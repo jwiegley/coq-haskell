@@ -1,0 +1,20 @@
+-R . Endo
+./ACompose.v
+./Applicative.v
+./Basics.v
+./Category.v
+./Conduit.v
+./Cont.v
+./CpdtTactics.v
+./Either.v
+./EitherT.v
+./FCompose.v
+./Functor.v
+./Iso.v
+./LogicT.v
+./MCompose.v
+./MMorph.v
+./Maybe.v
+./Monad.v
+./Trans.v
+./Tuple.v
