@@ -231,7 +231,7 @@ existential quantifier (∃), but it would not convey which [g] was chosen.
 
 *)
 
-Definition Epic `(f : X ~> Y)  := ∀ {Z} (g1 g2 : Y ~> Z), g1 ∘ f ≈ g2 ∘ f → g1 ≈ g2.
+Definition Epic  `(f : X ~> Y) := ∀ {Z} (g1 g2 : Y ~> Z), g1 ∘ f ≈ g2 ∘ f → g1 ≈ g2.
 Definition Monic `(f : X ~> Y) := ∀ {Z} (g1 g2 : Z ~> X), f ∘ g1 ≈ f ∘ g2 → g1 ≈ g2.
 
 Definition Bimorphic `(f : X ~> Y) := Epic f ∧ Monic f.
@@ -612,20 +612,22 @@ the plural is used instead.
 
 *)
 
-Definition func_eqv {a b} (f g : a → b) : Prop := f = g.
+Definition func_eqv {a b} (f g : a → b) : Prop := (∀ x, f x = g x) → f = g.
 
 Program Instance func_equivalence (a b : Type) : Equivalence (@func_eqv a b).
-(* Obligation 1. *)
-(*   unfold Reflexive, func_eqv. auto. *)
-(* Defined. *)
-(* Obligation 2. *)
-(*   unfold Symmetric, func_eqv. intros. *)
-(*   symmetry. apply H. *)
-(*   symmetry in H0. auto. *)
-(* Defined. *)
-(* Obligation 3. *)
-(*   unfold Transitive, func_eqv. intros. *)
-(* Admitted. *)
+Obligation 1.
+  unfold Reflexive, func_eqv. auto.
+Defined.
+Obligation 2.
+  unfold Symmetric, func_eqv. intros.
+  symmetry. apply H.
+  symmetry in H0. auto.
+Defined.
+Obligation 3.
+  unfold Transitive, func_eqv. intros.
+  extensionality e.
+  apply H1.
+Defined.
 
 Definition func_compose {A B C} (f : B -> C) (g : A -> B) (x : A) : C := f (g x).
 
@@ -640,8 +642,8 @@ Add Parametric Relation (a b : Type) : (a → b) (@func_eqv a b)
       as parametric_morphism_func_comp.
     intros. unfold func_compose.
     unfold func_eqv in *. intros.
-    extensionality x1. subst. reflexivity.
-    (* rewrite H1. reflexivity. *)
+    extensionality x1.
+    rewrite H1. reflexivity.
 Defined.
 
 Program Instance Sets : Category := {
@@ -656,8 +658,7 @@ Obligation 1.
   unfold Proper, respectful. intros.
   unfold func_eqv in *. intros.
   extensionality x1.
-  reflexivity.
-  (* apply H1. *)
+  apply H1.
 Defined.
 Obligation 2.
   unfold func_eqv. intros.
@@ -667,10 +668,10 @@ Obligation 3.
   unfold func_eqv. intros.
   apply eta_expansion.
 Defined.
-(* Obligation 4. *)
-(*   unfold func_eqv. intros. *)
-(*   apply eta_expansion. *)
-(* Defined. *)
+Obligation 4.
+  unfold func_eqv. intros.
+  apply eta_expansion.
+Defined.
 (**
 
 Within the category of [Sets] we can prove that monic functions are injective,
@@ -682,16 +683,14 @@ categories.
 Notation "X ≅Sets Y" :=
   (@Isomorphism Sets X Y) (at level 70, right associativity) : category_scope.
 
-Lemma injectivity_is_monic `(f : X ~> Y) : (∀ x y, f x = f y → x = y) ↔ Monic f.
+Lemma injectivity_is_monic `(f : X → Y) : (∀ x y, f x = f y → x = y) ↔ Monic f.
 Proof. split.
 - intros.
   unfold Monic.
   intros. reduce.
   extensionality e.
   specialize (H (g1 e) (g2 e)).
-  apply H. simpl in H0.
-  unfold func_eqv in H0.
-  apply (equal_f H0).
+  apply H1.
 - intros.
   unfold Monic in H.
   pose (fun (_ : unit) => x) as const_x.
@@ -699,25 +698,22 @@ Proof. split.
   specialize (H unit const_x const_y).
   unfold const_x in H.
   unfold const_y in H.
-  simpl in H.
+  simpl in H. unfold func_eqv in H.
   apply equal_f in H.
   + assumption.
   + intros. rewrite H0. reflexivity.
+  + intros. admit.
   + constructor.
 Qed.
 
-Lemma surjectivity_is_epic `(f : X ~> Y) : (∀ y, ∃ x, f x = y) ↔ Epic f.
+Lemma surjectivity_is_epic `(f : X → Y) : (∀ y, ∃ x, f x = y) ↔ Epic f.
 Proof. split.
 - intros.
   unfold Epic.
   intros.
   simpl in H0. reduce.
-  extensionality y.
-  unfold func_eqv in H0.
-  specialize (H y).
-  destruct H.
-  rewrite <- H.
-  apply (equal_f H0).
+  extensionality e.
+  apply H1.
 - intros.
   unfold Epic in H.
   specialize H with (Z := Prop).
@@ -729,9 +725,14 @@ Proof. split.
   + unfold func_eqv in *. intros.
     extensionality x.
     apply propositional_extensionality.
-    exists x.
-    reflexivity.
-Qed.
+    exists x. reflexivity.
+  + unfold func_eqv in *. intros.
+    eapply equal_f in H.
+    * apply H.
+    * intros. extensionality e. apply H0.
+    * intros. apply propositional_extensionality.
+      admit.
+Admitted.
 
 (** * Dual Category
 
