@@ -71,8 +71,8 @@ isomorphisms rather than "equality on the nose".
 *)
 
     eqv : forall {a b}, (a ~> b) -> (a ~> b) -> Prop where "f ≈ g" := (eqv f g);
-    eqv_equivalence : forall a b, Equivalence (@eqv a b);
-    comp_respects : forall a b c, Proper (@eqv b c ==> @eqv a b ==> @eqv a c) compose;
+    eqv_equivalence : forall {a b}, Equivalence (@eqv a b);
+    comp_respects : forall {a b c}, Proper (@eqv b c ==> @eqv a b ==> @eqv a c) compose;
 
 (**
 
@@ -156,9 +156,9 @@ Hint Extern 1 => apply left_identity.
 Hint Extern 1 => apply right_identity.
 
 Add Parametric Relation `(C : Category) (a b : C) : (hom a b) (@eqv C a b)
-  reflexivity proved by  (@Equivalence_Reflexive  _ _ (eqv_equivalence a b))
-  symmetry proved by     (@Equivalence_Symmetric  _ _ (eqv_equivalence a b))
-  transitivity proved by (@Equivalence_Transitive _ _ (eqv_equivalence a b))
+  reflexivity proved by  (@Equivalence_Reflexive  _ _ (@eqv_equivalence C a b))
+  symmetry proved by     (@Equivalence_Symmetric  _ _ (@eqv_equivalence C a b))
+  transitivity proved by (@Equivalence_Transitive _ _ (@eqv_equivalence C a b))
     as parametric_relation_eqv.
 
   Add Parametric Morphism `(C : Category) (a b c : C) : (@compose C a b c)
@@ -216,11 +216,12 @@ Definition Retraction `(f : X ~> Y) := { g : Y ~> X & f ∘ g ≈ id }.
 
 Class SplitIdempotent {X Y : C} := {
     split_idem_retract := Y;
-    split_idem         : X ~> X;
-    split_idem_r       : X ~> split_idem_retract;
-    split_idem_s       : split_idem_retract ~> X;
-    split_idem_law_1   : split_idem_s ∘ split_idem_r ≈ split_idem;
-    split_idem_law_2   : split_idem_r ∘ split_idem_s ≈ id/Y
+
+    split_idem       : X ~> X;
+    split_idem_r     : X ~> split_idem_retract;
+    split_idem_s     : split_idem_retract ~> X;
+    split_idem_law_1 : split_idem_s ∘ split_idem_r ≈ split_idem;
+    split_idem_law_2 : split_idem_r ∘ split_idem_s ≈ id/Y
 }.
 
 (**
@@ -502,14 +503,14 @@ Qed.
 
 (**
 
-A function which is both a retraction and monic, or a section and epic,
-expresses an isomorphism with its respective witness.
+A function which is both a retraction and monic, or a section and epic, bears
+an isomorphism with its respective witness.
 
 *)
 
 (*
 Program Instance Monic_Retraction_Iso
-    `{C : Category} {X Y : C} `(r : Retraction f) `(m : Monic f) : X ≅ Y := {
+    `{C : Category} `(f : X ~{C}~> Y) (r : Retraction f) (m : Monic f) : X ≅ Y := {
     to   := f;
     from := projT1 r
 }.
@@ -683,7 +684,9 @@ categories.
 Notation "X ≅Sets Y" :=
   (@Isomorphism Sets X Y) (at level 70, right associativity) : category_scope.
 
-Lemma injectivity_is_monic `(f : X → Y) : (∀ x y, f x = f y → x = y) ↔ Monic f.
+Definition Injective `(f : X → Y) := ∀ x y, f x = f y → x = y.
+
+Lemma injectivity_is_monic `(f : X → Y) : Injective f ↔ Monic f.
 Proof. split.
 - intros.
   unfold Monic.
@@ -691,14 +694,14 @@ Proof. split.
   extensionality e.
   specialize (H (g1 e) (g2 e)).
   apply H1.
-- intros.
-  unfold Monic in H.
+- intros. unfold Monic in H.
+  unfold Injective. intros.
+  simpl in H. unfold func_eqv in H.
   pose (fun (_ : unit) => x) as const_x.
   pose (fun (_ : unit) => y) as const_y.
   specialize (H unit const_x const_y).
   unfold const_x in H.
   unfold const_y in H.
-  simpl in H. unfold func_eqv in H.
   apply equal_f in H.
   + assumption.
   + intros. rewrite H0. reflexivity.
@@ -706,16 +709,17 @@ Proof. split.
   + constructor.
 Qed.
 
-Lemma surjectivity_is_epic `(f : X → Y) : (∀ y, ∃ x, f x = y) ↔ Epic f.
+Definition Surjective `(f : X → Y) := ∀ y, ∃ x, f x = y.
+
+Lemma surjectivity_is_epic `(f : X → Y) : Surjective f ↔ Epic f.
 Proof. split.
-- intros.
-  unfold Epic.
-  intros.
+- intros. unfold Epic.
+  intros. unfold Surjective in H.
   simpl in H0. reduce.
   extensionality e.
   apply H1.
-- intros.
-  unfold Epic in H.
+- intros. unfold Epic in H.
+  unfold Surjective. intros.
   specialize H with (Z := Prop).
   specialize H with (g1 := fun y0 => ∃ x0, f x0 = y0).
   simpl in *.
@@ -747,7 +751,10 @@ Program Instance Opposite `(C : Category) : Category := {
     ob      := @ob C;
     hom     := fun x y => @hom C y x;
     id      := @id C;
-    compose := fun _ _ _ f g => g ∘ f
+    compose := fun _ _ _ f g => g ∘ f;
+    eqv     := fun a b => @eqv C b a;
+
+    eqv_equivalence := fun a b => @eqv_equivalence C b a
 }.
 Obligation 4. rewrite comp_assoc. auto. Defined.
 
@@ -758,30 +765,31 @@ Notation "C ^op" := (Opposite C) (at level 90) : category_scope.
 Lemma op_involutive (C : Category) : (C^op)^op = C.
 Proof.
   unfold Opposite.
-  destruct C.
+  unfold Opposite_obligation_1.
+  unfold Opposite_obligation_2.
+  unfold Opposite_obligation_3.
+  unfold Opposite_obligation_4.
+  simpl. destruct C. simpl.
+  unfold parametric_relation_eqv.
+  unfold Equivalence_PER.
   apply f_equal5.
-  - unfold parametric_relation_eqv.
-    extensionality a.
+  - extensionality a.
     extensionality b.
     destruct (eqv_equivalence0 a b).
     apply f_equal3.
     + admit.
     + admit.
     + admit.
-  - unfold Opposite_obligation_1.
-    repeat (extensionality e; simpl; crush).
-  - unfold Opposite_obligation_2.
-    repeat (extensionality e; simpl; crush).
-  - unfold Opposite_obligation_3.
-    repeat (extensionality e; simpl; crush).
-  - unfold Opposite_obligation_4.
-    repeat (extensionality e; simpl; crush).
+  - repeat (extensionality e; simpl; crush).
+  - repeat (extensionality e; simpl; crush).
+  - repeat (extensionality e; simpl; crush).
+  - extensionality a.
+    extensionality b.
+    extensionality c.
+    extensionality d.
     extensionality f.
     extensionality g.
     extensionality h.
-    extensionality i.
-    extensionality j.
-    extensionality k.
     admit.
 Qed.
 
