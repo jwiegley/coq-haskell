@@ -62,7 +62,7 @@ Proof.
     rewrite <- comp_assoc.
     rewrite monad_law_2.
     rewrite comp_id_right.
-    f_equal. extensionality x.
+    f_equal. extensionality y.
     unfold compose at 1.
     rewrite <- fun_composition.
     rewrite comp_assoc.

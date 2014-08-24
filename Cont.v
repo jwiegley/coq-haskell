@@ -68,7 +68,7 @@ Proof.
     destruct x.
     f_equal. extensionality p.
     f_equal. extensionality q.
-    destruct x0.
+    destruct q.
     f_equal.
   - (* monad_law_2 *)
     intros. extensionality x. compute.
@@ -81,6 +81,6 @@ Proof.
     destruct x.
     f_equal. extensionality p.
     f_equal. extensionality q.
-    destruct x0.
+    destruct q.
     f_equal.
 Defined.

@@ -2,6 +2,7 @@ Require Export Coq.Unicode.Utf8.
 Require Export Coq.Classes.Morphisms.
 Require Export Coq.Program.Tactics.
 Require Export Coq.Setoids.Setoid.
+Require Export Coq.Relations.Relation_Definitions.
 
 Require Export Axioms.
 Require Export CpdtTactics.
@@ -16,6 +17,7 @@ Hint Extern 4 (?A = ?A) => reflexivity.
 Hint Extern 7 (?X = ?Z) => match goal
   with [H : ?X = ?Y, H' : ?Y = ?Z |- ?X = ?Z] => transitivity Y end.
 
+(*
 Ltac simple_solver :=
   intros;
   try extensionality e;
@@ -26,3 +28,4 @@ Ltac simple_solver :=
       is_var X; destruct X; auto
     end);
   auto.
+*)

@@ -113,7 +113,7 @@ Proof.
     repeat f_equal.
     extensionality p. f_equal.
     extensionality q. f_equal.
-    destruct x0.
+    destruct q.
     destruct c.
     reflexivity.
 
@@ -150,7 +150,7 @@ Proof.
     extensionality p.
     f_equal. simpl.
     extensionality q.
-    destruct x0.
+    destruct q.
     destruct c. simpl.
     reflexivity.
 Defined.
@@ -211,7 +211,7 @@ Proof.
     extensionality p. extensionality q.
     rewrite <- H0.
     pose proof monad_law_3_x.
-    specialize (H1 (EitherT R M) EitherT_Monad R (x0 x x1)).
+    specialize (H1 (EitherT R M) EitherT_Monad R (p e q)).
     simpl mu in H1.
     simpl eta in H1.
     assumption.
@@ -223,6 +223,7 @@ Proof.
     reflexivity.
 Defined.
 
+(*
 Require Export Category.
 
 (* Src is the category of simple-conduit Sources:
@@ -256,3 +257,4 @@ Proof.
   - (* left_identity *)    crush.
   - (* comp_assoc *)       crush.
 Defined.
+*)
