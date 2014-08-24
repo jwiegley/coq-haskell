@@ -22,7 +22,7 @@ Global Instance Applicative_Compose
 }.
 Proof.
   - (* app_identity *) intros.
-    ext_eq.
+    extensionality e.
     unfold compose_apply, compose_eta, compose.
     rewrite <- app_fmap_unit.
     rewrite app_homomorphism.
@@ -44,7 +44,7 @@ Proof.
     rewrite <- app_naturality.
     rewrite fun_composition_x.
     rewrite fun_composition_x.
-    f_equal. ext_eq.
+    f_equal. extensionality x.
     destruct x.
     unfold compose at 3.
     unfold app_merge.
@@ -52,7 +52,7 @@ Proof.
     unfold compose at 1.
     unfold compose at 1.
     rewrite uncurry_works.
-    ext_eq.
+    extensionality e.
     rewrite <- app_fmap_unit.
     rewrite app_composition.
     unfold compose.
@@ -70,7 +70,7 @@ Proof.
     rewrite app_interchange.
     rewrite_app_homomorphisms.
     rewrite fun_composition_x.
-    unfold compose. f_equal. ext_eq.
+    unfold compose. f_equal. extensionality e.
     rewrite <- app_fmap_unit.
     rewrite app_interchange.
     reflexivity.

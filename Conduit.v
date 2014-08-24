@@ -22,7 +22,7 @@ Global Instance Source_Functor {M : Type -> Type} `{Functor M} {R}
 { fmap := @Source_map M _ R
 }.
 Proof.
-  - (* fun_identity *) intros. ext_eq.
+  - (* fun_identity *) intros. extensionality x.
     unfold Source_map.
     destruct x.
     unfold id.
@@ -30,7 +30,7 @@ Proof.
     unfold Cont_map.
     destruct c.
     f_equal.
-  - (* fun_composition *) intros. ext_eq.
+  - (* fun_composition *) intros. extensionality x.
     unfold Source_map.
     destruct x. simpl.
     unfold compose, Cont_map.
@@ -55,7 +55,7 @@ Global Instance Source_Applicative {M : Type -> Type} `{Applicative M}
 }.
 Proof.
   - (* app_identity *)
-    intros. ext_eq.
+    intros. extensionality x.
     destruct x.
     unfold id, Source_apply.
     f_equal. simpl.
@@ -81,7 +81,7 @@ Proof.
     apply app_interchange.
 
   - (* app_fmap_unit *)
-    intros. ext_eq.
+    intros. extensionality x.
     unfold Source_apply.
     destruct x. simpl.
     f_equal.
@@ -105,20 +105,20 @@ Global Instance Source_Monad {M : Type -> Type} `{Monad M} {R}
 }.
 Proof.
   - (* monad_law_1 *)
-    intros. ext_eq. simpl.
+    intros. extensionality x. simpl.
     unfold Source_join, Source_map, id, compose.
     destruct x.
     destruct c. simpl.
     unfold compose, flip.
     repeat f_equal.
-    ext_eq. f_equal.
-    ext_eq. f_equal.
+    extensionality p. f_equal.
+    extensionality q. f_equal.
     destruct x0.
     destruct c.
     reflexivity.
 
   - (* monad_law_2 *)
-    intros. ext_eq. simpl.
+    intros. extensionality x. simpl.
     unfold Source_join, Source_map, id, compose.
     destruct x.
     f_equal. simpl.
@@ -131,7 +131,7 @@ Proof.
     apply H1.
 
   - (* monad_law_3 *)
-    intros. ext_eq. simpl.
+    intros. extensionality x. simpl.
     unfold Source_join, id, compose.
     destruct x.
     f_equal. simpl.
@@ -140,16 +140,16 @@ Proof.
     f_equal.
 
   - (* monad_law_4 *)
-    intros. ext_eq. simpl.
+    intros. extensionality x. simpl.
     unfold Source_join, Source_map, compose.
     destruct x.
     f_equal. simpl.
     destruct c. simpl.
     f_equal.
     unfold compose.
-    ext_eq.
+    extensionality p.
     f_equal. simpl.
-    ext_eq.
+    extensionality q.
     destruct x0.
     destruct c. simpl.
     reflexivity.
@@ -180,7 +180,7 @@ Proof.
   simpl mu. simpl.
   unfold compose, flip. simpl.
   f_equal. f_equal.
-  ext_eq. ext_eq.
+  extensionality p. extensionality q.
   pose (@monad_law_4_x (EitherT R M) EitherT_Monad).
   simpl in e. rewrite <- e. clear e.
   pose (@monad_law_1_x (EitherT R M) EitherT_Monad).
@@ -198,7 +198,7 @@ Global Instance Source_MonadTrans {M : Type -> Type} `{Monad M} {R}
 Proof.
   - (* trans_law_1 *) intros.
     unfold source. simpl eta.
-    ext_eq. unfold compose at 1.
+    extensionality e. unfold compose at 1.
     f_equal. f_equal.
     unfold flip. unfold compose at 1.
     unfold bind.
@@ -208,7 +208,7 @@ Proof.
     simpl mu.
     simpl eta.
     simpl eta in H0.
-    ext_eq. ext_eq.
+    extensionality p. extensionality q.
     rewrite <- H0.
     pose proof monad_law_3_x.
     specialize (H1 (EitherT R M) EitherT_Monad R (x0 x x1)).

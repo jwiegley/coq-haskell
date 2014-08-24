@@ -1,19 +1,27 @@
 Require Export Iso.
 
-Program Instance LTuple_Isomorphism {A} : unit * A ≅ A :=
+Close Scope nat_scope.
+
+Program Instance LTuple_Isomorphism {A} : (unit * A) ≅ A :=
 { to   := @snd unit A
 ; from := pair tt
 }.
-Next Obligation. (* iso_to *)
-  ext_eq. destruct x. compute. destruct u. reflexivity.
+Obligation 1. (* iso_to *)
+  intros. extensionality x. destruct x. compute. destruct u. reflexivity.
+Defined.
+Obligation 2.
+  intros. extensionality x. compute. reflexivity.
 Defined.
 
-Program Instance RTuple_Isomorphism {A} : A * unit ≅ A :=
+Program Instance RTuple_Isomorphism {A} : (A * unit) ≅ A :=
 { to   := @fst A unit
 ; from := fun x => (x, tt)
 }.
-Next Obligation. (* iso_to *)
-  ext_eq. destruct x. compute. destruct u. reflexivity.
+Obligation 1. (* iso_to *)
+  intros. extensionality x. destruct x. compute. destruct u. reflexivity.
+Defined.
+Obligation 2.
+  intros. extensionality x. compute. reflexivity.
 Defined.
 
 Definition tuple_swap_a_bc_to_ab_c {A B C} (x : A * (B * C)) : A * B * C :=
@@ -28,13 +36,13 @@ Definition left_triple {A B C} (x : A) (y : B) (z : C) : A * B * C :=
 Definition right_triple {A B C} (x : A) (y : B) (z : C) : A * (B * C) :=
   (x, (y, z)).
 
-Program Instance Tuple_Assoc {A B C} : A * B * C ≅ A * (B * C) :=
+Program Instance Tuple_Assoc {A B C} : (A * B * C) ≅ (A * (B * C)) :=
 { to   := tuple_swap_ab_c_to_a_bc
 ; from := tuple_swap_a_bc_to_ab_c
 }.
 Next Obligation. (* iso_to *)
   intros.
-  ext_eq.
+  extensionality x.
   unfold compose.
   destruct x.
   destruct p.
@@ -44,7 +52,7 @@ Next Obligation. (* iso_to *)
 Defined.
 Next Obligation. (* iso_from *)
   intros.
-  ext_eq.
+  extensionality x.
   unfold compose.
   destruct x.
   destruct p.

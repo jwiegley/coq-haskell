@@ -16,9 +16,9 @@ Global Instance Cont_Functor {R} : Functor (Cont R) :=
 }.
 Proof.
   - (* fun_identity *)
-    intros. ext_eq. compute. destruct x; reflexivity.
+    intros. extensionality x. compute. destruct x; reflexivity.
   - (* fun_composition *)
-    intros. ext_eq. compute. destruct x; reflexivity.
+    intros. extensionality x. compute. destruct x; reflexivity.
 Defined.
 
 Definition Cont_apply {R X Y} (f : Cont R (X -> Y)) (x : Cont R X)
@@ -37,7 +37,7 @@ Global Instance Cont_Applicative {R} : Applicative (Cont R) :=
 }.
 Proof.
   - (* app_identity *)
-    intros. ext_eq. compute. destruct x; reflexivity.
+    intros. extensionality x. compute. destruct x; reflexivity.
   - (* app_composition *)
     intros. compute.
     destruct u.
@@ -47,7 +47,7 @@ Proof.
   - (* app_interchange *)
     intros. compute. destruct u; reflexivity.
   - (* app_fmap_unit *)
-    intros. ext_eq. compute. destruct x; reflexivity.
+    intros. extensionality x. compute. destruct x; reflexivity.
 Defined.
 
 Definition Cont_join {R X} (x : Cont R (Cont R X)) : Cont R X :=
@@ -64,23 +64,23 @@ Global Instance Cont_Monad {R} : Monad (Cont R) :=
 }.
 Proof.
   - (* monad_law_1 *)
-    intros. ext_eq. compute.
+    intros. extensionality x. compute.
     destruct x.
-    f_equal. ext_eq.
-    f_equal. ext_eq.
+    f_equal. extensionality p.
+    f_equal. extensionality q.
     destruct x0.
     f_equal.
   - (* monad_law_2 *)
-    intros. ext_eq. compute.
+    intros. extensionality x. compute.
     destruct x; reflexivity.
   - (* monad_law_3 *)
-    intros. ext_eq. compute.
+    intros. extensionality x. compute.
     destruct x; reflexivity.
   - (* monad_law_4 *)
-    intros. ext_eq. compute.
+    intros. extensionality x. compute.
     destruct x.
-    f_equal. ext_eq.
-    f_equal. ext_eq.
+    f_equal. extensionality p.
+    f_equal. extensionality q.
     destruct x0.
     f_equal.
 Defined.

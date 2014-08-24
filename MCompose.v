@@ -1,5 +1,6 @@
 Require Export Monad.
 Require Export ACompose.
+Require Coq.Setoids.Setoid.
 
 Class Monad_Distributes (M : Type -> Type) (N : Type -> Type)
   `{Monad M} `{Applicative N} :=

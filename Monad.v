@@ -17,7 +17,7 @@ Notation "mu/ M N" := (@mu (fun X => M (N X)) _ _) (at level 66).
 Definition bind {M} `{Monad M} {X Y}
   (f : (X -> M Y)) (x : M X) : M Y := mu (fmap f x).
 
-Notation "m >>= f" := (bind f m) (at level 67, left associativity).
+Notation "m >>= f" := (bind f m) (at level 65, left associativity).
 
 Theorem monad_law_1_x
   : forall (M : Type -> Type) (m_dict : Monad M) A (x : M (M (M A))),

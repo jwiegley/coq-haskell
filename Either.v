@@ -32,9 +32,9 @@ Global Instance Either_Functor {E} : Functor (Either E) :=
 }.
 Proof.
   - (* fun_identity *)
-    intros. ext_eq. compute. destruct x; reflexivity.
+    intros. extensionality x. compute. destruct x; reflexivity.
   - (* fun_composition *)
-    intros. ext_eq. compute. destruct x; reflexivity.
+    intros. extensionality x. compute. destruct x; reflexivity.
 Defined.
 
 Global Instance Either_Applicative {E} : Applicative (Either E) :=
@@ -44,7 +44,7 @@ Global Instance Either_Applicative {E} : Applicative (Either E) :=
 }.
 Proof.
   - (* app_identity *)
-    intros. ext_eq. compute. destruct x; reflexivity.
+    intros. extensionality x. compute. destruct x; reflexivity.
   - (* app_composition *)
     intros. compute.
     destruct u.
@@ -55,7 +55,7 @@ Proof.
   - (* app_interchange *)
     intros. compute. destruct u; reflexivity.
   - (* app_fmap_unit *)
-    intros. ext_eq. compute. destruct x; reflexivity.
+    intros. extensionality x. compute. destruct x; reflexivity.
 Defined.
 
 Global Instance Either_Monad {E} : Monad (Either E) :=
@@ -64,20 +64,20 @@ Global Instance Either_Monad {E} : Monad (Either E) :=
 }.
 Proof.
   - (* monad_law_1 *)
-    intros. ext_eq. compute.
+    intros. extensionality x. compute.
     destruct x.
       reflexivity.
       destruct e.
         reflexivity.
         destruct e; reflexivity.
   - (* monad_law_2 *)
-    intros. ext_eq. compute.
+    intros. extensionality x. compute.
     destruct x; reflexivity.
   - (* monad_law_3 *)
-    intros. ext_eq. compute.
+    intros. extensionality x. compute.
     destruct x; reflexivity.
   - (* monad_law_4 *)
-    intros. ext_eq. compute.
+    intros. extensionality x. compute.
     destruct x.
       reflexivity.
       destruct e; reflexivity.

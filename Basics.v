@@ -1,25 +1,6 @@
-Require Import Coq.Init.Datatypes.
-Require Setoid.
+Require Export FunctionalExtensionality.
 
 Close Scope nat_scope.
-
-(* Pose the axiom of extensionality.  This is not needed when we work with
-   general categories, where we can make use of setoid equivalences to achieve
-   the same thing. *)
-
-Axiom ext_eq : forall {T1 T2 : Type} (f1 f2 : T1 -> T2),
-  (forall x, f1 x = f2 x) -> f1 = f2.
-
-Theorem ext_eqS : forall (T1 T2 : Type) (f1 f2 : T1 -> T2),
-  (forall x, f1 x = f2 x) -> f1 = f2.
-Proof.
-  intros; rewrite (ext_eq f1 f2); auto.
-Qed.
-
-Hint Resolve ext_eq.
-Hint Resolve ext_eqS.
-
-Ltac ext_eq := (apply ext_eq || apply ext_eqS); intro.
 
 (* Simple identity. *)
 

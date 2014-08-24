@@ -1,4 +1,4 @@
-Require Export Functor.
+Require Export Endo.
 
 (* Composition of functors produces a functor. *)
 
@@ -14,12 +14,12 @@ Global Instance Functor_Compose
 }.
 Proof.
   - (* fun_identity *)
-    intros. ext_eq. unfold compose_fmap, compose.
+    intros. extensionality x. unfold compose_fmap, compose.
     rewrite fun_identity.
     rewrite fun_identity. reflexivity.
 
   - (* fun_composition *)
-    intros. ext_eq. unfold compose_fmap, compose.
+    intros. extensionality x. unfold compose_fmap, compose.
     rewrite fun_composition_x.
     rewrite fun_composition. reflexivity.
 Defined.

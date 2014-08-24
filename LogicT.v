@@ -35,34 +35,34 @@ Global Instance LogicT_Restricted_Isomorphism
 }.
 Proof.
   intros.
-  - ext_eq.
+  - extensionality x.
     unfold id.
     destruct x.
     unfold compose.
     simpl. f_equal.
     unfold flip, bind.
-    ext_eq. ext_eq.
+    extensionality p. extensionality q.
     unfold compose.
     rewrite <- app_fmap_compose_x.
     rewrite monad_law_3_x.
     f_equal.
-    ext_eq. ext_eq.
+    extensionality p0. extensionality q0.
     unfold compose.
     rewrite <- app_fmap_compose_x.
     rewrite monad_law_3_x.
     reflexivity.
-  - ext_eq.
+  - extensionality x.
     unfold id. destruct x.
     unfold compose. simpl.
     unfold compose at 5.
-    f_equal. ext_eq.
+    f_equal. extensionality x.
     rewrite <- fun_composition.
     rewrite comp_assoc.
     rewrite J2.
     rewrite <- comp_assoc.
     rewrite monad_law_2.
     rewrite comp_id_right.
-    f_equal. ext_eq.
+    f_equal. extensionality x.
     unfold compose at 1.
     rewrite <- fun_composition.
     rewrite comp_assoc.

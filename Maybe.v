@@ -2,7 +2,7 @@ Require Export Monad.
 
 Ltac simple_solver :=
   intros;
-  try ext_eq;
+  try extensionality e;
   compute;
   repeat (
     match goal with

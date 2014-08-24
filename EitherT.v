@@ -17,7 +17,7 @@ Global Instance EitherT_Functor {E M} `{Functor M}
 Proof.
   - (* fun_identity *)
     intros.
-    ext_eq.
+    extensionality x.
     unfold EitherT_map.
     destruct x.
     repeat (rewrite fun_identity).
@@ -26,7 +26,7 @@ Proof.
 
   - (* fun_composition *)
     intros.
-    ext_eq.
+    extensionality x.
     unfold EitherT_map.
     destruct x.
     repeat (rewrite <- fun_composition).
@@ -52,7 +52,7 @@ Global Instance EitherT_Applicative {E M} `{Applicative M}
 ; apply := fun _ _ => EitherT_apply
 }.
 Proof.
-  - (* app_identity *) intros. ext_eq.
+  - (* app_identity *) intros. extensionality x.
     unfold EitherT_apply, EitherT_eta.
     destruct x.
     unfold id, compose.
@@ -107,7 +107,7 @@ Global Instance EitherT_Monad {E M} `{Monad M}
 ; mu := fun _ => EitherT_join
 }.
 Proof.
-  - (* monad_law_1 *) intros. ext_eq. simpl.
+  - (* monad_law_1 *) intros. extensionality x. simpl.
     unfold compose, EitherT_join.
     destruct x. simpl.
     f_equal. simpl.
@@ -120,14 +120,14 @@ Proof.
     repeat (rewrite fun_composition_x).
     repeat f_equal.
     unfold compose.
-    ext_eq. destruct x.
+    extensionality x. destruct x.
       rewrite <- app_fmap_unit.
         rewrite app_homomorphism.
         rewrite monad_law_3_x.
         reflexivity.
       destruct e. reflexivity.
 
-  - (* monad_law_2 *) intros. ext_eq. simpl.
+  - (* monad_law_2 *) intros. extensionality x. simpl.
     unfold compose, EitherT_join, EitherT_eta.
     simpl. destruct x.
     unfold EitherT_map, id.
@@ -147,11 +147,11 @@ Proof.
                  | Left e => (eta/M) (Left E X e)
                  | Right (EitherT_ mx') => mx'
                  end) = (@eta M _ (Either E X))).
-        ext_eq. destruct x; reflexivity. rewrite H0. clear H0.
+        extensionality x. destruct x; reflexivity. rewrite H0. clear H0.
     apply monad_law_2_x.
     assumption.
 
-  - (* monad_law_3 *) intros. ext_eq. simpl.
+  - (* monad_law_3 *) intros. extensionality x. simpl.
     unfold compose, EitherT_join, EitherT_eta.
     simpl. destruct x.
     unfold compose, id. f_equal.
@@ -160,14 +160,14 @@ Proof.
       rewrite monad_law_3. reflexivity.
       assumption.
 
-  - (* monad_law_4 *) intros. ext_eq. simpl.
+  - (* monad_law_4 *) intros. extensionality x. simpl.
     unfold compose, EitherT_join, EitherT_map.
     simpl. destruct x. f_equal.
     rewrite <- monad_law_4_x.
     f_equal.
     repeat (rewrite fun_composition_x).
     unfold compose.
-    f_equal. ext_eq.
+    f_equal. extensionality x.
     destruct x; simpl.
       unfold Either_map. simpl.
       rewrite <- app_fmap_compose_x. reflexivity.
@@ -179,7 +179,7 @@ Global Instance EitherT_MonadTrans {E} {M : Type -> Type} `{Monad M}
 { lift := fun A => EitherT_ E M A ∘ fmap eta
 }.
 Proof.
-  - (* trans_law_1 *) intros. ext_eq.
+  - (* trans_law_1 *) intros. extensionality x.
     repeat (rewrite <- comp_assoc).
     rewrite <- app_fmap_compose.
     reflexivity.
@@ -200,10 +200,10 @@ Global Instance EitherT_MFunctor {E}
     end
 }.
 Proof.
-  - (* hoist_law_1 *) intros. ext_eq.
+  - (* hoist_law_1 *) intros. extensionality x.
     destruct x. subst.
     reflexivity.
-  - (* hoist_law_2 *) intros. ext_eq.
+  - (* hoist_law_2 *) intros. extensionality x.
     destruct x.
     unfold compose.
     reflexivity.
@@ -226,7 +226,7 @@ Global Instance EitherT_MMonad {E}
     end)
 }.
 Proof.
-  - (* embed_law_1 *) intros. ext_eq.
+  - (* embed_law_1 *) intros. extensionality x.
     destruct x.
     unfold id.
     f_equal.

@@ -9,8 +9,10 @@
 
 Require Import Eqdep List.
 
-Require Omega.
+Require Import Omega.
 
+
+Set Primitive Projection.
 Set Implicit Arguments.
 
 

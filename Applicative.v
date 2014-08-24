@@ -1,7 +1,17 @@
-Require Export Functor.
+Require Export Endo.
 Require Export Tuple.
 
 Reserved Notation "f <*> g" (at level 68, left associativity).
+
+Reserved Notation "X ⊗ Y" (at level 67, right associativity).
+Reserved Notation "X ● Y" (at level 67, right associativity).
+
+(* Class Monoidal (C : Category) := { *)
+(*     product  : C ⟶ [C, C] where "X ⊗ Y" := (product X Y); *)
+(*     unit_obj : C *)
+(* }. *)
+
+(* Infix "●" := product (at level 67, right associativity). *)
 
 Class Applicative (F : Type -> Type) :=
 { is_functor :> Functor F
@@ -11,7 +21,8 @@ Class Applicative (F : Type -> Type) :=
     where "f <*> g" := (apply f g)
 
 ; app_identity : forall {X}, apply (eta (@id X)) = id
-; app_composition : forall {X Y Z} (v : F (X -> Y)) (u : F (Y -> Z)) (w : F X),
+; app_composition
+    : forall {X Y Z} (v : F (X -> Y)) (u : F (Y -> Z)) (w : F X),
     eta compose <*> u <*> v <*> w = u <*> (v <*> w)
 ; app_homomorphism : forall {X Y} (x : X) (f : X -> Y),
     eta f <*> eta x = eta (f x)
@@ -59,7 +70,7 @@ Section Applicatives.
     eta ∘ f = fmap f ∘ eta.
   Proof.
     intros.
-    ext_eq.
+    extensionality x.
     unfold compose.
     rewrite <- app_homomorphism.
     rewrite app_fmap_unit.
