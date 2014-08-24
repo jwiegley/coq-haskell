@@ -612,27 +612,65 @@ the plural is used instead.
 
 *)
 
+Definition func_eqv {a b} (f g : a → b) : Prop := f = g.
+
+Program Instance func_equivalence (a b : Type) : Equivalence (@func_eqv a b).
+(* Obligation 1. *)
+(*   unfold Reflexive, func_eqv. auto. *)
+(* Defined. *)
+(* Obligation 2. *)
+(*   unfold Symmetric, func_eqv. intros. *)
+(*   symmetry. apply H. *)
+(*   symmetry in H0. auto. *)
+(* Defined. *)
+(* Obligation 3. *)
+(*   unfold Transitive, func_eqv. intros. *)
+(* Admitted. *)
+
+Definition func_compose {A B C} (f : B -> C) (g : A -> B) (x : A) : C := f (g x).
+
+Add Parametric Relation (a b : Type) : (a → b) (@func_eqv a b)
+  reflexivity proved by  (@Equivalence_Reflexive  _ _ (func_equivalence a b))
+  symmetry proved by     (@Equivalence_Symmetric  _ _ (func_equivalence a b))
+  transitivity proved by (@Equivalence_Transitive _ _ (func_equivalence a b))
+    as parametric_relation_func_eqv.
+
+  Add Parametric Morphism (a b c : Type) : (@func_compose a b c)
+    with signature (func_eqv ==> func_eqv ==> func_eqv)
+      as parametric_morphism_func_comp.
+    intros. unfold func_compose.
+    unfold func_eqv in *. intros.
+    extensionality x1. subst. reflexivity.
+    (* rewrite H1. reflexivity. *)
+Defined.
+
 Program Instance Sets : Category := {
-    ob      := Type;
-    hom     := fun X Y => X → Y;
-    id      := fun _ x => x;
-    compose := fun _ _ _ f g x => f (g x);
-    eqv     := fun _ _ f g => (forall x, f x = g x) -> f = g
+    ob              := Type;
+    hom             := fun X Y => X → Y;
+    id              := fun _ x => x;
+    compose         := fun _ _ _ f g x => f (g x);
+    eqv             := @func_eqv;
+    eqv_equivalence := @func_equivalence
 }.
 Obligation 1.
-  refine (Build_Equivalence _ _ _ _ _).
-  - constructor.
-  - unfold Symmetric. crush.
-  - unfold Transitive. intros.
-    apply functional_extensionality.
-    assumption.
+  unfold Proper, respectful. intros.
+  unfold func_eqv in *. intros.
+  extensionality x1.
+  reflexivity.
+  (* apply H1. *)
 Defined.
 Obligation 2.
-  unfold Proper, respectful.
-  intros.
-  extensionality x1.
-  auto.
+  unfold func_eqv. intros.
+  apply eta_expansion.
 Defined.
+Obligation 3.
+  unfold func_eqv. intros.
+  apply eta_expansion.
+Defined.
+(* Obligation 4. *)
+(*   unfold func_eqv. intros. *)
+(*   apply eta_expansion. *)
+(* Defined. *)
 (**
 
 Within the category of [Sets] we can prove that monic functions are injective,
@@ -650,7 +688,10 @@ Proof. split.
   unfold Monic.
   intros. reduce.
   extensionality e.
-  apply H1.
+  specialize (H (g1 e) (g2 e)).
+  apply H. simpl in H0.
+  unfold func_eqv in H0.
+  apply (equal_f H0).
 - intros.
   unfold Monic in H.
   pose (fun (_ : unit) => x) as const_x.
@@ -661,8 +702,7 @@ Proof. split.
   simpl in H.
   apply equal_f in H.
   + assumption.
-  + intros. rewrite H1. reflexivity. constructor.
-  + intros. admit.
+  + intros. rewrite H0. reflexivity.
   + constructor.
 Qed.
 
@@ -672,11 +712,12 @@ Proof. split.
   unfold Epic.
   intros.
   simpl in H0. reduce.
-  extensionality e.
-  specialize (H e).
+  extensionality y.
+  unfold func_eqv in H0.
+  specialize (H y).
   destruct H.
   rewrite <- H.
-  rewrite H1. reflexivity.
+  apply (equal_f H0).
 - intros.
   unfold Epic in H.
   specialize H with (Z := Prop).
@@ -685,13 +726,11 @@ Proof. split.
   specialize H with (g2 := fun y  => True).
   eapply equal_f in H.
   + erewrite H. constructor.
-  + intros. extensionality e.
+  + unfold func_eqv in *. intros.
+    extensionality x.
     apply propositional_extensionality.
-    exists e.
+    exists x.
     reflexivity.
-  + intros.
-    apply propositional_extensionality.
-    admit.
 Qed.
 
 (** * Dual Category
@@ -742,7 +781,6 @@ Proof.
     extensionality i.
     extensionality j.
     extensionality k.
-    compute. simpl.
     admit.
 Qed.
 

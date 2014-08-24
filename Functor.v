@@ -434,15 +434,20 @@ Definition contramap `{F : C^op ⟶ D} `(f : X ~{C}~> Y) :
 Definition dimap `{P : C^op ⟶ [D, E]} `(f : X ~{C}~> W) `(g : Y ~{D}~> Z) :
   P W Y ~{E}~> P X Z := bimap (unop f) g.
 
+(* jww (2014-08-24): Waiting on Coq 8.5. *)
 (*
 Program Instance Hom `(C : Category) : C^op ⟶ [C, Sets] :=
 { fobj := fun X =>
   {| fobj := @hom C X
    ; fmap := @compose C X
+   (* ; fmap_respects := fun a b f f' H => @comp_respects C a b _ *)
    |}
 ; fmap := fun _ _ f => {| transport := fun X g => g ∘ unop f |}
 }.
-Obligation 1. intros. extensionality e. crush. Defined.
+Obligation 1.
+  unfold func_eqv. intros.
+  extensionality x. apply H0.
+Defined.
 Obligation 2. intros. extensionality e. crush. Defined.
 Obligation 3. extensionality e. crush. Defined.
 Obligation 4.

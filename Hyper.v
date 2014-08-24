@@ -119,6 +119,7 @@ Add Parametric Relation {u} (a b : Type) : (@HMachine u a b) (@HMachine_equiv u 
     intros. unfold HMachine_equiv, hcompose.
     destruct x. destruct y. destruct x0. destruct y0.
     simpl in *. intros.
+    unfold func_eqv. intros.
     extensionality zz. auto.
 Defined.
 
