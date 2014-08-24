@@ -440,12 +440,12 @@ Program Instance Hom `(C : Category) : C^op ⟶ [C, Sets] :=
 { fobj := fun X =>
   {| fobj := @hom C X
    ; fmap := @compose C X
-   (* ; fmap_respects := fun a b f f' H => @comp_respects C a b _ *)
+   ; fmap_respects := fun a b f f' H => @eqv_equivalence C a b
    |}
 ; fmap := fun _ _ f => {| transport := fun X g => g ∘ unop f |}
 }.
 Obligation 1.
-  unfold func_eqv. intros.
+  remove_equivs. f_equal.
   extensionality x. apply H0.
 Defined.
 Obligation 2. intros. extensionality e. crush. Defined.
