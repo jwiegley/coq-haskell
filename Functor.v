@@ -440,7 +440,8 @@ Program Instance Hom `(C : Category) : C^op ⟶ [C, Sets] :=
 { fobj := fun X =>
   {| fobj := @hom C X
    ; fmap := @compose C X
-   ; fmap_respects := fun a b f f' H => @eqv_equivalence C a b
+   ; fmap_respects := fun a b f f' H =>
+       @eqv Sets _ _ (compose f) (compose f')
    |}
 ; fmap := fun _ _ f => {| transport := fun X g => g ∘ unop f |}
 }.
