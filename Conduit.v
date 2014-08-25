@@ -247,12 +247,9 @@ Global Instance Src {M : Type -> Type} `{Monad M} {R}
              (fun dom ran => projT1 dom → projT1 ran) :=
 { id      := fun _ x => id x
 ; compose := fun _ _ _ f g x => f (g x)
-; eqv     := fun X Y f g => f ≈ g
 }.
 Proof.
   (* The proofs of all of these follow trivially from their definitions. *)
-  - (* eqv_equivalence *)  crush.
-  - (* compose_respects *) crush.
   - (* right_identity *)   crush.
   - (* left_identity *)    crush.
   - (* comp_assoc *)       crush.

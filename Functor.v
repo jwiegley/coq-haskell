@@ -2,29 +2,18 @@ Require Export Category.
 
 Open Scope category_scope.
 
-Set Primitive Projection.
-Set Universe Polymorphism.
 Generalizable All Variables.
 
 Class Functor (C : Category) (D : Category) :=
 { fobj : C → D
 ; fmap : ∀ {X Y : C}, (X ~> Y) → (fobj X ~> fobj Y)
 
-; fmap_respects : ∀ a b (f f' : a ~> b), f ≈ f' → fmap f ≈ fmap f'
-
-; functor_id_law : ∀ {X : C}, fmap (id (A := X)) ≈ id
+; functor_id_law : ∀ {X : C}, fmap (id (A := X)) = id
 ; functor_compose_law : ∀ {X Y Z : C} (f : Y ~> Z) (g : X ~> Y),
-    fmap f ∘ fmap g ≈ fmap (f ∘ g)
+    fmap f ∘ fmap g = fmap (f ∘ g)
 }.
 
 Notation "C ⟶ D" := (Functor C D) (at level 90, right associativity).
-
-Add Parametric Morphism `(C : Category) `(D : Category) (F : C ⟶ D) (a b : C)
-  : (@fmap C D F a b)
-  with signature ((@eqv C a b) ==> (@eqv D (fobj a) (fobj b)))
-    as parametric_morphism_fmap'.
-  intros; apply (@fmap_respects C D F a b x y); auto.
-Defined.
 
 (* Functors used as functions will map objects of categories, similar to the
    way type constructors behave in Haskell. *)
@@ -39,12 +28,11 @@ Program Instance fun_compose
     fobj := fun x => fobj (fobj x);
     fmap := fun _ _ f => fmap (fmap f)
 }.
-Obligation 1. crush. Defined.
-Obligation 2.
+Obligation 1.
   rewrite functor_id_law.
   apply functor_id_law.
 Defined.
-Obligation 3.
+Obligation 2.
   rewrite functor_compose_law.
   rewrite functor_compose_law.
   reflexivity.
@@ -53,21 +41,18 @@ Defined.
 Lemma fun_irrelevance `(C : Category) `(D : Category)
   : ∀ (a : C → D)
       (f g : ∀ {X Y : C}, (X ~> Y) → (a X ~> a Y))
-      e e' i i' c c',
+      i i' c c',
   @f = @g →
   {| fobj := @a
    ; fmap := @f
-   ; fmap_respects       := e
    ; functor_id_law      := i
    ; functor_compose_law := c |} =
   {| fobj := @a
    ; fmap := @g
-   ; fmap_respects       := e'
    ; functor_id_law      := i'
    ; functor_compose_law := c' |}.
 Proof.
   intros. subst. f_equal.
-  apply proof_irrelevance.
   apply proof_irrelevance.
   apply proof_irrelevance.
 Qed.
@@ -80,66 +65,24 @@ Definition Id `{C : Category} : Functor C C.
     (fmap := fun X X f => f); crush.
 Defined.
 
-(* This is like JMEq, but for the particular case of ≈; note it does not
-   require any axioms! *)
-
-Inductive heq_morphisms `{C : Category} {a b : C} (f : a ~> b)
-  : forall {a' b' : C}, a' ~> b' → Prop :=
-  | heq_morphisms_intro : forall {f' : a ~> b},
-      eqv f f' → @heq_morphisms C a b f a b f'.
-
-Definition heq_morphisms_refl : forall `{C : Category} a b f,
-  @heq_morphisms C a b f a  b  f.
-Proof.
-  intros; apply heq_morphisms_intro; reflexivity.
-Qed.
-
-Definition heq_morphisms_symm : forall `{C : Category} a b f a' b' f',
-  @heq_morphisms C a b f a' b' f' → @heq_morphisms C a' b' f' a b f.
-Proof.
-  refine (fun C a b f a' b' f' isd =>
-    match isd with
-      | heq_morphisms_intro f''' z => @heq_morphisms_intro C _ _ f''' f _
-    end); symmetry; auto.
-Qed.
-
-Definition heq_morphisms_tran
-  : forall `{C : Category} a b f a' b' f' a'' b'' f'',
-  @heq_morphisms C a b f a' b' f' ->
-  @heq_morphisms C a' b' f' a'' b'' f'' ->
-  @heq_morphisms C a b f a'' b'' f''.
-  destruct 1.
-  destruct 1.
-  apply heq_morphisms_intro.
-  setoid_rewrite <- H0.
-  apply H.
-Qed.
-
-Implicit Arguments heq_morphisms [C a b a' b'].
-Hint Constructors heq_morphisms.
-
-Definition EqualFunctors `{C : Category} `{D : Category}
-  (F : Functor C D) (G : Functor C D) :=
-  forall a b (f f' : a ~{C}~> b), f ≈ f' → heq_morphisms (fmap f) (fmap f').
-
-Notation "f ~~~ g" := (EqualFunctors f g) (at level 45).
-
-Lemma fun_left_identity `(F : @Functor C D) : fun_compose Id F ~~~ F.
+Lemma fun_left_identity `(F : @Functor C D) : fun_compose Id F = F.
 Proof.
   destruct F.
   unfold fun_compose.
-  simpl. unfold EqualFunctors.
-  intros. constructor. simpl.
-  apply fmap_respects0. assumption.
+  apply fun_irrelevance.
+  extensionality h.
+  extensionality h0.
+  extensionality f. crush.
 Qed.
 
-Lemma fun_right_identity `(F : @Functor C D) : fun_compose F Id ~~~ F.
+Lemma fun_right_identity `(F : @Functor C D) : fun_compose F Id = F.
 Proof.
   destruct F.
   unfold fun_compose.
-  simpl. unfold EqualFunctors.
-  intros. constructor. simpl.
-  apply fmap_respects0. assumption.
+  apply fun_irrelevance.
+  extensionality h.
+  extensionality h0.
+  extensionality f. crush.
 Qed.
 
 (** [Cat] is the category whose morphisms are functors betwen categories.
@@ -281,7 +224,7 @@ End Hidden.
 Class Natural `(F : @Functor C D) `(G : @Functor C D) :=
 { transport  : ∀ {X}, F X ~> G X
 ; naturality : ∀ {X Y} (f : X ~> Y),
-    fmap f ∘ transport ≈ transport ∘ fmap f
+    fmap f ∘ transport = transport ∘ fmap f
 }.
 
 Notation "transport/ N" := (@transport _ _ _ _ N _) (at level 44).
@@ -333,7 +276,7 @@ Qed.
 Definition nat_equiv (x y : F ⟾ G) : Prop :=
   match x with
   | Build_Natural transport0 _ => match y with
-    | Build_Natural transport1 _ => forall {X}, transport0 X ≈ transport1 X
+    | Build_Natural transport1 _ => forall {X}, transport0 X = transport1 X
     end
   end.
 
@@ -373,7 +316,7 @@ Add Parametric Relation
     intros. unfold nat_equiv, nat_compose.
     destruct x. destruct y. destruct x0. destruct y0.
     simpl in *. intros.
-    specialize (H0 X). rewrite H0. auto.
+    specialize (H0 X). rewrite H0. crush.
 Defined.
 
 (* Nat is the category whose morphisms are natural transformations between
@@ -384,19 +327,22 @@ Program Instance Nat (C : Category) (D : Category) : Category :=
 ; hom     := @Natural C D
 ; id      := @nat_identity C D
 ; compose := @nat_compose C D
-; eqv     := @nat_equiv C D
 }.
 Obligation 1. (* right_identity *)
   destruct f. intros.
-  rewrite right_identity. reflexivity.
+  apply nat_irrelevance.
+  extensionality x. crush.
 Defined.
 Obligation 2. (* left_identity *)
   destruct f. intros.
-  rewrite left_identity. reflexivity.
+  apply nat_irrelevance.
+  extensionality x. crush.
 Defined.
 Obligation 3. (* comp_assoc *)
-  destruct f. destruct g. destruct h. simpl.
-  rewrite <- comp_assoc. reflexivity.
+  destruct f. destruct g. destruct h.
+  apply nat_irrelevance.
+  extensionality x. unfold nat_compose.
+  simpl. rewrite <- comp_assoc. reflexivity.
 Defined.
 
 Notation "[ C , D ]" := (Nat C D) (at level 90, right associativity).
@@ -440,17 +386,12 @@ Program Instance Hom `(C : Category) : C^op ⟶ [C, Sets] :=
 { fobj := fun X =>
   {| fobj := @hom C X
    ; fmap := @compose C X
-   ; fmap_respects := fun a b f f' H =>
-       @eqv Sets _ _ (compose f) (compose f')
    |}
 ; fmap := fun _ _ f => {| transport := fun X g => g ∘ unop f |}
 }.
-Obligation 1.
-  remove_equivs. f_equal.
-  extensionality x. apply H0.
-Defined.
-Obligation 2. intros. extensionality e. crush. Defined.
-Obligation 3. extensionality e. crush. Defined.
+Obligation 1. extensionality x. crush. Defined.
+Obligation 2. extensionality x. crush. Defined.
+Obligation 3. extensionality x. crush. Defined.
 Obligation 4.
   unfold nat_identity.
   apply nat_irrelevance.
@@ -565,69 +506,48 @@ Program Instance Opposite_Functor `(F : C ⟶ D) : C^op ⟶ D^op := {
     fobj := @fobj C D F;
     fmap := fun X Y f => @fmap C D F Y X (op f)
 }.
-Obligation 1. unfold op. rewrite H. reflexivity. Qed.
-Obligation 2. unfold op. apply functor_id_law. Qed.
-Obligation 3. unfold op. apply functor_compose_law. Qed.
+Obligation 1. unfold op. apply functor_id_law. Defined.
+Obligation 2. unfold op. apply functor_compose_law. Defined.
 
 (* jww (2014-08-10): Until I figure out how to make C^op^op implicitly unify
    with C, I need a way of undoing the action of Opposite_Functor. *)
-
+(*
 Program Instance Reverse_Opposite_Functor `(F : C^op ⟶ D^op) : C ⟶ D := {
     fobj := @fobj _ _ F;
     fmap := fun X Y f => unop (@fmap _ _ F Y X f)
 }.
 Obligation 1.
-  destruct F.
-  unfold Opposite.
-  simpl in *.
-  admit.
-Defined.
-Obligation 2. admit. Defined.
-Obligation 3. admit. Defined.
-Obligation 4.
   unfold unop.
   unfold fmap. simpl.
   pose (@functor_id_law _ _ F).
   unfold fmap in e. simpl in e.
   specialize (e X). auto.
-Admitted.
-Obligation 5.
-  unfold unop.
-  unfold fmap. simpl.
-  pose (@functor_compose_law _ _ F).
-  unfold fmap in e. simpl in e.
-  (* specialize (e Z Y X f f'). *)
-  auto.
-Admitted.
-Obligation 6.
-  unfold unop.
-  pose (@functor_id_law _ _ F).
-  simpl in *.
-  specialize (e X).
-  auto.
-Admitted.
-Obligation 7.
+Qed.
+Obligation 2.
   unfold unop.
   unfold fmap. simpl.
   pose (@functor_compose_law _ _ F).
   unfold fmap in e. simpl in e.
   specialize (e Z Y X g f).
   auto.
-Admitted.
+Qed.
+*)
 
 (* Definition Coerce_Functor `(F : C ⟶ D) := Opposite_Functor F. *)
 
 (* Coercion Coerce_Functor : Functor >-> Functor. *)
 
+(*
 Lemma op_functor_involutive `(F : Functor)
-  : Reverse_Opposite_Functor (Opposite_Functor F) ~~~ F.
+  : Reverse_Opposite_Functor (Opposite_Functor F) = F.
 Proof.
   unfold Reverse_Opposite_Functor.
   unfold Opposite_Functor.
-  destruct F. simpl.
-  unfold EqualFunctors. intros.
-  simpl. constructor. auto.
+  destruct F.
+  apply fun_irrelevance.
+  auto.
 Qed.
+*)
 
 (*
 Class Adjunction `{C : Category} `{D : Category}
@@ -791,14 +711,24 @@ Obligation 2.
   rewrite right_identity. reflexivity.
 Defined.
 
-Hint Unfold Const_Transport_obligation_1.
+Hint Unfold Const_Transport.
 
 Program Instance Delta `{C : Category} `{J : Category} : C ⟶ [J, C] := {
     fobj := @Const C J;
     fmap := @Const_Transport J C
 }.
-Obligation 2. autounfold. reflexivity. Qed.
-Obligation 3. autounfold. reflexivity. Qed.
+Obligation 1.
+  autounfold.
+  unfold nat_compose.
+  apply nat_irrelevance.
+  extensionality x0. crush.
+Qed.
+Obligation 2.
+  autounfold.
+  unfold nat_compose.
+  apply nat_irrelevance.
+  extensionality x0. crush.
+Qed.
 
 (*
 Class Complete `(C : Category) := {
@@ -809,7 +739,7 @@ Class Complete `(C : Category) := {
 (* Here F is a diagram of type J in C. *)
 Record Cone `{C : Category} `{J : Category} (n : C) `(F : @Functor J C) := {
     cone_mor : ∀ j : J, n ~> F j;
-    cone_law : ∀ i j (f : i ~{J}~> j), (@fmap J C F i j f) ∘ cone_mor i ≈ cone_mor j
+    cone_law : ∀ i j (f : i ~{J}~> j), (@fmap J C F i j f) ∘ cone_mor i = cone_mor j
 }.
 
 Definition Const_to_Cone `(F : J ⟶ C) {a} : (Const a ⟾ F) → Cone a F.
@@ -826,23 +756,30 @@ Defined.
 
 Definition Cone_to_Const `(F : J ⟶ C) {a} : Cone a F → (Const a ⟾ F).
 Proof.
-  intros.
-  simpl. intros.
-  unfold Const.
-  destruct X.
+  unfold Const. intros.
+  destruct X. destruct F.
   refine (Build_Natural _ _ _ _ _ _); intros; simpl.
-  crush.
+  crush. rewrite right_identity. reflexivity.
 Defined.
 
-(* jww (2014-08-24): Needs Coq 8.5.
-Lemma Const_Cone_Iso `(F : J ⟶ C) : ∀ a, (Const a ⟾ F) ≅Sets Cone a F.
-Proof.
-  intros.
-  apply Build_Isomorphism
-    with (to   := @Const_to_Cone J C F a)
-         (from := @Cone_to_Const J C F a);
-  reduce; extensionality e; auto.
+(* jww (2014-08-24): Need Coq 8.5
+Program Instance Const_Cone_Iso `(F : J ⟶ C)
+  : ∀ a, (Const a ⟾ F) ≅Sets Cone a F := {
+    to   := @Const_to_Cone J C F a;
+    from := @Cone_to_Const J C F a
+}.
+Obligation 1.
+  extensionality x.
+  destruct x. destruct F.
+  simpl in *. f_equal.
+  extensionality i.
+  extensionality j.
+  extensionality f.
+  destruct C.
+  destruct J. simpl. crush.
 Qed.
+Obligation 2.
+Abort.
 *)
 
 (*
