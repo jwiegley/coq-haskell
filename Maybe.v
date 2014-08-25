@@ -48,8 +48,8 @@ Section Maybe.
 
   Global Program Instance Maybe_Applicative : Applicative Maybe :=
   { is_functor := Maybe_Functor
-  ; eta := Just
-  ; apply := @Maybe_apply
+  ; pure := Just
+  ; ap := @Maybe_apply
   }.
 
 
@@ -62,7 +62,7 @@ Section Maybe.
 
   Global Program Instance Maybe_Monad : Monad Maybe :=
   { is_applicative := Maybe_Applicative
-  ; mu := @Maybe_join
+  ; join := @Maybe_join
   }.
 
 End Maybe.

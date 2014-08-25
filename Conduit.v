@@ -13,9 +13,7 @@ Inductive Source (M : Type -> Type) (R : Type) (A : Type) : Type :=
 
 Definition Source_map {M : Type -> Type} `{Functor M} {R X Y}
   (f : X -> Y) (x : Source M R X) : Source M R Y :=
-  match x with
-    Source_ k => Source_ M R Y (fmap f k)
-  end.
+  match x with Source_ k => Source_ M R Y (fmap f k) end.
 
 Global Instance Source_Functor {M : Type -> Type} `{Functor M} {R}
   : Functor (Source M R) :=
@@ -43,15 +41,15 @@ Definition Source_apply {M : Type -> Type} `{Applicative M}
   {R X Y} (f : Source M R (X -> Y)) (x : Source M R X) : Source M R Y :=
   match f with
     Source_ k => match x with
-      Source_ j => Source_ M R Y (apply k j)
+      Source_ j => Source_ M R Y (ap k j)
     end
   end.
 
 Global Instance Source_Applicative {M : Type -> Type} `{Applicative M}
   {R} : Applicative (Source M R) :=
 { is_functor := Source_Functor
-; eta := fun A x => Source_ M R A (eta x)
-; apply := @Source_apply M _ R
+; pure := fun A x => Source_ M R A (pure x)
+; ap := @Source_apply M _ R
 }.
 Proof.
   - (* app_identity *)
@@ -96,12 +94,12 @@ Definition getSource {M : Type -> Type} {R X} (x : Source M R X)
 
 Definition Source_join {M : Type -> Type} `{Monad M}
   {R X} : Source M R (Source M R X) -> Source M R X :=
-  Source_ M R X ∘ mu ∘ fmap getSource ∘ getSource.
+  Source_ M R X ∘ join ∘ fmap getSource ∘ getSource.
 
 Global Instance Source_Monad {M : Type -> Type} `{Monad M} {R}
   : Monad (Source M R) :=
 { is_applicative := Source_Applicative
-; mu := fun _ => Source_join
+; join := fun _ => Source_join
 }.
 Proof.
   - (* monad_law_1 *)
@@ -173,11 +171,11 @@ Theorem source_distributes
 Proof.
   intros.
   unfold bind, flip.
-  simpl mu.
+  simpl join.
   simpl fmap.
   unfold source, flip, compose.
   unfold Source_join, compose.
-  simpl mu. simpl.
+  simpl join. simpl.
   unfold compose, flip. simpl.
   f_equal. f_equal.
   extensionality p. extensionality q.
@@ -197,7 +195,7 @@ Global Instance Source_MonadTrans {M : Type -> Type} `{Monad M} {R}
 }.
 Proof.
   - (* trans_law_1 *) intros.
-    unfold source. simpl eta.
+    unfold source. simpl pure.
     extensionality e. unfold compose at 1.
     f_equal. f_equal.
     unfold flip. unfold compose at 1.
@@ -205,15 +203,15 @@ Proof.
     rewrite trans_law_1_x.
     pose proof app_fmap_compose_x.
     specialize (H0 (EitherT R M) is_applicative A (EitherT R M R)).
-    simpl mu.
-    simpl eta.
-    simpl eta in H0.
+    simpl join.
+    simpl pure.
+    simpl pure in H0.
     extensionality p. extensionality q.
     rewrite <- H0.
     pose proof monad_law_3_x.
     specialize (H1 (EitherT R M) EitherT_Monad R (p e q)).
-    simpl mu in H1.
-    simpl eta in H1.
+    simpl join in H1.
+    simpl pure in H1.
     assumption.
 
   - (* trans_law_2 *) intros.

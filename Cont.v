@@ -32,8 +32,8 @@ Definition Cont_apply {R X Y} (f : Cont R (X -> Y)) (x : Cont R X)
 
 Global Instance Cont_Applicative {R} : Applicative (Cont R) :=
 { is_functor := Cont_Functor
-; eta := fun A x => Cont_ R A (fun k => k x)
-; apply := @Cont_apply R
+; pure := fun A x => Cont_ R A (fun k => k x)
+; ap := @Cont_apply R
 }.
 Proof.
   - (* app_identity *)
@@ -60,7 +60,7 @@ Definition Cont_join {R X} (x : Cont R (Cont R X)) : Cont R X :=
 
 Global Instance Cont_Monad {R} : Monad (Cont R) :=
 { is_applicative := Cont_Applicative
-; mu := @Cont_join R
+; join := @Cont_join R
 }.
 Proof.
   - (* monad_law_1 *)

@@ -12,14 +12,14 @@ Definition fromLogicT (M : Type -> Type) `{Monad M} (A : Type)
   match l with
     LogicT_ _ await =>
       LogicT_' M A (fun yield =>
-        await (compose (mu/M) ∘ (@fmap M _ _ _) ∘ yield) ∘ eta)
+        await (compose (join/M) ∘ (@fmap M _ _ _) ∘ yield) ∘ pure)
   end.
 
 Definition toLogicT (M : Type -> Type) `{Monad M} (A : Type)
   (l : LogicT' M A) : LogicT M A :=
   match l with
     LogicT_' _ await =>
-      LogicT_ M A (fun yield => mu ∘ fmap (await (fun x => yield x ∘ eta)))
+      LogicT_ M A (fun yield => join ∘ fmap (await (fun x => yield x ∘ pure)))
   end.
 
 (* The condition J2 was given by Jones and Duponcheel as a condition in their
@@ -28,7 +28,7 @@ Definition toLogicT (M : Type -> Type) `{Monad M} (A : Type)
 *)
 Global Instance LogicT_Restricted_Isomorphism
   (M : Type -> Type) `{Monad M} (A : Type)
-  (J2 : forall A B (f : M A -> M B), mu ∘ fmap f = f ∘ mu)
+  (J2 : forall A B (f : M A -> M B), join ∘ fmap f = f ∘ join)
   : LogicT' M A ≅ LogicT M A :=
 { to   := toLogicT M A
 ; from := fromLogicT M A

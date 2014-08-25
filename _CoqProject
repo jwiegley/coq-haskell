@@ -20,5 +20,6 @@ MCompose.v
 MMorph.v
 Maybe.v
 Monad.v
+Searchable.v
 Trans.v
 Tuple.v

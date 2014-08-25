@@ -39,8 +39,8 @@ Defined.
 
 Global Instance Either_Applicative {E} : Applicative (Either E) :=
 { is_functor := Either_Functor
-; eta := Right E
-; apply := @Either_apply E
+; pure := Right E
+; ap := @Either_apply E
 }.
 Proof.
   - (* app_identity *)
@@ -60,7 +60,7 @@ Defined.
 
 Global Instance Either_Monad {E} : Monad (Either E) :=
 { is_applicative := Either_Applicative
-; mu := @Either_join E
+; join := @Either_join E
 }.
 Proof.
   - (* monad_law_1 *)

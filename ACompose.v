@@ -3,27 +3,27 @@ Require Export FCompose.
 
 (* Composition of applicatives produces an applicative. *)
 
-Definition compose_eta (F : Type -> Type) (G : Type -> Type)
+Definition compose_pure (F : Type -> Type) (G : Type -> Type)
   `{Applicative F} `{Applicative G} {A} : A -> F (G A) :=
-  (@eta F _ (G A)) ∘ (@eta G _ A).
+  (@pure F _ (G A)) ∘ (@pure G _ A).
 
 Definition compose_apply (F : Type -> Type) (G : Type -> Type)
   `{Applicative F} `{Applicative G} {A B}
   : F (G (A -> B)) -> F (G A) -> F (G B) :=
-  apply ∘ fmap (@apply G _ A B).
+  ap ∘ fmap (@ap G _ A B).
 
 Global Instance Applicative_Compose
   (F : Type -> Type) (G : Type -> Type)
   `{f_dict : Applicative F} `{g_dict : Applicative G}
   : Applicative (fun X => F (G X))  :=
 { is_functor := Functor_Compose F G
-; eta := fun _ => compose_eta F G
-; apply := fun _ _ => compose_apply F G
+; pure := fun _ => compose_pure F G
+; ap := fun _ _ => compose_apply F G
 }.
 Proof.
   - (* app_identity *) intros.
     extensionality e.
-    unfold compose_apply, compose_eta, compose.
+    unfold compose_apply, compose_pure, compose.
     rewrite <- app_fmap_unit.
     rewrite app_homomorphism.
     rewrite app_identity.
@@ -32,9 +32,9 @@ Proof.
     reflexivity.
 
   - (* app_composition *) intros.
-    (* apply <$> (apply <$> (apply <$> eta (eta compose) <*> u) <*> v) <*> w =
+    (* apply <$> (apply <$> (apply <$> pure (pure compose) <*> u) <*> v) <*> w =
        apply <$> u <*> (apply <$> v <*> w) *)
-    unfold compose_apply, compose_eta, compose.
+    unfold compose_apply, compose_pure, compose.
     rewrite <- app_composition.
     f_equal.
     rewrite_app_homomorphisms.
@@ -59,13 +59,13 @@ Proof.
     reflexivity.
 
   - (* app_homomorphism *) intros.
-    unfold compose_apply, compose_eta, compose.
+    unfold compose_apply, compose_pure, compose.
     rewrite <- app_fmap_unit.
     repeat (rewrite app_homomorphism).
     reflexivity.
 
   - (* app_interchange *) intros.
-    unfold compose_apply, compose_eta, compose.
+    unfold compose_apply, compose_pure, compose.
     repeat (rewrite <- app_fmap_unit).
     rewrite app_interchange.
     rewrite_app_homomorphisms.
@@ -76,7 +76,7 @@ Proof.
     reflexivity.
 
   - (* app_fmap_unit *) intros.
-    unfold compose_apply, compose_eta, compose.
+    unfold compose_apply, compose_pure, compose.
     rewrite_app_homomorphisms.
     reflexivity.
 Defined.

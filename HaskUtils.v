@@ -17,7 +17,6 @@ Hint Extern 4 (?A = ?A) => reflexivity.
 Hint Extern 7 (?X = ?Z) => match goal
   with [H : ?X = ?Y, H' : ?Y = ?Z |- ?X = ?Z] => transitivity Y end.
 
-(*
 Ltac simple_solver :=
   intros;
   try extensionality e;
@@ -28,4 +27,3 @@ Ltac simple_solver :=
       is_var X; destruct X; auto
     end);
   auto.
-*)

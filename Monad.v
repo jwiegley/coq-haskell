@@ -3,30 +3,35 @@ Require Export Applicative.
 Class Monad (M : Type -> Type) :=
 { is_applicative :> Applicative M
 
-; mu : forall {X}, M (M X) -> M X
+; join : forall {X}, M (M X) -> M X
 
-; monad_law_1 : forall {X}, mu ∘ fmap mu = (@mu X) ∘ mu
-; monad_law_2 : forall {X}, mu ∘ fmap (@eta M is_applicative X) = id
-; monad_law_3 : forall {X}, (@mu X) ∘ eta = id
-; monad_law_4 : forall {X Y} (f : X -> Y), mu ∘ fmap (fmap f) = fmap f ∘ mu
+; monad_law_1 : forall {X}, join ∘ fmap join = (@join X) ∘ join
+; monad_law_2 : forall {X}, join ∘ fmap (@pure M is_applicative X) = id
+; monad_law_3 : forall {X}, (@join X) ∘ pure = id
+; monad_law_4 : forall {X Y} (f : X -> Y), join ∘ fmap (fmap f) = fmap f ∘ join
 }.
 
-Notation "mu/ M" := (@mu M _ _) (at level 68).
-Notation "mu/ M N" := (@mu (fun X => M (N X)) _ _) (at level 66).
+Notation "join/ M" := (@join M _ _) (at level 68).
+Notation "join/ M N" := (@join (fun X => M (N X)) _ _) (at level 66).
 
 Definition bind {M} `{Monad M} {X Y}
-  (f : (X -> M Y)) (x : M X) : M Y := mu (fmap f x).
+  (f : (X -> M Y)) (x : M X) : M Y := join (fmap f x).
 
 Notation "m >>= f" := (bind f m) (at level 65, left associativity).
 
+Notation "x <- c1 ;; c2" := (@bind _ _ _ _ _ c1 (fun x => c2))
+  (at level 100, c1 at next level, right associativity).
+
+Notation "e1 ;; e2" := (_ <- e1 ;; e2) (at level 100, right associativity).
+
 Theorem monad_law_1_x
   : forall (M : Type -> Type) (m_dict : Monad M) A (x : M (M (M A))),
-  mu (fmap mu x) = (@mu M m_dict A) (mu x).
+  join (fmap join x) = (@join M m_dict A) (join x).
 Proof.
   intros.
-  assert (mu (fmap mu x) = (mu ∘ fmap mu) x).
+  assert (join (fmap join x) = (join ∘ fmap join) x).
     unfold compose. reflexivity.
-  assert (mu (mu x) = (mu ∘ mu) x).
+  assert (join (join x) = (join ∘ join) x).
     unfold compose. reflexivity.
   rewrite H. rewrite H0.
   rewrite monad_law_1.
@@ -35,10 +40,10 @@ Qed.
 
 Theorem monad_law_2_x
   : forall (M : Type -> Type) (m_dict : Monad M) A (x : M A),
-  mu (fmap (@eta M _ A) x) = x.
+  join (fmap (@pure M _ A) x) = x.
 Proof.
   intros.
-  assert (mu (fmap eta x) = (mu ∘ fmap eta) x).
+  assert (join (fmap pure x) = (join ∘ fmap pure) x).
     unfold compose. reflexivity.
   rewrite H.
   rewrite monad_law_2.
@@ -47,10 +52,10 @@ Qed.
 
 Theorem monad_law_3_x
   : forall (M : Type -> Type) (m_dict : Monad M) A (x : M A),
-  (@mu M m_dict A) (eta x) = x.
+  (@join M m_dict A) (pure x) = x.
 Proof.
   intros.
-  assert (mu (eta x) = (mu ∘ eta) x).
+  assert (join (pure x) = (join ∘ pure) x).
     unfold compose. reflexivity.
   rewrite H.
   rewrite monad_law_3.
@@ -60,12 +65,12 @@ Qed.
 Theorem monad_law_4_x
   : forall (M : Type -> Type) (m_dict : Monad M)
       A B (f : A -> B) (x : M (M A)),
-  mu (fmap (fmap f) x) = fmap f (mu x).
+  join (fmap (fmap f) x) = fmap f (join x).
 Proof.
   intros.
-  assert (mu (fmap (fmap f) x) = (mu ∘ fmap (fmap f)) x).
+  assert (join (fmap (fmap f) x) = (join ∘ fmap (fmap f)) x).
     unfold compose. reflexivity.
-  assert (fmap f (mu x) = (fmap f ∘ mu) x).
+  assert (fmap f (join x) = (fmap f ∘ join) x).
     unfold compose. reflexivity.
   rewrite H. rewrite H0.
   rewrite monad_law_4.

@@ -8,18 +8,18 @@ Class Monad_Distributes (M : Type -> Type) (N : Type -> Type)
 ; prod_law_1 : forall {A B : Type} (f : A -> B),
     prod ∘ fmap[N] (@fmap (fun X => M (N X)) _ _ _ f) =
     (@fmap (fun X => M (N X)) _ _ _ f) ∘ prod
-; prod_law_2 : forall {A : Type}, (@prod A) ∘ eta/N = id
+; prod_law_2 : forall {A : Type}, (@prod A) ∘ pure/N = id
 ; prod_law_3 : forall {A : Type},
-    prod ∘ fmap[N] (@eta (fun X => M (N X)) _ A) = eta/M
+    prod ∘ fmap[N] (@pure (fun X => M (N X)) _ A) = pure/M
 ; prod_law_4 : forall {A : Type},
-    prod ∘ fmap[N] (mu/M ∘ fmap[M] prod) =
-    mu/M ∘ fmap[M] prod ∘ (@prod (M (N A)))
+    prod ∘ fmap[N] (join/M ∘ fmap[M] prod) =
+    join/M ∘ fmap[M] prod ∘ (@prod (M (N A)))
 }.
 
 (* These proofs are due to Mark P. Jones and Luc Duponcheel in their article
    "Composing monads", Research Report YALEU/DCS/RR-1004, December 1993.
 
-   Given any Monad M, and any Premonad N (i.e., having eta), and further given
+   Given any Monad M, and any Premonad N (i.e., having pure), and further given
    an operation [prod] and its accompanying four laws, it can be shown that M
    N is closed under composition.
 *)
@@ -27,17 +27,17 @@ Global Instance Monad_Compose (M : Type -> Type) (N : Type -> Type)
   `{Monad M} `{Applicative N} `{Monad_Distributes M N}
   : Monad (fun X => M (N X)) :=
 { is_applicative := Applicative_Compose M N
-; mu := fun A => mu/M ∘ fmap[M] (@prod M N _ _ _ A)
+; join := fun A => join/M ∘ fmap[M] (@prod M N _ _ _ A)
 }.
 Proof.
   - (* monad_law_1 *) intros.
-    rewrite <- comp_assoc with (f := mu/M).
-    rewrite <- comp_assoc with (f := mu/M).
+    rewrite <- comp_assoc with (f := join/M).
+    rewrite <- comp_assoc with (f := join/M).
     rewrite comp_assoc with (f := fmap[M] (@prod M N _ _ _ X)).
     rewrite <- monad_law_4.
     rewrite <- comp_assoc.
-    rewrite comp_assoc with (f := mu/M).
-    rewrite comp_assoc with (f := mu/M).
+    rewrite comp_assoc with (f := join/M).
+    rewrite comp_assoc with (f := join/M).
     rewrite <- monad_law_1.
     repeat (rewrite <- comp_assoc).
     repeat (rewrite fun_composition).
@@ -61,7 +61,7 @@ Proof.
     rewrite app_fmap_compose. simpl.
     rewrite <- fun_composition.
     rewrite <- comp_assoc.
-    unfold compose_eta.
+    unfold compose_pure.
     rewrite <- app_fmap_compose.
     reflexivity.
 

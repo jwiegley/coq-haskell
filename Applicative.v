@@ -16,30 +16,30 @@ Reserved Notation "X ● Y" (at level 67, right associativity).
 Class Applicative (F : Type -> Type) :=
 { is_functor :> Functor F
 
-; eta : forall {X}, X -> F X
-; apply : forall {X Y}, F (X -> Y) -> F X -> F Y
-    where "f <*> g" := (apply f g)
+; pure : forall {X}, X -> F X
+; ap : forall {X Y}, F (X -> Y) -> F X -> F Y
+    where "f <*> g" := (ap f g)
 
-; app_identity : forall {X}, apply (eta (@id X)) = id
+; app_identity : forall {X}, ap (pure (@id X)) = id
 ; app_composition
     : forall {X Y Z} (v : F (X -> Y)) (u : F (Y -> Z)) (w : F X),
-    eta compose <*> u <*> v <*> w = u <*> (v <*> w)
+    pure compose <*> u <*> v <*> w = u <*> (v <*> w)
 ; app_homomorphism : forall {X Y} (x : X) (f : X -> Y),
-    eta f <*> eta x = eta (f x)
+    pure f <*> pure x = pure (f x)
 ; app_interchange : forall {X Y} (y : X) (u : F (X -> Y)),
-    u <*> eta y = eta (fun f => f y) <*> u
+    u <*> pure y = pure (fun f => f y) <*> u
 
-; app_fmap_unit : forall {X Y} (f : X -> Y), apply (eta f) = fmap f
+; app_fmap_unit : forall {X Y} (f : X -> Y), ap (pure f) = fmap f
 }.
 
-Notation "eta/ M" := (@eta M _ _) (at level 68).
-Notation "eta/ M N" := (@eta (fun X => M (N X)) _ _) (at level 66).
+Notation "pure/ M" := (@pure M _ _) (at level 68).
+Notation "pure/ M N" := (@pure (fun X => M (N X)) _ _) (at level 66).
 
-Notation "apply[ M ]  f" := (@apply M _ _ _ f) (at level 68).
-Notation "apply[ M N ]  f" := (@apply (fun X => M (N X)) _ _ _ f) (at level 66).
-Notation "apply[ M N O ]  f" := (@apply (fun X => M (N (O X))) _ _ _ f) (at level 64).
+Notation "ap[ M ]  f" := (@ap M _ _ _ f) (at level 68).
+Notation "ap[ M N ]  f" := (@ap (fun X => M (N X)) _ _ _ f) (at level 66).
+Notation "ap[ M N O ]  f" := (@ap (fun X => M (N (O X))) _ _ _ f) (at level 64).
 
-Notation "f <*> g" := (apply f g) (at level 68, left associativity).
+Notation "f <*> g" := (ap f g) (at level 68, left associativity).
 
 Notation "[| f x y .. z |]" := (.. (f <$> x <*> y) .. <*> z)
     (at level 9, left associativity, f at level 9,
@@ -67,7 +67,7 @@ Section Applicatives.
   Context `{Applicative F}.
 
   Theorem app_fmap_compose : forall A B (f : A -> B),
-    eta ∘ f = fmap f ∘ eta.
+    pure ∘ f = fmap f ∘ pure.
   Proof.
     intros.
     extensionality x.
@@ -78,12 +78,12 @@ Section Applicatives.
   Qed.
 
   Theorem app_fmap_compose_x : forall A B (f : A -> B) (x : A),
-    eta (f x) = fmap f (eta x).
+    pure (f x) = fmap f (pure x).
   Proof.
     intros.
-    assert (eta (f x) = (eta ∘ f) x).
+    assert (pure (f x) = (pure ∘ f) x).
       unfold compose. reflexivity.
-    assert (fmap f (eta x) = (fmap f ∘ eta) x).
+    assert (fmap f (pure x) = (fmap f ∘ pure) x).
       unfold compose. reflexivity.
     rewrite H0. rewrite H1.
     rewrite app_fmap_compose.
@@ -91,7 +91,7 @@ Section Applicatives.
   Qed.
 
   Theorem app_identity_x : forall {X} {x : F X},
-    apply (eta (@id X)) x = id x.
+    ap (pure (@id X)) x = id x.
   Proof.
     intros.
     rewrite app_fmap_unit.
@@ -99,7 +99,7 @@ Section Applicatives.
   Qed.
 
   Theorem app_homomorphism_2 : forall {X Y Z} (x : X) (y : Y) (f : X -> Y -> Z),
-    f <$> eta x <*> eta y = eta (f x y).
+    f <$> pure x <*> pure y = pure (f x y).
   Proof.
     intros.
     rewrite <- app_homomorphism.
@@ -113,7 +113,7 @@ Section Applicatives.
      http://www.haskell.org/haskellwiki/Typeclassopedia#Applicative
   *)
   Theorem app_flip : forall {X Y} (x : F X) (f : X -> Y),
-    eta f <*> x = eta (flip call) <*> x <*> eta f.
+    pure f <*> x = pure (flip call) <*> x <*> pure f.
   Proof.
     intros.
     rewrite app_interchange.
@@ -126,11 +126,11 @@ Section Applicatives.
     reflexivity.
   Qed.
 
-  Definition app_unit : F unit := eta tt.
+  Definition app_unit : F unit := pure tt.
 
   Theorem app_embed : forall {G : Type -> Type} `{Applicative G}
       {X Y} (x : G (X -> Y)) (y : G X),
-    eta (x <*> y) = eta apply <*> eta x <*> eta y.
+    pure (x <*> y) = pure ap <*> pure x <*> pure y.
   Proof.
     intros.
     rewrite_app_homomorphisms.
@@ -174,7 +174,7 @@ Section Applicatives.
     f_equal.
   Qed.
 
-  Theorem app_left_identity : forall {A} (v : F A), (eta tt ** v) ≡ v.
+  Theorem app_left_identity : forall {A} (v : F A), (pure tt ** v) ≡ v.
   Proof.
     intros.
     unfold app_prod, app_unit.
@@ -189,7 +189,7 @@ Section Applicatives.
   Qed.
 
   Theorem app_right_identity : forall {A : Type} (v : F A),
-    (v ** eta tt) ≡ v.
+    (v ** pure tt) ≡ v.
   Proof.
     intros.
     unfold app_prod, app_unit.
