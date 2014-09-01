@@ -1,10 +1,11 @@
 Require Export Category.
 
+Close Scope nat_scope.
 Open Scope category_scope.
 
 Generalizable All Variables.
 
-Class Functor (C : Category) (D : Category) :=
+Class Functor {C : Category} {D : Category} :=
 { fobj : C → D
 ; fmap : ∀ {X Y : C}, (X ~> Y) → (fobj X ~> fobj Y)
 
@@ -13,7 +14,7 @@ Class Functor (C : Category) (D : Category) :=
     fmap f ∘ fmap g = fmap (f ∘ g)
 }.
 
-Notation "C ⟶ D" := (Functor C D) (at level 90, right associativity).
+Notation "C ⟶ D" := (@Functor C D) (at level 90, right associativity).
 
 (* Functors used as functions will map objects of categories, similar to the
    way type constructors behave in Haskell. *)
@@ -24,7 +25,7 @@ Coercion fobj : Functor >-> Funclass.
    Cat). *)
 Program Instance fun_compose
   {C : Category} {D : Category} {E : Category}
-  (F : Functor D E) (G : Functor C D) : Functor C E := {
+  (F : D ⟶ E) (G : C ⟶ D) : C ⟶ E := {
     fobj := fun x => fobj (fobj x);
     fmap := fun _ _ f => fmap (fmap f)
 }.
@@ -59,13 +60,13 @@ Qed.
 
 (* The Identity [Functor] *)
 
-Definition Id `{C : Category} : Functor C C.
+Definition Id `{C : Category} : C ⟶ C.
   apply Build_Functor with
     (fobj := fun X => X)
     (fmap := fun X X f => f); crush.
 Defined.
 
-Lemma fun_left_identity `(F : @Functor C D) : fun_compose Id F = F.
+Lemma fun_left_identity `(F : C ⟶ D) : fun_compose Id F = F.
 Proof.
   destruct F.
   unfold fun_compose.
@@ -75,7 +76,7 @@ Proof.
   extensionality f. crush.
 Qed.
 
-Lemma fun_right_identity `(F : @Functor C D) : fun_compose F Id = F.
+Lemma fun_right_identity `(F : C ⟶ D) : fun_compose F Id = F.
 Proof.
   destruct F.
   unfold fun_compose.
@@ -323,7 +324,7 @@ Defined.
    Functors from C ⟶ D. *)
 
 Program Instance Nat (C : Category) (D : Category) : Category :=
-{ ob      := Functor C D
+{ ob      := @Functor C D
 ; hom     := @Natural C D
 ; id      := @nat_identity C D
 ; compose := @nat_compose C D
@@ -858,3 +859,151 @@ Obligation 1.
   apply Sets_Const_Lim_Iso.
 Qed.
 *)
+
+Definition EndoFunctor `(C : Category) := C ⟶ C.
+
+Definition CoqEndoFunctor := Sets ⟶ Sets.
+
+Reserved Notation "X ⊗ Y" (at level 67, right associativity).
+
+Class MonoidalCategory := {
+    is_category :> Category;
+
+    mult  : is_category ⟶ [is_category, is_category] where "X ⊗ Y" := (mult X Y);
+    nelem : is_category;
+
+    mc_left_id  : ∀ X, X ⊗ nelem ≅ X;
+    mc_right_id : ∀ X, nelem ⊗ X ≅ X;
+    mc_assoc    : ∀ X Y Z, (X ⊗ Y) ⊗ Z ≅ X ⊗ (Y ⊗ Z)
+}.
+
+Infix "⊗" := mult (at level 67, right associativity) : category_scope.
+
+Coercion is_category : MonoidalCategory >-> Category.
+
+Program Instance Tuple_Functor (X : Type) : Sets ⟶ Sets := {
+    fobj := fun Y => (X * Y);
+    fmap := fun _ _ f p => match p with
+      (x, y) => (x, f y)
+    end
+}.
+Obligation 1.
+  extensionality p.
+  destruct p. reflexivity.
+Qed.
+Obligation 2.
+  extensionality p.
+  destruct p. reflexivity.
+Qed.
+
+Program Instance Tuple_Bifunctor : Sets ⟶ [Sets, Sets] := {
+    fobj := Tuple_Functor;
+    fmap := fun _ _ f =>
+      {| transport := fun _ p =>
+           match p with (x, y) => (f x, y) end
+       |}
+}.
+Obligation 1.
+  extensionality p.
+  destruct p. reflexivity.
+Qed.
+Obligation 2.
+  unfold nat_identity.
+  apply nat_irrelevance.
+  extensionality H.
+  extensionality p.
+  destruct p. reflexivity.
+Qed.
+Obligation 3.
+  unfold nat_compose.
+  apply nat_irrelevance.
+  extensionality H.
+  extensionality p.
+  destruct p. reflexivity.
+Qed.
+
+Program Instance LTuple_Isomorphism {A} : (unit * A) ≅Sets A :=
+{ to   := @snd unit A
+; from := pair tt
+}.
+Obligation 2.
+  extensionality x. destruct x. destruct u. reflexivity.
+Qed.
+
+Program Instance RTuple_Isomorphism {A} : (A * unit) ≅Sets A :=
+{ to   := @fst A unit
+; from := fun x => (x, tt)
+}.
+Obligation 2.
+  extensionality x. destruct x. destruct u. reflexivity.
+Qed.
+
+Definition tuple_swap_a_bc_to_ab_c {A B C} (x : A * (B * C)) : A * B * C :=
+  match x with (a, (b, c)) => ((a, b), c) end.
+
+Definition tuple_swap_ab_c_to_a_bc {A B C} (x : A * B * C) : A * (B * C) :=
+  match x with ((a, b), c) => (a, (b, c)) end.
+
+Definition left_triple {A B C} (x : A) (y : B) (z : C) : A * B * C :=
+  ((x, y), z).
+
+Definition right_triple {A B C} (x : A) (y : B) (z : C) : A * (B * C) :=
+  (x, (y, z)).
+
+Program Instance Tuple_Assoc {A B C} : (A * B * C) ≅Sets (A * (B * C)) :=
+{ to   := tuple_swap_ab_c_to_a_bc
+; from := tuple_swap_a_bc_to_ab_c
+}.
+Next Obligation. (* iso_to *)
+  intros.
+  extensionality x.
+  unfold compose.
+  destruct x.
+  destruct p.
+  unfold id.
+  unfold tuple_swap_a_bc_to_ab_c, tuple_swap_ab_c_to_a_bc.
+  reflexivity.
+Defined.
+Next Obligation. (* iso_from *)
+  intros.
+  extensionality x.
+  unfold compose.
+  destruct x.
+  destruct p.
+  unfold id.
+  unfold tuple_swap_a_bc_to_ab_c, tuple_swap_ab_c_to_a_bc.
+  reflexivity.
+Defined.
+
+Definition uncurry {X Y Z} (f : X -> Y -> Z) (xy : X * Y) : Z :=
+  match xy with (x, y) => f x y end.
+
+Theorem uncurry_works : forall {X Y Z} (x : X) (y : Y) (f : X -> Y -> Z),
+  uncurry f (x, y) = f x y.
+Proof. reflexivity. Qed.
+
+Program Instance Sets_with_Products : MonoidalCategory := {
+    is_category := Sets;
+
+    mult  := Tuple_Bifunctor;
+    nelem := unit;
+
+    mc_left_id  := @RTuple_Isomorphism;
+    mc_right_id := @LTuple_Isomorphism;
+    mc_assoc    := @Tuple_Assoc
+}.
+
+Reserved Notation "f ** g" (at level 68, left associativity).
+
+Class LaxMonoidalFunctor `(C : MonoidalCategory) `(D : MonoidalCategory) := {
+    lmf_functor :> C ⟶ D;
+
+    lmf_id : nelem ~> fobj nelem;
+    ap_prod : ∀ X Y, fobj X ⊗ fobj Y ~> fobj (X ⊗ Y)
+      where "f ** g" := (ap_prod f g);
+
+    lmf_left_id : ∀ X, fobj X ⊗ nelem ≅ fobj (X ⊗ nelem);
+    lmf_right_id : ∀ X, nelem ⊗ fobj X ≅ fobj (nelem ⊗ X);
+    lmf_assoc : ∀ X Y Z,
+      (fobj X ⊗ fobj Y) ⊗ fobj Z ≅ fobj (X ⊗ (Y ⊗ Z))
+}.

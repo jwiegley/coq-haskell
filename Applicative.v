@@ -3,16 +3,6 @@ Require Export Tuple.
 
 Reserved Notation "f <*> g" (at level 68, left associativity).
 
-Reserved Notation "X ⊗ Y" (at level 67, right associativity).
-Reserved Notation "X ● Y" (at level 67, right associativity).
-
-(* Class Monoidal (C : Category) := { *)
-(*     product  : C ⟶ [C, C] where "X ⊗ Y" := (product X Y); *)
-(*     unit_obj : C *)
-(* }. *)
-
-(* Infix "●" := product (at level 67, right associativity). *)
-
 Class Applicative (F : Type -> Type) :=
 { is_functor :> Functor F
 

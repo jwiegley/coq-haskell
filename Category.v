@@ -220,9 +220,6 @@ Variables X Y : C.
 Variable f : X ~> Y.
 (* end hide *)
 
-Ltac reassociate_left  := repeat (rewrite <- comp_assoc); try f_equal; auto.
-Ltac reassociate_right := repeat (rewrite comp_assoc); try f_equal; auto.
-
 Lemma retractions_are_epic : Retraction f → Epic f.
 Proof.
   autounfold.
@@ -232,7 +229,7 @@ Proof.
   symmetry.
   rewrite <- right_identity.
   rewrite <- e.
-  reassociate_right.
+  repeat (rewrite comp_assoc); try f_equal; auto.
 Qed.
 
 Lemma sections_are_monic : Section' f → Monic f.
@@ -244,7 +241,7 @@ Proof.
   symmetry.
   rewrite <- left_identity.
   rewrite <- e.
-  reassociate_left.
+  repeat (rewrite <- comp_assoc); try f_equal; auto.
 Qed.
 
 (* begin hide *)
@@ -252,16 +249,13 @@ End Lemmas.
 End Morphisms.
 (* end hide *)
 
-Ltac reassociate_left  := repeat (rewrite <- comp_assoc); auto.
-Ltac reassociate_right := repeat (rewrite comp_assoc); auto.
-
 Definition epi_compose `{C : Category} {X Y Z : C}
   `(ef : @Epic C Y Z f) `(eg : @Epic C X Y g) : Epic (f ∘ g).
 Proof.
   unfold Epic in *. intros.
   apply ef.
   apply eg.
-  reassociate_left.
+  repeat (rewrite <- comp_assoc); auto.
 Qed.
 
 Definition monic_compose `{C : Category} {X Y Z : C}
@@ -270,7 +264,7 @@ Proof.
   unfold Monic in *. intros.
   apply eg.
   apply ef.
-  reassociate_right.
+  repeat (rewrite comp_assoc); auto.
 Qed.
 
 (** * Isomorphism
@@ -618,10 +612,10 @@ Qed.
 
 (** * Dual Category
 
-The opposite, or categorical dual, of a category is expressed [C^op].  It has
-the same objects as its parent, but the direction of all morphisms is flipped.
-Further, doing this twice should result in the same category, making it an
-involutive operation.
+The opposite, or dual, of a category is expressed [C^op].  It has the same
+objects as its parent, but the direction of all morphisms is flipped.  Doing
+this twice should result in the same category, making it an involutive
+operation.
 
 *)
 
@@ -650,8 +644,7 @@ Proof.
   extensionality d.
   extensionality f.
   extensionality g.
-  extensionality h.
-  crush.
+  extensionality h. crush.
 Qed.
 
 (**
