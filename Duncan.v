@@ -25,14 +25,53 @@ Definition NatF (a : Type) := unit + a.
 (* This definition works fine, however, and is equivalent. *)
 Definition μ (F : Type -> Type) := ∀ a, (F a → a) → a.
 
-Definition Nat := μ NatF.
+Definition μNat := μ NatF.
 
-Definition zero : Nat := λ a (X : NatF a   → a), X (inl tt).
-Definition one  : Nat := λ a (X : unit + a → a), X (inr (X (inl tt))).
+Definition zero : μNat := λ a (X : NatF a   → a), X (inl tt).
+Definition one  : μNat := λ a (X : unit + a → a), X (inr (X (inl tt))).
 
 Definition ChurchNat := ∀ a, a → (a → a) → a.
 
-Program Instance nat_is_Church : Nat ≅ ChurchNat.
+Inductive Nat :=
+  | Z : Nat
+  | S : Nat -> Nat.
+
+Program Instance nat_is_muNat : Nat ≅ μNat.
+Obligation 1.
+  compute in *. intros.
+  induction H; apply X.
+    left. constructor.
+  right. apply IHNat.
+Defined.
+Obligation 2.
+  compute in *. intros.
+  apply X. intros.
+  destruct H.
+    apply Z.
+  apply (S n).
+Defined.
+Obligation 3.
+  unfold nat_is_muNat_obligation_1.
+  unfold nat_is_muNat_obligation_2.
+  unfold compose.
+  extensionality x.
+  induction x; auto.
+  simpl. rewrite IHx.
+  reflexivity.
+Defined.
+Obligation 4.
+  unfold nat_is_muNat_obligation_1.
+  unfold nat_is_muNat_obligation_2.
+  unfold compose.
+  extensionality x.
+  extensionality a.
+  extensionality X.
+  unfold id.
+  compute in x.
+  compute.
+Abort.
+
+Program Instance nat_is_Church : μNat ≅ ChurchNat.
 Obligation 1.
   compute in *. intros.
   apply X. intros.
