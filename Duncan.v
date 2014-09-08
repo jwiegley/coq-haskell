@@ -19,7 +19,7 @@ Close Scope nat_scope.
 
 Definition NatF (a : Type) := unit + a.
 
-(* This does not work in Coq, but of the strict positivity requirement. *)
+(* This does not work in Coq, because of the strict positivity requirement. *)
 (* Inductive Fix (F : Type -> Type) := outF : F (Fix F) -> Fix F. *)
 
 (* This definition works fine, however, and is equivalent. *)
@@ -27,33 +27,8 @@ Definition μ (F : Type -> Type) := ∀ a, (F a → a) → a.
 
 Definition Nat := μ NatF.
 
-(* Definition zero : Nat := λ a (X : NatF a   → a), X (inl tt). *)
-(* Definition one  : Nat := λ a (X : unit + a → a), X (inr (X (inl tt))). *)
-
-Program Instance sum_distributive : ∀ a b c, ((a + b) → c) ≅ ((a → c) * (b → c)).
-Solve All Obligations using auto.
-Obligation 2. destruct X0; auto. Defined.
-Obligation 3.
-  compute.
-  extensionality x.
-  extensionality n.
-  destruct n; auto.
-Qed.
-Obligation 4.
-  compute.
-  extensionality x.
-  destruct x. auto.
-Qed.
-
-Program Instance unit_impl : ∀ a, (unit → a) ≅ a.
-Solve All Obligations using auto.
-Obligation 1. apply X. constructor. Defined.
-Obligation 3.
-  compute.
-  extensionality H.
-  extensionality tt.
-  destruct tt. reflexivity.
-Qed.
+Definition zero : Nat := λ a (X : NatF a   → a), X (inl tt).
+Definition one  : Nat := λ a (X : unit + a → a), X (inr (X (inl tt))).
 
 Definition ChurchNat := ∀ a, a → (a → a) → a.
 
@@ -81,6 +56,31 @@ Obligation 3.
   destruct X2.
     destruct u. reflexivity.
   reflexivity.
+Qed.
+
+Program Instance sum_distributive : ∀ a b c, ((a + b) → c) ≅ ((a → c) * (b → c)).
+Solve All Obligations using auto.
+Obligation 2. destruct X0; auto. Defined.
+Obligation 3.
+  compute.
+  extensionality x.
+  extensionality n.
+  destruct n; auto.
+Qed.
+Obligation 4.
+  compute.
+  extensionality x.
+  destruct x. auto.
+Qed.
+
+Program Instance unit_impl : ∀ a, (unit → a) ≅ a.
+Solve All Obligations using auto.
+Obligation 1. apply X. constructor. Defined.
+Obligation 3.
+  compute.
+  extensionality H.
+  extensionality tt.
+  destruct tt. reflexivity.
 Qed.
 
 Section F.
@@ -154,6 +154,6 @@ Proof.
     unfold fold at 1.
     unfold fold at 2.
     assert (id = fold (μ F) initial_algebra).
-      admit.                    (* universe inconsistency *)
-  apply ump_fold_1 in e0.
+  (*     admit.                    (* universe inconsistency *) *)
+  (* apply ump_fold_1 in e0. *)
 Abort.
