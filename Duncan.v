@@ -115,31 +115,45 @@ Proof. auto. Qed.
 Theorem unbuild_unfold_fusion : ∀ c a k g s, unbuild c g (unfold a k s) = g a k s.
 Proof. auto. Qed.
 
-Theorem free_theorem_for_fold : ∀ A A' h k k',
+Lemma free_theorem_for_fold : ∀ A A' h k k',
   h ∘ k = k' ∘ fmap h → h ∘ fold A k = fold A' k'.
 Proof.
   intros.
   unfold fold, compose.
-  extensionality g.
-  unfold μ in g.
-  assert (∀ B j, ∃ x, g B j = j x).
-    admit.
-  pose proof H1.
-  specialize (H1 A k). destruct H1. rewrite H1.
-  specialize (H2 A' k'). destruct H2. rewrite H2.
-  replace (h (k x)) with ((h ∘ k) x). rewrite H0.
-  unfold compose. f_equal.
-  destruct H. simpl.
+  extensionality x.
+  (* jww (2014-09-08): How to proceed from here? *)
 Admitted.
 
-Theorem ump_fold : ∀ a (h : μ F → a) (k : F a → a) (alg : F (μ F) → μ F),
-  h ∘ alg = k ∘ fmap h  ↔  h = fold a k.
+Definition initial_algebra y b k := k (fmap (fold b k) y).
+
+(* Lemma 3.3.2 *)
+Theorem ump_fold_1 : ∀ a (h : μ F → a) (k : F a → a) (alg : F (μ F) → μ F),
+  h = fold a k → h ∘ initial_algebra = k ∘ fmap h.
 Proof.
   intros.
-  split; intros.
-  - pose (free_theorem_for_fold (μ F) a h alg k).
-    rewrite <- e.
-    replace (fold (μ F) alg) with (@id (μ F)).
+  rewrite H0.
+  extensionality y.
+  unfold compose, fold, initial_algebra.
+  auto.
+Qed.
+
+(* Lemma 3.3.3 *)
+Theorem ump_fold_2 : ∀ a (h : μ F → a) (k : F a → a) (alg : F (μ F) → μ F),
+  h ∘ initial_algebra = k ∘ fmap h → h = fold a k.
+Proof.
+  intros.
+  pose (free_theorem_for_fold (μ F) a h initial_algebra k).
+  apply e in H0.
+  rewrite <- H0.
+  replace (fold (μ F) initial_algebra) with (@id (μ F)).
     rewrite comp_id_right. reflexivity.
-    pose (free_theorem_for_fold (μ F) a (fold a k) alg k).
+  pose (free_theorem_for_fold (μ F) a (fold a k) initial_algebra k).
+  assert (fold a k ∘ fold (μ F) initial_algebra = fold a k).
+    extensionality x.
+    unfold compose.
+    unfold fold at 1.
+    unfold fold at 2.
+    assert (id = fold (μ F) initial_algebra).
+      admit.                    (* universe inconsistency *)
+  apply ump_fold_1 in e0.
 Abort.
