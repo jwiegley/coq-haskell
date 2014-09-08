@@ -1004,6 +1004,5 @@ Class LaxMonoidalFunctor `(C : MonoidalCategory) `(D : MonoidalCategory) := {
 
     lmf_left_id : ∀ X, fobj X ⊗ nelem ≅ fobj (X ⊗ nelem);
     lmf_right_id : ∀ X, nelem ⊗ fobj X ≅ fobj (nelem ⊗ X);
-    lmf_assoc : ∀ X Y Z,
-      (fobj X ⊗ fobj Y) ⊗ fobj Z ≅ fobj (X ⊗ (Y ⊗ Z))
+    lmf_assoc : ∀ X Y Z, (fobj X ⊗ fobj Y) ⊗ fobj Z ≅ fobj (X ⊗ (Y ⊗ Z))
 }.

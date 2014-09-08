@@ -1,6 +1,6 @@
 Require Export Coq.Unicode.Utf8.
-Require Export Coq.Classes.Morphisms.
 Require Export Coq.Program.Tactics.
+Require Export Coq.Classes.Morphisms.
 Require Export Coq.Setoids.Setoid.
 Require Export Coq.Relations.Relation_Definitions.
 
