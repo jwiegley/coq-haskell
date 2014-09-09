@@ -36,6 +36,7 @@ Inductive Nat :=
   | Z : Nat
   | S : Nat -> Nat.
 
+(*
 Program Instance nat_is_muNat : Nat ≅ μNat.
 Obligation 1.
   compute in *. intros.
@@ -70,6 +71,7 @@ Obligation 4.
   compute in x.
   compute.
 Abort.
+*)
 
 Program Instance nat_is_Church : μNat ≅ ChurchNat.
 Obligation 1.
@@ -163,10 +165,11 @@ Proof.
   (* jww (2014-09-08): How to proceed from here? *)
 Admitted.
 
-Definition initial_algebra y b k := k (fmap (fold b k) y).
+Definition initial_algebra (y : F (μ F)) : μ F :=
+  fun b (k : F b -> b) => k (fmap (fold b k) y).
 
 (* Lemma 3.3.2 *)
-Theorem ump_fold_1 : ∀ a (h : μ F → a) (k : F a → a) (alg : F (μ F) → μ F),
+Theorem ump_fold_1 : ∀ a (h : μ F → a) (k : F a → a),
   h = fold a k → h ∘ initial_algebra = k ∘ fmap h.
 Proof.
   intros.
@@ -176,23 +179,44 @@ Proof.
   auto.
 Qed.
 
+(*
+Lemma uniqueness_of_id :
+  (∀ (x : μ F) a (k : F a → a), fold (μ F) initial_algebra x a k = x a k)
+  -> fold (μ F) initial_algebra = @id (μ F).
+Proof.
+  intros.
+  extensionality x.
+  extensionality a.
+  extensionality k.
+  apply H0.
+Qed.
+*)
+
 (* Lemma 3.3.3 *)
-Theorem ump_fold_2 : ∀ a (h : μ F → a) (k : F a → a) (alg : F (μ F) → μ F),
+Theorem ump_fold_2 : ∀ a (h : μ F → a) (k : F a → a),
   h ∘ initial_algebra = k ∘ fmap h → h = fold a k.
 Proof.
   intros.
   pose (free_theorem_for_fold (μ F) a h initial_algebra k).
-  apply e in H0.
+  pose proof H0.
+  apply e in H0. clear e.
   rewrite <- H0.
   replace (fold (μ F) initial_algebra) with (@id (μ F)).
     rewrite comp_id_right. reflexivity.
-  pose (free_theorem_for_fold (μ F) a (fold a k) initial_algebra k).
-  assert (fold a k ∘ fold (μ F) initial_algebra = fold a k).
-    extensionality x.
-    unfold compose.
-    unfold fold at 1.
-    unfold fold at 2.
-    assert (id = fold (μ F) initial_algebra).
-  (*     admit.                    (* universe inconsistency *) *)
-  (* apply ump_fold_1 in e0. *)
+  symmetry.
+  replace h with (fold a k) in H0.
+  unfold compose in H0.
+  unfold fold at 1 in H0.
+  unfold fold at 2 in H0.
+  assert
+    ((∀ (x : μ F) a (k : F a → a), fold (μ F) initial_algebra x a k = x a k)
+      -> fold (μ F) initial_algebra = @id (μ F)) as uniqueness_of_id.
+    intros.
+    extensionality x0.
+    extensionality a0.
+    extensionality k0.
+    apply H2.
+  apply uniqueness_of_id.
+  intros.
+  apply (equal_f H0).
 Abort.
