@@ -179,19 +179,6 @@ Proof.
   auto.
 Qed.
 
-(*
-Lemma uniqueness_of_id :
-  (∀ (x : μ F) a (k : F a → a), fold (μ F) initial_algebra x a k = x a k)
-  -> fold (μ F) initial_algebra = @id (μ F).
-Proof.
-  intros.
-  extensionality x.
-  extensionality a.
-  extensionality k.
-  apply H0.
-Qed.
-*)
-
 (* Lemma 3.3.3 *)
 Theorem ump_fold_2 : ∀ a (h : μ F → a) (k : F a → a),
   h ∘ initial_algebra = k ∘ fmap h → h = fold a k.
@@ -208,15 +195,5 @@ Proof.
   unfold compose in H0.
   unfold fold at 1 in H0.
   unfold fold at 2 in H0.
-  assert
-    ((∀ (x : μ F) a (k : F a → a), fold (μ F) initial_algebra x a k = x a k)
-      -> fold (μ F) initial_algebra = @id (μ F)) as uniqueness_of_id.
-    intros.
-    extensionality x0.
-    extensionality a0.
-    extensionality k0.
-    apply H2.
-  apply uniqueness_of_id.
-  intros.
-  apply (equal_f H0).
-Abort.
+  rewrite (eta_expansion (fold (μ F) initial_algebra)).
+Admitted.
