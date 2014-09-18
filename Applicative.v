@@ -1,7 +1,7 @@
 Require Export Endo.
 Require Export Tuple.
 
-Reserved Notation "f <*> g" (at level 68, left associativity).
+Reserved Notation "f <*> g" (at level 28, left associativity).
 
 Class Applicative (F : Type -> Type) :=
 { is_functor :> Functor F
@@ -22,14 +22,14 @@ Class Applicative (F : Type -> Type) :=
 ; app_fmap_unit : forall {X Y} (f : X -> Y), ap (pure f) = fmap f
 }.
 
-Notation "pure/ M" := (@pure M _ _) (at level 68).
-Notation "pure/ M N" := (@pure (fun X => M (N X)) _ _) (at level 66).
+Notation "pure/ M" := (@pure M _ _) (at level 28).
+Notation "pure/ M N" := (@pure (fun X => M (N X)) _ _) (at level 26).
 
-Notation "ap[ M ]  f" := (@ap M _ _ _ f) (at level 68).
-Notation "ap[ M N ]  f" := (@ap (fun X => M (N X)) _ _ _ f) (at level 66).
-Notation "ap[ M N O ]  f" := (@ap (fun X => M (N (O X))) _ _ _ f) (at level 64).
+Notation "ap[ M ]  f" := (@ap M _ _ _ f) (at level 28).
+Notation "ap[ M N ]  f" := (@ap (fun X => M (N X)) _ _ _ f) (at level 26).
+Notation "ap[ M N O ]  f" := (@ap (fun X => M (N (O X))) _ _ _ f) (at level 24).
 
-Notation "f <*> g" := (ap f g) (at level 68, left associativity).
+Notation "f <*> g" := (ap f g) (at level 28, left associativity).
 
 Notation "[| f x y .. z |]" := (.. (f <$> x <*> y) .. <*> z)
     (at level 9, left associativity, f at level 9,
@@ -42,9 +42,9 @@ Definition app_merge {X Y Z W} (f : X -> Y) (g : Z -> W)
 Definition app_prod {F : Type -> Type} `{Applicative F}
   {X Y} (x : F X) (y : F Y) : F (X * Y) := pair <$> x <*> y.
 
-Notation "f *** g" := (app_merge f g) (at level 68, left associativity).
+Notation "f *** g" := (app_merge f g) (at level 28, left associativity).
 
-Notation "f ** g" := (app_prod f g) (at level 68, left associativity).
+Notation "f ** g" := (app_prod f g) (at level 28, left associativity).
 
 Ltac rewrite_app_homomorphisms :=
   (repeat (rewrite <- app_fmap_unit);
@@ -103,7 +103,7 @@ Section Applicatives.
      http://www.haskell.org/haskellwiki/Typeclassopedia#Applicative
   *)
   Theorem app_flip : forall {X Y} (x : F X) (f : X -> Y),
-    pure f <*> x = pure (flip call) <*> x <*> pure f.
+    pure f <*> x = pure (flip apply) <*> x <*> pure f.
   Proof.
     intros.
     rewrite app_interchange.

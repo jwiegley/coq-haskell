@@ -228,7 +228,7 @@ Class Natural `(F : @Functor C D) `(G : @Functor C D) :=
     fmap f ∘ transport = transport ∘ fmap f
 }.
 
-Notation "transport/ N" := (@transport _ _ _ _ N _) (at level 44).
+Notation "transport/ N" := (@transport _ _ _ _ N _) (at level 24).
 Notation "F ⟾ G" := (Natural F G) (at level 90, right associativity).
 
 (* Natural transformations can be applied directly to functorial values to
@@ -864,7 +864,7 @@ Definition EndoFunctor `(C : Category) := C ⟶ C.
 
 Definition CoqEndoFunctor := Sets ⟶ Sets.
 
-Reserved Notation "X ⊗ Y" (at level 67, right associativity).
+Reserved Notation "X ⊗ Y" (at level 27, right associativity).
 
 Class MonoidalCategory := {
     is_category :> Category;
@@ -877,7 +877,7 @@ Class MonoidalCategory := {
     mc_assoc    : ∀ X Y Z, (X ⊗ Y) ⊗ Z ≅ X ⊗ (Y ⊗ Z)
 }.
 
-Infix "⊗" := mult (at level 67, right associativity) : category_scope.
+Infix "⊗" := mult (at level 27, right associativity) : category_scope.
 
 Coercion is_category : MonoidalCategory >-> Category.
 
@@ -993,7 +993,7 @@ Program Instance Sets_with_Products : MonoidalCategory := {
     mc_assoc    := @Tuple_Assoc
 }.
 
-Reserved Notation "f ** g" (at level 68, left associativity).
+Reserved Notation "f ** g" (at level 28, left associativity).
 
 Class LaxMonoidalFunctor `(C : MonoidalCategory) `(D : MonoidalCategory) := {
     lmf_functor :> C ⟶ D;

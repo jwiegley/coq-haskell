@@ -9,8 +9,8 @@ Class MonadTrans (T : (Type -> Type) -> Type -> Type)
     lift (m >>= f) = (@lift A m) >>= (lift ∘ f)
 }.
 
-Notation "lift/ M" := (@lift M _ _ _) (at level 68).
-Notation "lift/ M N" := (@lift (fun X => M (N X)) _ _ _) (at level 66).
+Notation "lift/ M" := (@lift M _ _ _) (at level 28).
+Notation "lift/ M N" := (@lift (fun X => M (N X)) _ _ _) (at level 26).
 
 Theorem trans_law_1_x
   : forall (T : (Type -> Type) -> Type -> Type) {M : Type -> Type}

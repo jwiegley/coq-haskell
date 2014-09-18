@@ -16,11 +16,11 @@ Class Functor (F : Type -> Type) :=
   Arguments fun_identity    [F] [Functor] [X].
   Arguments fun_composition [F] [Functor] [X] [Y] [Z] f g.
 
-Notation "f <$> g" := (fmap f g) (at level 68, left associativity).
+Notation "f <$> g" := (fmap f g) (at level 28, left associativity).
 
-Notation "fmap[ M ]  f" := (@fmap M _ _ _ f) (at level 68).
-Notation "fmap[ M N ]  f" := (@fmap (fun X => M (N X)) _ _ _ f) (at level 66).
-Notation "fmap[ M N O ]  f" := (@fmap (fun X => M (N (O X))) _ _ _ f) (at level 64).
+Notation "fmap[ M ]  f" := (@fmap M _ _ _ f) (at level 28).
+Notation "fmap[ M N ]  f" := (@fmap (fun X => M (N X)) _ _ _ f) (at level 26).
+Notation "fmap[ M N O ]  f" := (@fmap (fun X => M (N (O X))) _ _ _ f) (at level 24).
 
 Section Functors.
 

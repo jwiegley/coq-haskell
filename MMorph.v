@@ -18,7 +18,7 @@ Class MFunctor (T : (Type -> Type) -> Type -> Type) :=
     hoist (fun X => f X ∘ g X) = hoist f ∘ (@hoist M N _ _ A g)
 }.
 
-Notation "hoist/ M N" := (@hoist M N _ _ _) (at level 68).
+Notation "hoist/ M N" := (@hoist M N _ _ _) (at level 28).
 
 (*
 Set Printing All.
@@ -45,5 +45,5 @@ Class MMonad (T : (Type -> Type) -> Type -> Type)
     (@embed M O _ _ A (fun B => (@embed N O _ _ B f) ∘ g B))
 }.
 
-Notation "embed/ M N" := (@embed M N _ _ _) (at level 68).
+Notation "embed/ M N" := (@embed M N _ _ _) (at level 28).
 *)

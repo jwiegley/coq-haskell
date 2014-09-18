@@ -1,0 +1,33 @@
+16:15 <jgross> johnw: It's approximately [eauto with typeclass_instances].  There are a
+          few subtle differences (backtracking across evar instantiations across
+          multiple goals is handled slightly differently) and a few very, very, very
+          subtle differences (I think the algorithm it uses to look things up and what
+          it unfolds are slightly different in a way that I've seen show up in
+          performance bugs and nothing else).  But, in general, just look at [Print
+          HintDb
+16:15 <jgross> typeclass_instances] and [Set Typeclasses := debug.] (I think that's the
+          right invocation?).
+18:25 <jgross> johnw: [unfold trans_sym_co_inv_impl_morphism]?
+18:25 <jgross> johnw: Is there a way to use "Check" within a definition? <- use [$(idtac
+          defn; admit)$].  You'll need to get enough of your definition type-checking
+          that admitting the broken piece is enough to get it to go through, but that
+          should show you the thing you want to see.  Or [$(let T := type of defn in
+          idtac T; admit)$].  Or you might need [$(let term := constr:(defn) in let T :=
+          type of term in idtac T; admit)$].
+18:30 <jgross> johnw: how do I ask Coq to always prefer ∘ from Sets <- make [Sets] have
+          prioity 0 ([Instance Sets : Category | 0 := ...]), and give all other
+          instances prioity 1 or higher (default is the number of typeclass arguments
+          the instance has)
+18:37 <jgross> johnw: Rather than using setoids, you should develop the theory of higher
+          coinductive types, or a sane equality for coinductives. :-P (Is axiomatizing
+          HStream_eq -> eq really that terrible?  You should be able to convince
+          yourself in the metatheory that any function out of HStream will respect
+          HStream_eq (because, for cofixpoint functions, you can induct on your proof of
+          HStream_eq, and for non-cofix functions, you can destruct the proof
+18:37 <jgross> whatever finite number of times the non-cofix function does.  And then
+          you do magic univalence-like things to get it to work with crazy dependent
+          type families like [eq].) And that's basically the definition of [eq].
+          Furthermore, if you make your axiom that the function [eq -> HStream_eq] is an
+          equivalence, then you can make your axiom disappear whenever you transport
+          across it, in much the same way that we currently make univalence disappear
+18:37 <jgross> in HoTT/HoTT.

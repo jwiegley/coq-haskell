@@ -63,7 +63,12 @@ Proof.
     rewrite monad_law_2.
     rewrite comp_id_right.
     f_equal. extensionality y.
+    unfold compose at 2.
     unfold compose at 1.
+    extensionality x0.
+    assert ((join/M) ((fmap[M] (x y ∘ pure/M)) x0) =
+            (join/M ∘ fmap[M] (x y ∘ pure/M)) x0).
+      auto. rewrite H0. clear H0.
     rewrite <- fun_composition.
     rewrite comp_assoc.
     rewrite J2.

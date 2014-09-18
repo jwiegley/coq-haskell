@@ -27,7 +27,7 @@ objects. *)
 
 (* begin hide *)
 Reserved Notation "a ~> b" (at level 70, right associativity).
-Reserved Notation "f ∘ g" (at level 69).
+Reserved Notation "f ∘ g" (at level 40, left associativity).
 Reserved Notation "C ^op" (at level 90).
 (* end hide *)
 
@@ -91,7 +91,7 @@ Coercion ob : Category >-> Sortclass.
 
 Infix "~>"       := hom : category_scope.
 Infix "~{ C }~>" := (@hom C) (at level 100) : category_scope.
-Infix "∘"        := compose : category_scope.
+Infix "∘"        := compose (at level 40, left associativity) : category_scope.
 
 Notation "ob/ C" := (@ob C) (at level 1) : category_scope.
 Notation "id/ X" := (@id _ X) (at level 1) : category_scope.

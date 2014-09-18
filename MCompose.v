@@ -41,6 +41,7 @@ Proof.
     rewrite <- monad_law_1.
     repeat (rewrite <- comp_assoc).
     repeat (rewrite fun_composition).
+    repeat (rewrite comp_assoc).
     rewrite <- prod_law_4.
     repeat (rewrite <- fun_composition).
     unfold compose_fmap. reflexivity.

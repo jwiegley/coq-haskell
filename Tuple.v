@@ -9,9 +9,6 @@ Program Instance LTuple_Isomorphism {A} : (unit * A) ≅ A :=
 Obligation 1. (* iso_to *)
   intros. extensionality x. destruct x. compute. destruct u. reflexivity.
 Defined.
-Obligation 2.
-  intros. extensionality x. compute. reflexivity.
-Defined.
 
 Program Instance RTuple_Isomorphism {A} : (A * unit) ≅ A :=
 { to   := @fst A unit
@@ -19,9 +16,6 @@ Program Instance RTuple_Isomorphism {A} : (A * unit) ≅ A :=
 }.
 Obligation 1. (* iso_to *)
   intros. extensionality x. destruct x. compute. destruct u. reflexivity.
-Defined.
-Obligation 2.
-  intros. extensionality x. compute. reflexivity.
 Defined.
 
 Definition tuple_swap_a_bc_to_ab_c {A B C} (x : A * (B * C)) : A * B * C :=
@@ -40,7 +34,7 @@ Program Instance Tuple_Assoc {A B C} : (A * B * C) ≅ (A * (B * C)) :=
 { to   := tuple_swap_ab_c_to_a_bc
 ; from := tuple_swap_a_bc_to_ab_c
 }.
-Next Obligation. (* iso_to *)
+Obligation 1. (* iso_to *)
   intros.
   extensionality x.
   unfold compose.
@@ -50,7 +44,7 @@ Next Obligation. (* iso_to *)
   unfold tuple_swap_a_bc_to_ab_c, tuple_swap_ab_c_to_a_bc.
   reflexivity.
 Defined.
-Next Obligation. (* iso_from *)
+Obligation 2. (* iso_from *)
   intros.
   extensionality x.
   unfold compose.

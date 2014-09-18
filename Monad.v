@@ -11,13 +11,13 @@ Class Monad (M : Type -> Type) :=
 ; monad_law_4 : forall {X Y} (f : X -> Y), join ∘ fmap (fmap f) = fmap f ∘ join
 }.
 
-Notation "join/ M" := (@join M _ _) (at level 68).
-Notation "join/ M N" := (@join (fun X => M (N X)) _ _) (at level 66).
+Notation "join/ M" := (@join M _ _) (at level 28).
+Notation "join/ M N" := (@join (fun X => M (N X)) _ _) (at level 26).
 
 Definition bind {M} `{Monad M} {X Y}
   (f : (X -> M Y)) (x : M X) : M Y := join (fmap f x).
 
-Notation "m >>= f" := (bind f m) (at level 65, left associativity).
+Notation "m >>= f" := (bind f m) (at level 25, left associativity).
 
 Notation "x <- c1 ;; c2" := (@bind _ _ _ _ _ c1 (fun x => c2))
   (at level 100, c1 at next level, right associativity).
