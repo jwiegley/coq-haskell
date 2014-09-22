@@ -1,7 +1,7 @@
-Require Import Endo.
 Require Import Applicative.
+Require Import Basics.
+Require Import Endo.
 Require Import Monad.
-Require Import HaskUtils.
 
 Definition succ := S.
 

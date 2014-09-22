@@ -7,21 +7,20 @@ Definition compose_fmap
   `{Functor F} `{Functor G} {A B} :=
   (@fmap F _ (G A) (G B)) ∘ (@fmap G _ A B).
 
-Global Instance Functor_Compose
+Program Instance Functor_Compose
   (F : Type -> Type) (G : Type -> Type) `{Functor F} `{Functor G}
   : Functor (fun X => F (G X)) :=
 { fmap := fun _ _ => compose_fmap F G
 }.
-Proof.
-  - (* fun_identity *)
-    intros. extensionality x. unfold compose_fmap, compose.
-    rewrite fun_identity.
-    rewrite fun_identity. reflexivity.
-
-  - (* fun_composition *)
-    intros. extensionality x. unfold compose_fmap, compose.
-    rewrite fun_composition_x.
-    rewrite fun_composition. reflexivity.
+Obligation 1. (* fun_identity *)
+  intros. extensionality x. unfold compose_fmap, compose.
+  rewrite fun_identity.
+  rewrite fun_identity. reflexivity.
+Defined.
+Obligation 2. (* fun_composition *)
+  intros. extensionality x. unfold compose_fmap, compose.
+  rewrite fun_composition_x.
+  rewrite fun_composition. reflexivity.
 Defined.
 
 Theorem fmap_compose
@@ -35,3 +34,5 @@ Proof.
   unfold compose_fmap, compose.
   reflexivity.
 Qed.
+
+Infix "◌" := Functor_Compose (at level 40, left associativity).

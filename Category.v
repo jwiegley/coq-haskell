@@ -9,7 +9,7 @@
 
 (** %\chapter{Category}% *)
 
-Require Export HaskUtils.
+Require Export Basics.
 
 (* Set Universe Polymorphism. *)
 Generalizable All Variables.

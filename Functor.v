@@ -998,11 +998,11 @@ Reserved Notation "f ** g" (at level 28, left associativity).
 Class LaxMonoidalFunctor `(C : MonoidalCategory) `(D : MonoidalCategory) := {
     lmf_functor :> C ⟶ D;
 
-    lmf_id : nelem ~> fobj nelem;
+    lmf_id  : nelem ~> fobj nelem;
     ap_prod : ∀ X Y, fobj X ⊗ fobj Y ~> fobj (X ⊗ Y)
       where "f ** g" := (ap_prod f g);
 
-    lmf_left_id : ∀ X, fobj X ⊗ nelem ≅ fobj (X ⊗ nelem);
+    lmf_left_id  : ∀ X, fobj X ⊗ nelem ≅ fobj (X ⊗ nelem);
     lmf_right_id : ∀ X, nelem ⊗ fobj X ≅ fobj (nelem ⊗ X);
-    lmf_assoc : ∀ X Y Z, (fobj X ⊗ fobj Y) ⊗ fobj Z ≅ fobj (X ⊗ (Y ⊗ Z))
+    lmf_assoc    : ∀ X Y Z, (fobj X ⊗ fobj Y) ⊗ fobj Z ≅ fobj (X ⊗ (Y ⊗ Z))
 }.

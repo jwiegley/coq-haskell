@@ -1,6 +1,8 @@
 Require Export Endo.
 Require Export Tuple.
 
+Generalizable All Variables.
+
 Reserved Notation "f <*> g" (at level 28, left associativity).
 
 Class Applicative (F : Type -> Type) :=
@@ -164,7 +166,8 @@ Section Applicatives.
     f_equal.
   Qed.
 
-  Theorem app_left_identity : forall {A} (v : F A), (pure tt ** v) ≡ v.
+(*
+  Theorem app_left_identity `(v : F A) : (F unit * v) ≅ v.
   Proof.
     intros.
     unfold app_prod, app_unit.
@@ -178,8 +181,7 @@ Section Applicatives.
       reflexivity.
   Qed.
 
-  Theorem app_right_identity : forall {A : Type} (v : F A),
-    (v ** pure tt) ≡ v.
+  Theorem app_right_identity `(v : F A) : (v ** pure tt) ≡ v.
   Proof.
     intros.
     unfold app_prod, app_unit.
@@ -198,6 +200,7 @@ Section Applicatives.
       apply iso_from_x.
       reflexivity.
   Qed.
+*)
 
   Theorem app_embed_left_triple : forall A B C (u : F A) (v : F B) (w : F C),
     u ** v ** w = left_triple <$> u <*> v <*> w.
@@ -234,6 +237,7 @@ Section Applicatives.
     reflexivity.
   Qed.
 
+(*
   Theorem app_associativity : forall A B C (u : F A) (v : F B) (w : F C),
     ((u ** v) ** w) ≡ (u ** (v ** w)).
   Proof.
@@ -253,6 +257,7 @@ Section Applicatives.
     rewrite app_homomorphism;
     reflexivity.
   Qed.
+*)
 
   Definition liftA2 {A B C} (f : A -> B -> C) (x : F A) (y : F B) : F C :=
     f <$> x <*> y.
