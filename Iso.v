@@ -20,7 +20,7 @@ Arguments from     {A} {B} {Iso} _.
 Arguments iso_to   {A} {B} {Iso}.
 Arguments iso_from {A} {B} {Iso}.
 
-Infix "≅" := Iso (at level 50) : type_scope.
+Infix "≅" := Iso (at level 30) : type_scope.
 (* Notation "x ≡ y" := (to x = y /\ from y = x) (at level 50). *)
 
 Definition Isomorphic (A B : Type) : Prop := inhabited (A ≅ B).
