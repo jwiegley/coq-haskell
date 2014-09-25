@@ -258,6 +258,7 @@ Obligation 2.
   reflexivity.
 Qed.
 
+(*
 Program Instance IState_IMonad {s : Type} (R : relation s) `{PartialOrder _ R} : IMonad (@IState s R) := {
     iskip := fun P st x =>
       St st (λ st' H, existT2 P (R st') _ x H);
@@ -358,3 +359,4 @@ End IState.
 Program Instance IState_IFunctor : IFunctor IState := {
     fmap := IState_fmap
 }.
+*)
