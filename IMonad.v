@@ -227,10 +227,10 @@ Definition runIState {s : Type} {P : relation s} {a : s → Type} (st : s) (x : 
 Definition IState_fmap {s : Type} (P : relation s) {a b : s → Type}
   (f : a :→ b) : IState P a :→ IState P b := λ (st : s) x,
   St st (λ st' H, let p := runIState st x st' H in
-                  match p with
-                  | existT2 st'' x H' =>
-                    existT2 _ _ st'' (f st'' x) H'
-                  end).
+                match p with
+                | existT2 st'' x H' =>
+                  existT2 _ _ st'' (f st'' x) H'
+                end).
 
 Program Instance IState_IFunctor {s : Type} (P : relation s) : IFunctor (@IState s P) := {
     imap := @IState_fmap s P
@@ -258,33 +258,46 @@ Obligation 2.
   reflexivity.
 Qed.
 
-Program Instance IState_IMonad {s : Type} (P : relation s) : IMonad (@IState s P) := {
-    iskip := fun a st x =>
-      St st (λ st' H, existT2 a (P st') st' x H)(* ; *)
-    (* iextend := fun P Q f st x => *)
-    (*   St st (λ st', let (a, st'') := runIState st x st' in *)
-    (*                 runIState st' (f st a) st'') *)
+Program Instance IState_IMonad {s : Type} (R : relation s) `{PartialOrder _ R} : IMonad (@IState s R) := {
+    iskip := fun P st x =>
+      St st (λ st' H, existT2 P (R st') _ x H);
+
+    iextend := fun P Q f st x =>
+      St st (λ st' H, let p := runIState st x st' H in
+                    match p with
+                    | existT2 st'' y H' =>
+                      runIState st'' (f st'' y) st' _
+                    end)
 }.
-Obligation 1.
-  compute. destruct (f i a). reflexivity.
-Defined.
-Obligation 2.
-  compute. destruct m. destruct p0.
-Obligation 1.
-  compute. intros.
-  constructor.
-  split; assumption.
-Defined.
-Obligation 2.
-  compute. intros.
-  apply (imap X) in X0.
-  destruct X0. destruct p0.
-  assumption.
-Defined.
+Obligation 1. intuition. Defined.
+Obligation 2. intuition. Defined.
 Obligation 4.
-  destruct m. destruct p0.
+Admitted.
+Obligation 5.
+  compute in *.
+  destruct m.
+  destruct (s0 st).
+    reflexivity.
+  f_equal.
+  extensionality st'.
+  extensionality H'.
+  destruct (s0 st').
+  f_equal.
+Admitted.
+Obligation 6.
   compute.
-  f_equal. f_equal.
+  destruct m.
+  destruct (s0 st).
+    reflexivity.
+  f_equal.
+  extensionality st'.
+  extensionality H'.
+  destruct (s0 st').
+    assumption.
+  compute.
+  destruct (s0 x0).
+    crush.
+Admitted.
 
 Section IState.
 
