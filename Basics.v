@@ -10,6 +10,9 @@ Require Export FunctionalExtensionality.
 Close Scope nat_scope.
 Open Scope program_scope.
 
+Infix "$" := apply (at level 60, right associativity, only parsing)
+  : program_scope.
+
 Hint Unfold id.
 Hint Unfold compose.
 
