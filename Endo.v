@@ -149,3 +149,28 @@ Obligation 1.
   pose (@faithful_prop _ (Hom A) _ X Y).
   apply (X0 (const X1)).
 Admitted.
+
+Program Instance option_Functor : Functor option := {
+    fmap := fun _ _ f x => match x with
+      | None => None
+      | Some x => Some (f x)
+      end
+}.
+Obligation 1. extensionality x. destruct x; auto. Qed.
+Obligation 2. extensionality x. destruct x; auto. Qed.
+
+Program Instance list_Functor : Functor list := {
+    fmap := List.map
+}.
+Obligation 1.
+  extensionality l.
+  induction l; auto.
+  simpl. rewrite IHl.
+  reflexivity.
+Qed.
+Obligation 2.
+  extensionality l.
+  induction l; auto.
+  simpl. rewrite <- IHl.
+  reflexivity.
+Qed.

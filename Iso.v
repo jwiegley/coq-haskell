@@ -411,3 +411,33 @@ Obligation 4.
   extensionality B.
   destruct f. auto.
 Qed.
+
+Theorem iso_reason_to {A B} (iso : A ≅ B) : forall x y : A,
+  to x = to y → x = y.
+Proof.
+  intros.
+  destruct iso. simpl in *.
+  assert (y = id y). auto.
+  rewrite H0.
+  rewrite <- iso_to0.
+  unfold compose.
+  rewrite <- H.
+  replace (from0 (to0 x)) with ((from0 ∘ to0) x).
+    rewrite iso_to0. reflexivity.
+  reflexivity.
+Qed.
+
+Theorem iso_reason_from {A B} (iso : A ≅ B) : forall x y : B,
+  from x = from y → x = y.
+Proof.
+  intros.
+  destruct iso. simpl in *.
+  assert (y = id y). auto.
+  rewrite H0.
+  rewrite <- iso_from0.
+  unfold compose.
+  rewrite <- H.
+  replace (to0 (from0 x)) with ((to0 ∘ from0) x).
+    rewrite iso_from0. reflexivity.
+  reflexivity.
+Qed.

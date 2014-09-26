@@ -89,3 +89,67 @@ Proof.
   rewrite fun_composition_x.
   f_equal.
 Qed.
+
+Program Instance option_Monad : Monad option := {
+    join := fun _ x => match x with
+      | None => None
+      | Some None => None
+      | Some (Some x) => Some x
+      end
+}.
+Obligation 1.
+  extensionality x.
+  destruct x; auto;
+  destruct o; auto;
+  destruct o; auto.
+Qed.
+Obligation 2.
+  extensionality x.
+  destruct x; auto;
+  destruct o; auto;
+  destruct o; auto.
+Qed.
+Obligation 3.
+  extensionality x.
+  destruct x; auto;
+  destruct o; auto;
+  destruct o; auto.
+Qed.
+Obligation 4.
+  extensionality x.
+  destruct x; auto;
+  destruct o; auto;
+  destruct o; auto.
+Qed.
+
+Module Import LN := ListNotations.
+
+Program Instance list_Monad : Monad list := {
+    join := @concat
+}.
+Obligation 1.
+  extensionality l.
+  induction l. crush.
+  unfold compose in *. simpl.
+  rewrite IHl.
+Admitted.
+Obligation 2.
+  extensionality l.
+  induction l. crush.
+  unfold compose in *. simpl.
+  rewrite IHl.
+  unfold id. reflexivity.
+Qed.
+Obligation 3.
+  extensionality l.
+  induction l. crush.
+  unfold compose, id in *.
+  simpl. rewrite app_nil_r.
+  reflexivity.
+Qed.
+Obligation 4.
+  extensionality l.
+  induction l. crush.
+  unfold compose, id in *.
+  simpl. rewrite IHl.
+Admitted.

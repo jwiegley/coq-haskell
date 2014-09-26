@@ -1,5 +1,6 @@
 -I .
 ACompose.v
+Alternative.v
 Applicative.v
 Basics.v
 Category.v

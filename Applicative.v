@@ -1,5 +1,6 @@
 Require Export Endo.
 Require Export Tuple.
+Require Export Coq.Lists.List.
 
 Generalizable All Variables.
 
@@ -263,3 +264,54 @@ Section Applicatives.
     f <$> x <*> y.
 
 End Applicatives.
+
+Program Instance option_Applicative : Applicative option := {
+    pure := Some;
+    ap := fun _ _ f x => match f with
+      | None => None
+      | Some f' => match x with
+         | None => None
+         | Some x' => Some (f' x')
+         end
+      end
+}.
+Obligation 1. extensionality x. destruct x; auto. Qed.
+Obligation 2. destruct u; destruct v; destruct w; auto. Qed.
+
+Module Import LN := ListNotations.
+
+Fixpoint concat {a} (l : list (list a)) : list a :=
+  match l with
+  | nil => nil
+  | x :: xs => x ++ concat xs
+  end.
+
+Fixpoint list_ap {a b} (fs : list (a -> b)) (xs : list a) : list b :=
+  match fs with
+  | nil => nil
+  | f :: fs' => fmap f xs ++ list_ap fs' xs
+  end.
+
+Program Instance list_Applicative : Applicative list := {
+    pure := fun _ x => [x];
+    ap := @list_ap
+}.
+Obligation 1.
+  extensionality l.
+  unfold id.
+  rewrite app_nil_r.
+  induction l; simpl. auto.
+  congruence.
+Qed.
+Obligation 2.
+Admitted.
+Obligation 4.
+  induction u. reflexivity.
+  simpl in *. rewrite IHu.
+  reflexivity.
+Qed.
+Obligation 5.
+  extensionality l.
+  rewrite app_nil_r.
+  reflexivity.
+Qed.
