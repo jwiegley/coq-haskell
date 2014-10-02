@@ -20,8 +20,9 @@ Class IMonad (M : Type -> Type -> Type -> Type) :=
 Notation "ijoin/ M" := (@ijoin M _ _ _ _ _) (at level 28).
 Notation "ijoin/ M N" := (@ijoin (fun X => M (N X)) _ _ _ _ _) (at level 26).
 
-Definition ibind {M} `{IMonad M} {I J K X Y}
-  (f : (X -> M J K Y)) (x : M I J X) : M I K Y := ijoin (imap f x).
+Definition ibind {M : Type -> Type -> Type -> Type} `{IMonad M} {I J K X Y}
+  (f : (X -> M J K Y)) (x : M I J X) : M I K Y :=
+  @ijoin M _ I J K Y (@imap _ _ I J _ _ f x).
 
 Notation "m >>>= f" := (ibind f m) (at level 25, left associativity).
 
