@@ -14,7 +14,7 @@ Arguments mkState [a] _.
 
 Definition runState {a} (x : State a) := match x with mkState f => f end.
 
-Program Instance State_Functor : Functor State := {
+Global Program Instance State_Functor : Functor State := {
     fmap := fun _ _ f x =>
       mkState (fun st => let (a,st') := runState x st in (f a, st'))
 }.
@@ -39,7 +39,7 @@ Obligation 2.
   reflexivity.
 Qed.
 
-Program Instance State_Applicative : Applicative State := {
+Global Program Instance State_Applicative : Applicative State := {
     pure := fun _ x => mkState (fun st => (x, st));
     ap := fun _ _ f x =>
       mkState (fun st =>
@@ -70,7 +70,7 @@ Obligation 2.
   reflexivity.
 Qed.
 
-Program Instance State_Monad : Monad State := {
+Global Program Instance State_Monad : Monad State := {
     join := fun _ x => mkState (fun st =>
       let (y, st') := runState x st in
       let (a, st'') := runState y st' in
@@ -119,4 +119,17 @@ Obligation 4.
   reflexivity.
 Qed.
 
+Definition get : State s := mkState (fun s => (s, s)).
+
+Definition gets {a} (f : s -> a) : State a := mkState (fun s => (f s, s)).
+
+Definition put (x : s) : State unit := mkState (fun s => (tt, x)).
+
+Definition modify f : State unit := mkState (fun s => (tt, f s)).
+
 End State.
+
+Arguments get [s].
+Arguments gets [s a] f.
+Arguments put [s] x.
+Arguments modify [s] f.

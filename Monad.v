@@ -19,10 +19,17 @@ Definition bind {M} `{Monad M} {X Y}
 
 Notation "m >>= f" := (bind f m) (at level 25, left associativity).
 
-Notation "x <- c1 ;; c2" := (@bind _ _ _ _ _ c1 (fun x => c2))
-  (at level 100, c1 at next level, right associativity).
+(* Notation "x <- c1 ;; c2" := (@bind _ _ _ _ _ c1 (fun x => c2)) *)
+(*   (at level 100, c1 at next level, right associativity). *)
 
-Notation "e1 ;; e2" := (_ <- e1 ;; e2) (at level 100, right associativity).
+Notation "X <- A ; B" := (A >>= (fun X => B))
+  (right associativity, at level 84, A1 at next level).
+
+(* Notation "x : a <== c1 ;; c2" := (@bind _ _ _ _ _ c1 (fun x : a => c2)) *)
+(*   (at level 100, c1 at next level, right associativity). *)
+
+Notation "A ;; B" := (_ <- A ; B)
+  (right associativity, at level 84, A1 at next level).
 
 Theorem monad_law_1_x
   : forall (M : Type -> Type) (m_dict : Monad M) A (x : M (M (M A))),
