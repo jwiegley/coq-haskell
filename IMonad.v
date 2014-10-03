@@ -5,8 +5,6 @@ Class IMonad (M : Type -> Type -> Type -> Type) :=
 
 ; ijoin : forall {I A O X}, M I A (M A O X) -> M I O X
 
-  (* x : M I J (M J K (M K O A)) *)
-
 ; imonad_law_1 : forall {I O J K X},
     (@ijoin I J O X) ∘ imap ijoin = (@ijoin I K O X) ∘ (@ijoin I J K _)
 ; imonad_law_2 : forall {I X},

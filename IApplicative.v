@@ -13,18 +13,15 @@ Class IApplicative (F : Type -> Type -> Type -> Type) :=
 ; iap : forall {I J K X Y}, F I J (X -> Y) -> F J K X -> F I K Y
     where "f <**> g" := (iap f g)
 
-(*
-; iapp_identity : forall {X}, iap (ipure (@id X)) = id
+; iapp_identity : forall {I X}, @iap _ _ I _ _ (@ipure I _ (@id X)) = id
 ; iapp_composition
-    : forall {I J K X Y Z} (v : F (X -> Y)) (u : F (Y -> Z)) (w : F X),
+    : forall {I J K L X Y Z}
+             (u : F I J (Y -> Z)) (v : F J K (X -> Y)) (w : F K L X),
     ipure compose <**> u <**> v <**> w = u <**> (v <**> w)
-*)
 ; iapp_homomorphism : forall {I X Y} (x : X) (f : X -> Y),
     ipure f <**> ipure x = @ipure I _ (f x)
-(*
-; iapp_interchange : forall {X Y} (y : X) (u : F (X -> Y)),
+; iapp_interchange : forall {I J X Y} (y : X) (u : F I J (X -> Y)),
     u <**> ipure y = ipure (fun f => f y) <**> u
-*)
 
 ; app_imap_unit : forall {I O X Y} (f : X -> Y), iap (ipure f) = @imap _ _ I O _ _ f
 }.
@@ -42,18 +39,18 @@ Notation "[| f x y .. z |]" := (.. (f <$$> x <**> y) .. <**> z)
     (at level 9, left associativity, f at level 9,
      x at level 9, y at level 9, z at level 9).
 
-Definition app_merge {X Y Z W} (f : X -> Y) (g : Z -> W)
+Definition iapp_merge {X Y Z W} (f : X -> Y) (g : Z -> W)
   (t : X * Z) : Y * W  :=
   match t with (x, z) => (f x, g z) end.
 
-Definition app_prod {F : Type -> Type -> Type -> Type} `{IApplicative F}
+Definition iapp_prod {F : Type -> Type -> Type -> Type} `{IApplicative F}
   {I J K X Y} (x : F I J X) (y : F J K Y) : F I K (X * Y) := pair <$$> x <**> y.
 
-Notation "f *** g" := (app_merge f g) (at level 28, left associativity).
+Notation "f *** g" := (iapp_merge f g) (at level 28, left associativity).
 
-Notation "f ** g" := (app_prod f g) (at level 28, left associativity).
+Notation "f ** g" := (iapp_prod f g) (at level 28, left associativity).
 
-Ltac rewrite_app_homomorphisms :=
+Ltac rewrite_iapp_homomorphisms :=
   (repeat (rewrite <- app_imap_unit);
    rewrite iapp_homomorphism;
    repeat (rewrite app_imap_unit)).
@@ -87,7 +84,7 @@ Section IApplicatives.
     reflexivity.
   Qed.
 
-  Theorem app_identity_x : forall {I X} {x : F I I X},
+  Theorem iapp_identity_x : forall {I X} {x : F I I X},
     iap (ipure (@id X)) x = id x.
   Proof.
     intros.
@@ -95,7 +92,8 @@ Section IApplicatives.
     apply ifun_identity_x.
   Qed.
 
-  Theorem app_homomorphism_2 : forall {I X Y Z} (x : X) (y : Y) (f : X -> Y -> Z),
+  Theorem iapp_homomorphism_2
+    : forall {I X Y Z} (x : X) (y : Y) (f : X -> Y -> Z),
     f <$$> ipure x <**> ipure y = @ipure _ _ I _ (f x y).
   Proof.
     intros.
@@ -109,8 +107,7 @@ Section IApplicatives.
 
      http://www.haskell.org/haskellwiki/Typeclassopedia#IApplicative
   *)
-(*
-  Theorem app_flip : forall {J K X Y} (x : F J K X) (f : X -> Y),
+  Theorem iapp_flip : forall {J K X Y} (x : F J K X) (f : X -> Y),
     ipure f <**> x = ipure (flip apply) <**> x <**> ipure f.
   Proof.
     intros.
@@ -118,65 +115,65 @@ Section IApplicatives.
     rewrite <- iapp_composition.
     rewrite app_imap_unit.
     rewrite app_imap_unit.
-    rewrite app_homomorphism_2.
+    rewrite iapp_homomorphism_2.
     unfold compose.
     rewrite app_imap_unit.
     reflexivity.
   Qed.
-*)
 
-  Definition app_unit : F unit unit unit := ipure tt.
+  Definition iapp_unit : F unit unit unit := ipure tt.
 
-  Theorem app_embed : forall {G : Type -> Type -> Type -> Type} `{IApplicative G}
-      {I J K X Y} (x : G I J (X -> Y)) (y : G J K X),
+  Theorem iapp_embed
+    : forall {G : Type -> Type -> Type -> Type} `{IApplicative G}
+             {I J K X Y} (x : G I J (X -> Y)) (y : G J K X),
     ipure (x <**> y) = ipure iap <**> ipure x <**> @ipure _ _ K _ y.
   Proof.
     intros.
-    rewrite_app_homomorphisms.
+    rewrite_iapp_homomorphisms.
     rewrite <- iapp_homomorphism.
     rewrite <- app_imap_unit.
     reflexivity.
   Qed.
 
-(*
-  Theorem app_split : forall I J K A B C (f : A -> B -> C) (x : F I J A) (y : F J K B),
+  Theorem iapp_split
+    : forall I J K A B C (f : A -> B -> C) (x : F I J A) (y : F J K B),
     f <$$> x <**> y = uncurry f <$$> (x ** y).
   Proof.
-    intros. unfold app_prod.
+    intros. unfold iapp_prod.
     repeat (rewrite <- app_imap_unit).
-    repeat (rewrite <- app_composition; f_equal).
-    repeat (rewrite app_homomorphism).
+    repeat (rewrite <- iapp_composition; f_equal).
+    repeat (rewrite iapp_homomorphism).
     unfold uncurry, compose. f_equal.
   Qed.
 
-  Theorem app_naturality
-    : forall {I J K A B C D} (f : A -> C) (g : B -> D) (u : F I J A) (v : F J K B),
+  Theorem iapp_naturality
+    : forall {I J K A B C D}
+             (f : A -> C) (g : B -> D) (u : F I J A) (v : F J K B),
     imap (f *** g) (u ** v) = (imap f u) ** (imap g v).
   Proof.
     intros.
-    unfold app_prod.
+    unfold iapp_prod.
     rewrite <- app_imap_unit.
-    rewrite fun_composition_x.
+    rewrite ifun_composition_x.
     repeat (rewrite <- app_imap_unit).
-    rewrite <- app_composition.
-    rewrite <- app_composition.
-    rewrite <- app_composition.
-    rewrite <- app_composition.
-    rewrite app_composition.
-    rewrite app_composition.
+    rewrite <- iapp_composition.
+    rewrite <- iapp_composition.
+    rewrite <- iapp_composition.
+    rewrite <- iapp_composition.
+    rewrite iapp_composition.
+    rewrite iapp_composition.
     f_equal.
-    rewrite_app_homomorphisms.
-    rewrite fun_composition_x.
-    rewrite fun_composition_x.
-    rewrite app_interchange.
+    rewrite_iapp_homomorphisms.
+    rewrite ifun_composition_x.
+    rewrite ifun_composition_x.
+    rewrite iapp_interchange.
     rewrite app_imap_unit.
-    rewrite fun_composition_x.
+    rewrite ifun_composition_x.
     f_equal.
   Qed.
-*)
 
 (*
-  Theorem app_left_identity `(v : F A) : (F unit * v) ≅ v.
+  Theorem app_left_identity {I A} (v : F I I A) : (F I I unit * v) ≅ v.
   Proof.
     intros.
     unfold app_prod, app_unit.
@@ -209,61 +206,64 @@ Section IApplicatives.
       apply iso_from_x.
       reflexivity.
   Qed.
+*)
 
-  Theorem app_embed_left_triple : forall A B C (u : F A) (v : F B) (w : F C),
+  Theorem iapp_embed_left_triple
+    : forall I J K L A B C (u : F I J A) (v : F J K B) (w : F K L C),
     u ** v ** w = left_triple <$$> u <**> v <**> w.
   Proof.
     intros.
-    unfold app_prod.
+    unfold iapp_prod.
     repeat (rewrite <- app_imap_unit).
-    rewrite <- app_composition.
+    rewrite <- iapp_composition.
     f_equal. f_equal.
-    rewrite_app_homomorphisms.
-    rewrite fun_composition_x.
+    rewrite_iapp_homomorphisms.
+    rewrite ifun_composition_x.
     reflexivity.
   Qed.
 
-  Theorem app_embed_right_triple : forall A B C (u : F A) (v : F B) (w : F C),
+  Theorem iapp_embed_right_triple
+    : forall I J K L A B C (u : F I J A) (v : F J K B) (w : F K L C),
     u ** (v ** w) = right_triple <$$> u <**> v <**> w.
   Proof.
     intros.
-    unfold app_prod.
+    unfold iapp_prod.
     repeat (rewrite <- app_imap_unit).
-    rewrite <- app_composition.
+    rewrite <- iapp_composition.
     f_equal. f_equal.
     repeat (rewrite app_imap_unit).
-    rewrite fun_composition_x.
+    rewrite ifun_composition_x.
     repeat (rewrite <- app_imap_unit).
-    rewrite <- app_composition.
+    rewrite <- iapp_composition.
     f_equal.
     repeat (rewrite app_imap_unit).
-    rewrite fun_composition_x.
-    rewrite app_interchange.
+    rewrite ifun_composition_x.
+    rewrite iapp_interchange.
     rewrite app_imap_unit.
-    rewrite fun_composition_x.
+    rewrite ifun_composition_x.
     unfold compose.
     reflexivity.
   Qed.
-*)
 
 (*
-  Theorem app_associativity : forall A B C (u : F A) (v : F B) (w : F C),
+  Theorem iapp_associativity
+    : forall A B C (u : F I J A) (v : F J K B) (w : F K L C),
     ((u ** v) ** w) ≡ (u ** (v ** w)).
   Proof.
     intros.
-    rewrite app_embed_left_triple.
-    rewrite app_embed_right_triple.
+    rewrite iapp_embed_left_triple.
+    rewrite iapp_embed_right_triple.
     split; simpl;
     repeat (rewrite <- app_imap_unit);
-    rewrite <- app_composition;
-    rewrite <- app_composition;
-    rewrite <- app_composition;
+    rewrite <- iapp_composition;
+    rewrite <- iapp_composition;
+    rewrite <- iapp_composition;
     repeat f_equal;
     repeat (rewrite app_imap_unit);
-    rewrite fun_composition_x;
-    rewrite fun_composition_x;
+    rewrite ifun_composition_x;
+    rewrite ifun_composition_x;
     rewrite <- app_imap_compose_x;
-    rewrite app_homomorphism;
+    rewrite iapp_homomorphism;
     reflexivity.
   Qed.
 *)

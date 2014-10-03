@@ -52,6 +52,25 @@ Program Instance IState_IApplicative : IApplicative IState := {
         let (x', st'') := runIState x st' in
         (f' x', st''))
 }.
+Obligation 1.
+  extensionality x.
+  destruct x. compute.
+  f_equal.
+  extensionality st.
+  destruct (p st).
+  reflexivity.
+Qed.
+Obligation 2.
+  destruct u.
+  destruct v.
+  destruct w. simpl.
+  f_equal.
+  extensionality st.
+  destruct (p st).
+  destruct (p0 j).
+  destruct (p1 k).
+  reflexivity.
+Qed.
 
 Program Instance IState_IMonad : IMonad IState := {
     ijoin := fun _ _ _ _ x => mkIState (fun st =>
