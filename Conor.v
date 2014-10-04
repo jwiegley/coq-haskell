@@ -1,3 +1,4 @@
+Require Export Coq.Program.Equality.
 Require Export Iso.
 
 Generalizable All Variables.
@@ -70,12 +71,56 @@ Proof.
   apply proof_irrelevance.
 Qed.
 
-Inductive Path {I : Type} (g : (I * I) → Type) : (I * I) → Type :=
-  | Stop : ∀ {i : I}, Path g (i,i)
-  | Link : ∀ {i j k : I}, g (i,j) → Path g (j,k) → Path g (i,k).
+Section Path.
 
-Arguments Stop [I g i].
-Arguments Link [I g i j k] _ _.
+Variable I : Type.
+Variable g : (I * I) → Type.
+
+Inductive Path : (I * I) → Type :=
+  | Stop : ∀ {i : I}, Path (i,i)
+  | Link : ∀ {i j k : I}, g (i,j) → Path (j,k) → Path (i,k).
+
+Fixpoint path_compose {i j k} (x : Path (i,j)) (y : Path (j,k)) : Path (i,k).
+Proof.
+  intros.
+  inversion x; subst. assumption.
+  inversion y; subst. assumption.
+  apply @Link with (j := j0).
+    assumption.
+  apply path_compose with (j := j); assumption.
+Defined.
+
+Lemma path_right_id : forall i j (x : Path (i,j)), path_compose x Stop = x.
+Proof. dependent destruction x; reflexivity. Qed.
+
+Hint Rewrite path_right_id.
+Hint Resolve path_right_id.
+
+Lemma path_left_id : forall i j (x : Path (i,j)), path_compose Stop x = x.
+Proof. dependent destruction x; reflexivity. Qed.
+
+Hint Rewrite path_left_id.
+Hint Resolve path_left_id.
+
+Definition path_comp_assoc
+  {i j k l} (x : Path (i,j)) (y : Path (j,k)) (z : Path (k,l)) :
+  path_compose x (path_compose y z) = path_compose (path_compose x y) z.
+Proof.
+  dependent destruction x;
+  dependent destruction y;
+  dependent destruction z; auto.
+  simpl. f_equal.
+  dependent induction x; auto.
+  simpl. f_equal.
+  eapply IHx.
+  apply g1.
+Qed.
+
+End Path.
+
+Arguments Path {I} g _.
+Arguments Stop {I g i}.
+Arguments Link {I g i j k} _ _.
 
 Notation "f :-: g" := (Link f g) (at level 50).
 
@@ -111,14 +156,11 @@ Arguments V {I a k} _.
 
 Infix "::=" := IAssign (at level 50).
 
-Definition Atkey {I : Type} (m : (I → Type) → (I → Type)) i j a :=
-  m (a ::= j) i.
-
 Definition list_to_Path : ∀ {a}, list a → Path (a ::= (tt, tt)) (tt, tt).
   intros.
   induction X.
     apply Stop.
-  apply Link with (j := tt).
+  apply @Link with (j := tt).
   apply V. apply a0.
   apply IHX.
 Defined.
@@ -144,10 +186,15 @@ Obligation 1.
   apply IHl.
 Qed.
 Obligation 2.
+  compute.
   extensionality p.
-  inversion p.
-    auto.
-Admitted.                       (* need to do induction on p! *)
+  dependent induction p. auto.
+  destruct j.
+  rewrite IHp; auto.
+  f_equal.
+  dependent destruction g.
+  reflexivity.
+Qed.
 
 Program Instance KeyIndex_Iso : ∀ (a I : Type) (t : I → Type) (k : I),
   ((a ::= k) :→ t) ≅ (a → t k).
@@ -199,183 +246,63 @@ Coercion is_ifunctor : IMonad >-> IFunctor.
 
 Notation "c ?>= f" := (iextend f _ c) (at level 25, left associativity).
 
+Definition angbind `{m : IMonad}
+  {a j q} (f : a → m q j) : m (a ::= j) :→ m q :=
+  iextend ((λ _ x, match x with V a => f a end) : (a ::= j) :→ m q).
+
+Notation "c =>= f" := (angbind f _ c) (at level 25, left associativity).
+
+(** An ordinary monad on indexed types induces an indexed monad on ordinary
+    types, packaging the restricted functionality offered by the angelic
+    bind. -- Conor *)
+
+Definition Atkey {I : Type} (m : (I → Type) → (I → Type)) i j a :=
+  m (a ::= j) i.
+
 Definition ireturn `{m : IMonad} {i a} (x : a) : Atkey m i i a :=
   iskip (V x).
 
-Definition angbind `{m : IMonad}
-  {a j q i} (c : m (a ::= j) i) (f : a → m q j) : m q i :=
-  c ?>= ((λ _ x, match x with V a => f a end) : forall i, m (a ::= j) i → m q i).
+Definition ibind `{m : IMonad} {i j k a b}
+  : Atkey m i j a → (a → Atkey m j k b) → Atkey m i k b :=
+  fun x f => angbind f _ x.
 
-Infix "=>=" := angbind (at level 25, left associativity).
+Infix ">>=" := ibind (at level 25, left associativity).
 
 Definition iseq `{m : IMonad} {p q r} (f : p :→ m q) (g : q :→ m r)
   : p :→ m r := iextend g ∘ f.
 
-Program Instance Path_IMonad {I} : IMonad (@Path I).
+Definition ijoin : forall {I : Type} (g : (I * I) → Type) x,
+  Path (Path g) x → Path g x.
+Proof.
+  intros. dependent induction X. apply Stop.
+  apply (@path_compose _ _ i j k); assumption.
+Defined.
+
+Program Instance Path_IMonad {I} : IMonad (@Path I) := {
+    iskip := fun p (x : I * I) =>
+      (let (i, j) as z return (p z → Path p z) := x in
+       λ Y : p (i, j), Y :-: Stop)
+}.
 Obligation 1.
-  unfold ":→". intros.
-  destruct x.
-  apply Link with (j := i0).
-    apply X.
-  apply Stop.
+  unfold ":→" in *. intros.
+  apply (imap X) in X0.
+  apply ijoin in X0.
+  assumption.
 Defined.
 Obligation 2.
-  unfold ":→". intros x P.
-  destruct x as [i j].
-  apply (imap X) in P.
-  inversion P; subst.
-    apply Stop.
-Admitted.
+  unfold Path_IMonad_obligation_1. simpl.
+  apply path_right_id.
+Qed.
 Obligation 3.
-Admitted.
-Obligation 4.
-Admitted.
-Obligation 5.
-Admitted.
-
-(*************************************************************************)
-
-Inductive IState {I O : Type} (P : relation s) (a : I → Type) : O → Type :=
-  | St st : (forall st', P st st' → { st'' : s & a st'' & P st' st'' }) → IState P a st.
-
-Arguments St [s P a] st _.
-
-Definition runIState {s : Type} {P : relation s} {a : s → Type} (st : s) (x : IState P a st)
-  : (forall st', P st st' → { st'' : s & a st'' & P st' st'' }) := match x with St _ p => p end.
-
-Definition IState_fmap {s : Type} (P : relation s) {a b : s → Type}
-  (f : a :→ b) : IState P a :→ IState P b := λ (st : s) x,
-  St st (λ st' H, let p := runIState st x st' H in
-                match p with
-                | existT2 st'' x H' =>
-                  existT2 _ _ st'' (f st'' x) H'
-                end).
-
-Program Instance IState_IFunctor {s : Type} (P : relation s) : IFunctor (@IState s P) := {
-    imap := @IState_fmap s P
-}.
-Obligation 1.
-  compute.
-  extensionality st.
-  extensionality x.
-  destruct x.
-  f_equal.
-  extensionality st'.
-  extensionality H.
-  destruct (s0 st').
-  reflexivity.
+  unfold Path_IMonad_obligation_1. simpl.
+  dependent induction m. reflexivity.
+  specialize (IHm _ f).
+  simpl. rewrite IHm.
+  dependent destruction m; auto.
 Qed.
-Obligation 2.
-  compute.
-  extensionality st.
-  extensionality x.
-  destruct x.
-  f_equal.
-  extensionality st'.
-  extensionality H.
-  destruct (s0 st').
-  reflexivity.
-Qed.
-
-(*
-Program Instance IState_IMonad {s : Type} (R : relation s) `{PartialOrder _ R} : IMonad (@IState s R) := {
-    iskip := fun P st x =>
-      St st (λ st' H, existT2 P (R st') _ x H);
-
-    iextend := fun P Q f st x =>
-      St st (λ st' H, let p := runIState st x st' H in
-                    match p with
-                    | existT2 st'' y H' =>
-                      runIState st'' (f st'' y) st' _
-                    end)
-}.
-Obligation 1. intuition. Defined.
-Obligation 2. intuition. Defined.
 Obligation 4.
+  unfold Path_IMonad_obligation_1. simpl.
+  dependent induction m. reflexivity.
+  specialize (IHm _ _ f g).
+  simpl. rewrite <- IHm.
 Admitted.
-Obligation 5.
-  compute in *.
-  destruct m.
-  destruct (s0 st).
-    reflexivity.
-  f_equal.
-  extensionality st'.
-  extensionality H'.
-  destruct (s0 st').
-  f_equal.
-Admitted.
-Obligation 6.
-  compute.
-  destruct m.
-  destruct (s0 st).
-    reflexivity.
-  f_equal.
-  extensionality st'.
-  extensionality H'.
-  destruct (s0 st').
-    assumption.
-  compute.
-  destruct (s0 x0).
-    crush.
-Admitted.
-
-Section IState.
-
-Variable   s : Type.
-Hypothesis P : relation s.
-Context  `(e : PreOrder s P).
-
-Record StateP (before : s) (a : s → Type) := {
-    after  : s;
-    result : a after;
-    holds  : P before after
-}.
-
-Arguments after [before] [a] _.
-Arguments result [before] [a] _.
-Arguments holds [before] [a] _.
-
-(** The [IState] monad requires that a given equivalence relation hold
-    between state transitions. *)
-Inductive IState (st : s) (a : s → Type) : Type :=
-  | St : StateP st a → IState st a.
-
-Arguments St st [a] _.
-
-Definition runIState (st : s) {a : s → Type} (v : IState st a)
-  : StateP st a := match v with St f => f end.
-
-Definition IState_fmap (st : s) {a b : s → Type}
-  (f : forall st, a st → b st) (x : IState st a) : IState st b :=
-  St st (let sp := runIState st x in
-          {| after  := after sp
-           ; result := f (after sp) (result sp)
-           ; holds  := holds sp
-           |}).
-
-Hint Unfold IState_fmap.
-
-Ltac IState_auto :=
-  intros; simpl;
-  repeat (
-    autounfold; unfold id, compose; simpl;
-    f_equal; try apply proof_irrelevance; auto;
-    match goal with
-    | [ |- (fun _ : IState _ => _) = (fun _ : IState _ => _) ] =>
-        extensionality sx
-    | [ |- (fun _ : s => _) = _ ] =>
-        extensionality st
-    | [ st : s, sp : forall st : s, StateP st _ |- _ ] =>
-        destruct (sp st)
-    | [ sx : IState _ |- _ ] => destruct sx as [sp]
-    | [ |- St _ = St _ ] => f_equal
-    end).
-
-Obligation Tactic := IState_auto.
-
-End IState.
-
-Program Instance IState_IFunctor : IFunctor IState := {
-    fmap := IState_fmap
-}.
-*)
