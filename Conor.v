@@ -104,10 +104,15 @@ Obligation 2.
   f_equal. apply IHp.
 Qed.
 
-Inductive IAssign {I : Type} : Type → I → I → Type :=
-  | V a k : a → IAssign a k k.
+Inductive IAssign {I : Type} (a : Type) (k : I) : I → Type :=
+  | V : a → IAssign a k k.
+
+Arguments V {I a k} _.
 
 Infix "::=" := IAssign (at level 50).
+
+Definition Atkey {I : Type} (m : (I → Type) → (I → Type)) i j a :=
+  m (a ::= j) i.
 
 Definition list_to_Path : ∀ {a}, list a → Path (a ::= (tt, tt)) (tt, tt).
   intros.
@@ -169,25 +174,39 @@ Obligation 3.
   reflexivity.
 Qed.
 
-Reserved Notation "c ?>>= f" (at level 25, left associativity).
+Reserved Notation "c ?>= f" (at level 25, left associativity).
 
 Class IMonad {I} (m : (I → Type) → (I → Type)) `{IFunctor I I m} := {
     is_ifunctor :> IFunctor m;
 
     iskip   : ∀ {p}, p :→ m p;
     iextend : ∀ {p q}, (p :→ m q) → (m p :→ m q)
-      where "c ?>>= f" := (iextend f _ c);
+      where "c ?>= f" := (iextend f _ c);
 
     imonad_left_id : ∀ (p q : I → Type) (f : p :→ m q) (i : I) (a : p i),
-      iskip i a ?>>= f = f i a;
+      iskip i a ?>= f = f i a;
     imonad_right_id : ∀ (p q : I → Type) (f : p :→ m q) (i : I) (m : m p i),
-      m ?>>= iskip = m;
+      m ?>= iskip = m;
     imonad_assoc : ∀ (p q r : I → Type)
       (f : p :→ m q) (g : q :→ m r) (i : I) (m : m p i),
-      (m ?>>= f) ?>>= g = m ?>>= (λ x a, f x a ?>>= g)
+      (m ?>= f) ?>= g = m ?>= (λ x a, f x a ?>= g)
 }.
 
+Arguments iskip {I m H IMonad p _} _.
+Arguments iextend {I m H IMonad p q _} _ _.
+
 Coercion is_ifunctor : IMonad >-> IFunctor.
+
+Notation "c ?>= f" := (iextend f _ c) (at level 25, left associativity).
+
+Definition ireturn `{m : IMonad} {i a} (x : a) : Atkey m i i a :=
+  iskip (V x).
+
+Definition angbind `{m : IMonad}
+  {a j q i} (c : m (a ::= j) i) (f : a → m q j) : m q i :=
+  c ?>= ((λ _ x, match x with V a => f a end) : forall i, m (a ::= j) i → m q i).
+
+Infix "=>=" := angbind (at level 25, left associativity).
 
 Definition iseq `{m : IMonad} {p q r} (f : p :→ m q) (g : q :→ m r)
   : p :→ m r := iextend g ∘ f.
