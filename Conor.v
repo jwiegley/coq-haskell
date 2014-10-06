@@ -973,15 +973,28 @@ Definition FH : (State → Type) → State → Type :=
   :+: ((unit ::= Open) :>>: (option nat ::= Open))   (* fGetC *)
   :+: ((unit ::= Open) :>>: (unit ::= Closed)).      (* fClose *)
 
-Inductive Kleene {I} (F : (I → Type) → I → Type) (p : I → Type) (i : I) : Type :=
+Inductive Kleene {I} (F : (I → Type) → I → Type) (p : I → Type) (i : I) :=
   | Ret : p i → Kleene F p i
-  | Do  : forall j, F p j → Kleene F p i.
+  | Do  : (forall q, F q i) → Kleene F p i.
 
 Arguments Ret {I F p i} _.
-Arguments Do {I F p i} _ _.
+Arguments Do {I F p i} _.
 
 Infix ":*" := Kleene (at level 25, left associativity).
 
+Fixpoint Kleene_extend {I} `{IFunctor I I F}
+  {p q : I → Type} (f : p :→ Kleene F q) i (x : Kleene F p i)
+  {struct x} : Kleene F q i.
+Proof.
+  destruct x as [y | r ffp].
+    apply (f i y).
+  apply Do. intros.
+  unfold ":→" in *.
+  pose (Kleene_extend _ _ _ p q f).
+  pose (imap k i).
+Admitted.
+
+(*
 Program Instance Kleene_IFunctor {I} `{H : IFunctor I I F}
   : IFunctor (Kleene F) := {
     imap := fun X Y f i x =>
@@ -1007,21 +1020,6 @@ Obligation 2.
   unfold icompose. reflexivity.
 Qed.
 
-Fixpoint Kleene_concat {I} `{H : IFunctor I I F} {p : I → Type}
-  {i} (x : (F :* (F :* p)) i) : (F :* p) i.
-Proof.
-  destruct x.
-    apply k.
-Admitted.
-
-Fixpoint Kleene_extend {I} `{IFunctor I I F}
-  {p q : I → Type} (f : p :→ Kleene F q) {i} (x : Kleene F p i)
-  {struct x} : Kleene F q i :=
-  match x with
-  | Ret y => f i y
-  | Do j ffp => Kleene_concat (Do j (imap f j ffp))
-  end.
-
 Program Instance Kleene_IMonad {I} `{H : IFunctor I I F}
   : IMonad (Kleene F) := {
     iskip := fun _ _ => Ret;
@@ -1033,3 +1031,4 @@ Obligation 2.
 Admitted.
 Obligation 3.
 Admitted.
+*)
