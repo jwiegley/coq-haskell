@@ -1032,3 +1032,77 @@ Admitted.
 Obligation 3.
 Admitted.
 *)
+
+End Hoare.
+
+Inductive IState {I} (S P : I → Type) (i : I) :=
+  mkIState : (S i → (P i * S i)) → IState S P i.
+
+Arguments mkIState {I S P i} _.
+
+Definition runIState {I} {S P : I → Type} {i} (x : IState S P i) :=
+  match x with mkIState f => f end.
+
+Definition iget {I} {S : I → Type} {i} : IState S S i :=
+  mkIState (fun s : S i => (s, s)).
+
+Definition igets {I} {S T : I → Type} {i} (f : S :→ T) : IState S T i :=
+  mkIState (fun s : S i => (f i s, s)).
+
+Definition iput {I} {S : I → Type} {i} (s : S i) : IState S (const unit) i :=
+  mkIState (fun _ : S i => (tt, s)).
+
+Definition imodify {I} (S : I → Type) {i} (f : S :→ S)
+  : IState S (const unit) i :=
+  mkIState (fun s : S i => (tt, f i s)).
+
+Program Instance IState_IFunctor {I} (S : I → Type)
+  : IFunctor (IState S) := {
+    imap := fun X Y f i x =>
+      mkIState (fun st => let (a,st') := runIState x st in (f i a, st'))
+}.
+Obligation 1.
+  extensionality i.
+  extensionality x.
+  unfold iid. destruct x.
+  f_equal.
+  extensionality st. simpl.
+  destruct (p st).
+  reflexivity.
+Qed.
+Obligation 2.
+  extensionality i.
+  extensionality x.
+  unfold icompose.
+  f_equal.
+  extensionality st.
+  destruct x.
+  simpl.
+  destruct (p st).
+  reflexivity.
+Qed.
+
+Program Instance IState_IMonad {I} (S : I → Type) : IMonad (IState S) := {
+    iskip := fun p i x => mkIState (fun st => (x, st));
+    iextend := fun p q f i x => mkIState (fun st =>
+      let (y, st') := runIState x st in
+      runIState (f i y) st')
+}.
+Obligation 1.
+  destruct (f i a). simpl.
+  f_equal.
+Qed.
+Obligation 2.
+  destruct m. simpl.
+  f_equal.
+  extensionality st.
+  destruct (p0 st).
+  reflexivity.
+Qed.
+Obligation 3.
+  destruct m. simpl.
+  f_equal.
+  extensionality st.
+  destruct (p0 st).
+  reflexivity.
+Qed.
