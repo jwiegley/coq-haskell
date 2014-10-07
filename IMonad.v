@@ -27,13 +27,13 @@ Notation "m >>>= f" := (ibind f m) (at level 25, left associativity).
 (* Notation "x <- c1 ;; c2" := (@ibind _ _ _ _ _ c1 (fun x => c2)) *)
 (*   (at level 100, c1 at next level, right associativity). *)
 
-Notation "X <<- A ; B" := (A >>>= (fun X => B))
+Notation "X <<- A ;; B" := (A >>>= (fun X => B))
   (right associativity, at level 84, A1 at next level).
 
 (* Notation "x : a <== c1 ;; c2" := (@ibind _ _ _ _ _ c1 (fun x : a => c2)) *)
 (*   (at level 100, c1 at next level, right associativity). *)
 
-Notation "A ;;; B" := (_ <<- A ; B)
+Notation "A ;;; B" := (_ <<- A ;; B)
   (right associativity, at level 84, A1 at next level).
 
 Theorem imonad_law_1_x
