@@ -973,15 +973,29 @@ Definition FH : (State → Type) → State → Type :=
   :+: ((unit ::= Open) :>>: (option nat ::= Open))   (* fGetC *)
   :+: ((unit ::= Open) :>>: (unit ::= Closed)).      (* fClose *)
 
-Inductive Kleene {I} (F : (I → Type) → I → Type) (p : I → Type) (i : I) :=
-  | Ret : p i → Kleene F p i
-  | Do  : (forall q, F q i) → Kleene F p i.
+Record Signature (I : Type): Type := {
+    Operations : I → Type;
+    Arities    : forall i : I, Operations i → Type;
+    Sorts      : forall (i : I) (op : Operations i), Arities i op → I
+}.
 
-Arguments Ret {I F p i} _.
-Arguments Do {I F p i} _.
+Arguments Operations {_} _ i.
+Arguments Arities {_} _ {_} op.
+Arguments Sorts {_} _ {_} {_} ar.
+
+Definition WFunctor {I} (S : Signature I) (X : I → Type) (i : I) : Type :=
+  { op : Operations S i & forall ar : Arities S op, X (Sorts S ar) }.
+
+Inductive Kleene {I} (S : Signature I) (p : I → Type) (i : I) :=
+| Ret : p i → Kleene S p i
+| Do  : WFunctor S (Kleene S p) i → Kleene S p i.
+
+Arguments Ret {I S p i} _.
+Arguments Do {I S p i} _.
 
 Infix ":*" := Kleene (at level 25, left associativity).
 
+(*
 Fixpoint Kleene_extend {I} `{IFunctor I I F}
   {p q : I → Type} (f : p :→ Kleene F q) i (x : Kleene F p i)
   {struct x} : Kleene F q i.
@@ -994,7 +1008,6 @@ Proof.
   pose (imap k i).
 Admitted.
 
-(*
 Program Instance Kleene_IFunctor {I} `{H : IFunctor I I F}
   : IFunctor (Kleene F) := {
     imap := fun X Y f i x =>
