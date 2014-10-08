@@ -401,7 +401,7 @@ Qed.
 
 (** We now formalize a notion of indexed monads ala Atkey, prove that the
     Atkey definition fulfills them, and thereafter we can trust that Atkey is
-    a specialization of IMonad.  We must keep IxAndlicative, however, since we
+    a specialization of IMonad.  We must keep IxApplicative, however, since we
     do not have applicatives in the general case. *)
 
 Module Atkey.
@@ -526,7 +526,7 @@ Qed.
 
 Reserved Notation "f <**> g" (at level 28, left associativity).
 
-Class IxAndlicative {I} (F : I → I → Type → Type) :=
+Class IxApplicative {I} (F : I → I → Type → Type) :=
 { is_ixfunctor :> IxFunctor F
 
 ; ixpure : ∀ {I X}, X → F I I X
@@ -563,7 +563,7 @@ Definition ixapp_merge {X Y Z W} (f : X → Y) (g : Z → W)
   (t : X * Z) : Y * W  :=
   match t with (x, z) => (f x, g z) end.
 
-Definition ixapp_prod `{IxAndlicative T F}
+Definition ixapp_prod `{IxApplicative T F}
   {I J K X Y} (x : F I J X) (y : F J K Y)
   : F I K (X * Y) := pair <$$> x <**> y.
 
@@ -576,10 +576,10 @@ Ltac rewrite_ixapp_homomorphisms :=
    rewrite ixapp_homomorphism;
    repeat (rewrite app_ixmap_unit)).
 
-Section IxAndlicative.
+Section IxApplicative.
 
 Variables I : Type.
-Context `{@IxAndlicative I F}.
+Context `{@IxApplicative I F}.
 
 Theorem app_imap_compose : ∀ I A B (f : A → B),
   ixpure ∘ f = ixmap f ∘ @ixpure _ _ _ I _.
@@ -626,7 +626,7 @@ Qed.
 
 (* This theorem was given as an exercise by Brent Yorgey at:
 
-   http://www.haskell.org/haskellwiki/Typeclassopedia#IxAndlicative
+   http://www.haskell.org/haskellwiki/Typeclassopedia#IxApplicative
 *)
 Theorem ixapp_flip : ∀ {J K X Y} (x : F J K X) (f : X → Y),
   ixpure f <**> x = ixpure (flip apply) <**> x <**> ixpure f.
@@ -643,7 +643,7 @@ Proof.
 Qed.
 
 Theorem ixapp_embed
-  : ∀ {GI G} `{IxAndlicative GI G}
+  : ∀ {GI G} `{IxApplicative GI G}
            {I J K X Y} (x : G I J (X → Y)) (y : G J K X),
   ixpure (x <**> y) = ixpure ixap <**> ixpure x <**> @ixpure _ _ _ K _ y.
 Proof.
@@ -793,10 +793,10 @@ Definition liftIA2 {I J K A B C} (f : A → B → C)
   (x : F I J A) (y : F J K B) : F I K C :=
   f <$$> x <**> y.
 
-End IxAndlicative.
+End IxApplicative.
 
-Program Instance Atkey_IxAndlicative {I : Type} `{H : IMonad I F}
-  : IxAndlicative (Atkey F) := {
+Program Instance Atkey_IxApplicative {I : Type} `{H : IMonad I F}
+  : IxApplicative (Atkey F) := {
   ixpure := fun _ _ x => iskip (V x)
 }.
 Obligation 1.
@@ -813,7 +813,7 @@ Obligation 1.
   assumption.
 Defined.
 Obligation 2.
-  unfold Atkey_IxAndlicative_obligation_1.
+  unfold Atkey_IxApplicative_obligation_1.
   extensionality X1. unfold id.
   destruct H. destruct H0. simpl in *.
   rewrite imonad_left_id0.
@@ -844,12 +844,12 @@ Obligation 4. Admitted.
 Obligation 5. Admitted.
 Obligation 6. Admitted.
 
-Definition ixapp_unit `{IxAndlicative _ F} : F unit unit unit := ixpure tt.
+Definition ixapp_unit `{IxApplicative _ F} : F unit unit unit := ixpure tt.
 
 Reserved Notation "m >>= f" (at level 25, left associativity).
 
 Class IxMonad {I} (M : I → I → Type → Type) :=
-{ is_ixapplicative :> IxAndlicative M
+{ is_ixapplicative :> IxApplicative M
 
 ; ixbind : ∀ {I J K X Y}, M I J X → (X -> M J K Y) → M I K Y
     where "m >>= f" := (ixbind m f)
@@ -904,9 +904,155 @@ Qed.
 
 End Atkey.
 
-Module Hoare.
+Module Kleene.
 
-Inductive RProd {I} (p q : I → Type) r i :=
+Record Signature (I : Type) : Type := {
+    Operations : I → Type;
+    Arities    : forall i : I, Operations i → Type;
+    Sorts      : forall (i : I) (op : Operations i), Arities i op → I
+}.
+
+Arguments Operations {_} _ i.
+Arguments Arities {_} _ {_} op.
+Arguments Sorts {_} _ {_} {_} ar.
+
+Record WFunctor {I} (S : Signature I) (X : I → Type) (i : I) : Type := {
+    op : Operations S i;
+    ar : Arities S op;
+    xx : X (Sorts S ar)
+}.
+
+Program Instance WFunctor_IFunctor {I} (S : Signature I) : IFunctor (WFunctor S).
+Obligation 1.
+  unfold ":→". intros.
+  destruct X1.
+  eexists.
+  apply X0 in xx0. apply xx0.
+Defined.
+Obligation 2.
+  compute.
+  extensionality x.
+  extensionality F.
+  destruct F. reflexivity.
+Qed.
+Obligation 3.
+  compute.
+  extensionality x.
+  extensionality F.
+  destruct F. reflexivity.
+Qed.
+
+Inductive Kleene {I} (S : Signature I) (p : I → Type) (i : I) :=
+| Ret : p i → Kleene S p i
+| Do  : WFunctor S (Kleene S p) i → Kleene S p i.
+
+Arguments Ret {I S p i} _.
+Arguments Do {I S p i} _.
+
+Infix ":*" := Kleene (at level 25, left associativity).
+
+Fixpoint Kleene_extend {I} (F : Signature I)
+  {p q : I → Type} (f : p :→ Kleene F q) i (x : Kleene F p i)
+  {struct x} : Kleene F q i.
+Proof.
+  destruct x as [y | r].
+    apply (f i y).
+  apply Do.
+  destruct r.
+  eexists.
+  apply (Kleene_extend _ _ p q f).
+  apply xx0.
+Defined.
+
+Fixpoint Kleene_map {I} (F : Signature I)
+  {X Y} (f : X :→ Y) i (x : (F :* X) i) {struct x} : (F :* Y) i.
+Proof.
+  destruct x.
+    apply (Ret (f i x)).
+  apply Do.
+  destruct w.
+  eexists.
+  apply (Kleene_map I F X Y f).
+  apply xx0.
+Defined.
+
+Fixpoint Kleene_identity {I} (F : Signature I)
+  {X : I → Type} {i : I} (x : (F :* X) i) :
+  Kleene_map F iid i x = iid i x.
+Proof.
+  destruct x. reflexivity.
+  destruct w.
+  unfold iid in *. simpl.
+  f_equal. f_equal.
+  apply Kleene_identity.
+Qed.
+
+Fixpoint Kleene_composition {I} (F : Signature I)
+  (X Y Z : I → Type) (f : Y :→ Z) (g : X :→ Y)
+  (i : I) (x : (F :* X) i) {struct x} :
+  (Kleene_map F f :∘ Kleene_map F g) i x = Kleene_map F (f :∘ g) i x.
+Proof.
+  unfold icompose.
+  destruct x. reflexivity.
+  destruct w. simpl.
+  f_equal. f_equal.
+  apply Kleene_composition.
+Qed.
+
+Program Instance Kleene_IFunctor {I} (F : Signature I)
+  : IFunctor (Kleene F) := {
+    imap := fun _ _ => Kleene_map F
+}.
+Obligation 1.
+  extensionality i.
+  extensionality x.
+  apply Kleene_identity.
+Qed.
+Obligation 2.
+  extensionality i.
+  extensionality x.
+  apply Kleene_composition.
+Qed.
+
+Fixpoint Kleene_left_id {I} (F : Signature I)
+  (p q : I → Type) (f : p :→ F :* q) (i : I) (m : (F :* p) i) :
+  Kleene_extend F (λ H : I, Ret) i m = m.
+Proof.
+  destruct m. reflexivity.
+  destruct w. simpl.
+  f_equal. f_equal.
+  apply (Kleene_left_id I F p q).
+  assumption.
+Qed.
+
+Fixpoint Kleene_assoc {I} (F : Signature I)
+  (p q r : I → Type) (f : p :→ F :* q) (g : q :→ F :* r)
+  (i : I) (m : (F :* p) i) :
+  Kleene_extend F g i (Kleene_extend F f i m) =
+  Kleene_extend F (λ (x : I) (a : p x), Kleene_extend F g x (f x a)) i m.
+Proof.
+  destruct m. reflexivity.
+  destruct w. simpl.
+  f_equal. f_equal.
+  apply (Kleene_assoc I F p q r).
+Qed.
+
+Program Instance Kleene_IMonad {I} (F : Signature I)
+  : IMonad (Kleene F) := {
+    iskip := fun _ _ => Ret;
+    iextend := @Kleene_extend I F
+}.
+Obligation 2.
+  apply (Kleene_left_id F p q).
+  assumption.
+Qed.
+Obligation 3.
+  apply (Kleene_assoc F p q r).
+Qed.
+
+End Kleene.
+
+Inductive RProd {I} (p q r : I → Type) (i : I) :=
   mkRProd : p i → (q :→ r) → RProd p q r i.
 
 Arguments mkRProd {I p q r i} _ _.
@@ -964,89 +1110,50 @@ Obligation 2.
   rewrite <- ifun_composition0; reflexivity.
 Qed.
 
+Module Hoare.
+
+Import Kleene.
+
 Inductive FilePath := FilePath_.
 
 Inductive State := Open | Closed.
 
-Definition FH : (State → Type) → State → Type :=
+Definition FH' : (State → Type) → State → Type :=
       ((FilePath ::= Closed) :>>: (fun _ => State))  (* fOpen *)
   :+: ((unit ::= Open) :>>: (option nat ::= Open))   (* fGetC *)
   :+: ((unit ::= Open) :>>: (unit ::= Closed)).      (* fClose *)
 
-Record Signature (I : Type): Type := {
-    Operations : I → Type;
-    Arities    : forall i : I, Operations i → Type;
-    Sorts      : forall (i : I) (op : Operations i), Arities i op → I
-}.
-
-Arguments Operations {_} _ i.
-Arguments Arities {_} _ {_} op.
-Arguments Sorts {_} _ {_} {_} ar.
-
-Definition WFunctor {I} (S : Signature I) (X : I → Type) (i : I) : Type :=
-  { op : Operations S i & forall ar : Arities S op, X (Sorts S ar) }.
-
-Inductive Kleene {I} (S : Signature I) (p : I → Type) (i : I) :=
-| Ret : p i → Kleene S p i
-| Do  : WFunctor S (Kleene S p) i → Kleene S p i.
-
-Arguments Ret {I S p i} _.
-Arguments Do {I S p i} _.
-
-Infix ":*" := Kleene (at level 25, left associativity).
+Definition FH : Signature State :=
+  {| Operations := fun st : State => State -> Type
+   ; Arities    := fun (st : State) ops => FH' ops st
+   ; Sorts      := fun (st : State) ops ars => st |}.
 
 (*
-Fixpoint Kleene_extend {I} `{IFunctor I I F}
-  {p q : I → Type} (f : p :→ Kleene F q) i (x : Kleene F p i)
-  {struct x} : Kleene F q i.
+Definition fOpen (p : FilePath) : (FH :* (const State)) Closed.
 Proof.
-  destruct x as [y | r ffp].
-    apply (f i y).
-  apply Do. intros.
-  unfold ":→" in *.
-  pose (Kleene_extend _ _ _ p q f).
-  pose (imap k i).
-Admitted.
+  apply Do.
+  apply {| op := _
+         ; ar := _
+         ; xx := @Ret _ _ _
+         |}.
+  eexists.
+  apply Ret.
+  apply Closed.
+  Grab Existential Variables.
+  constructor.
+  constructor.
+Defined.
 
-Program Instance Kleene_IFunctor {I} `{H : IFunctor I I F}
-  : IFunctor (Kleene F) := {
-    imap := fun X Y f i x =>
-      match x with
-      | Ret y => Ret (f i y)
-      | Do j g => Do j (imap f j g)
-      end
-}.
-Obligation 1.
-  extensionality i.
-  extensionality x.
-  destruct x.
-    unfold iid; reflexivity.
-  rewrite ifun_identity.
-  unfold iid; reflexivity.
-Qed.
-Obligation 2.
-  extensionality i.
-  extensionality x.
-  destruct x.
-    unfold iid; reflexivity.
-  rewrite <- ifun_composition.
-  unfold icompose. reflexivity.
-Qed.
+Definition fGetC : (FH :* (Maybe Char := Open)) Open :=
+  Do (InR (InL (V () :& k))).
 
-Program Instance Kleene_IMonad {I} `{H : IFunctor I I F}
-  : IMonad (Kleene F) := {
-    iskip := fun _ _ => Ret;
-    iextend := @Kleene_extend I F H
-}.
-Obligation 2.
-  destruct m. reflexivity.
-  simpl.
-Admitted.
-Obligation 3.
-Admitted.
+Definition fClose : (FH :* (unit := Closed)) Open :=
+  Do (InR (InR (V () :& k))).
 *)
 
 End Hoare.
+
+Module IState.
 
 Inductive IState {I} (S P : I → Type) (i : I) :=
   mkIState : (S i → (P i * S i)) → IState S P i.
@@ -1119,3 +1226,5 @@ Obligation 3.
   destruct (p0 st).
   reflexivity.
 Qed.
+
+End IState.
