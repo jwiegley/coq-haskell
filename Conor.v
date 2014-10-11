@@ -8,28 +8,28 @@ Section Indexed.
 
 Variable A : Type.
 
-Definition inat (P Q : A → Type) := ∀ x : A, P x → Q x.
+Definition transp (P Q : A → Type) := ∀ x : A, P x → Q x.
 
-Notation "s :→ t" := (inat s t) (at level 28).
+Notation "s :→ t" := (transp s t) (at level 28).
 
-Definition iid {X} : X :→ X.
+Definition pid {X} : X :→ X.
   unfold ":→". intros.
   apply X0.
 Defined.
 
-Definition icompose {X Y Z} : (Y :→ Z) → (X :→ Y) → (X :→ Z).
+Definition pcompose {X Y Z} : (Y :→ Z) → (X :→ Y) → (X :→ Z).
   unfold ":→". intros.
   apply X0. apply X1. apply X2.
 Defined.
 
 End Indexed.
 
-Arguments inat {A} _ _.
-Arguments iid {A X} _ _.
-Arguments icompose {A X Y Z} _ _ _ _.
+Arguments transp {A} _ _.
+Arguments pid {A X} _ _.
+Arguments pcompose {A X Y Z} _ _ _ _.
 
-Infix ":→" := inat (at level 100).
-Infix ":∘" := icompose (at level 40, left associativity).
+Infix ":→" := transp (at level 100).
+Infix ":∘" := pcompose (at level 40, left associativity).
 
 Module SimpleCategory.
 
@@ -46,42 +46,42 @@ Class Category {k} (cat : k → k → Type) := {
       compose f (compose g h) = compose (compose f g) h
 }.
 
-Program Instance Index_Category {A} : Category (@inat A) := {
-    id      := @iid A;
-    compose := @icompose A
+Program Instance Index_Category {A} : Category (@transp A) := {
+    id      := @pid A;
+    compose := @pcompose A
 }.
 
 End SimpleCategory.
 
-(** * Indexed functors *)
+(** * Predicate functors *)
 
-Class IFunctor {I O} (F : (I → Type) → (O → Type)) := {
-    iobj := F;
-    imap : ∀ {X Y}, (X :→ Y) → (F X :→ F Y);
+Class PFunctor {I O} (F : (I → Type) → (O → Type)) := {
+    pobj := F;
+    pmap : ∀ {X Y}, (X :→ Y) → (F X :→ F Y);
 
-    ifun_identity : ∀ {X}, imap (@iid _ X) = iid;
-    ifun_composition : ∀ {X Y Z} (f : Y :→ Z) (g : X :→ Y),
-      imap f :∘ imap g = imap (f :∘ g)
+    pfun_identity : ∀ {X}, pmap (@pid _ X) = pid;
+    pfun_composition : ∀ {X Y Z} (f : Y :→ Z) (g : X :→ Y),
+      pmap f :∘ pmap g = pmap (f :∘ g)
 }.
 
-Notation "imap[ M ]  f" := (@imap _ _ M _ _ _ f) (at level 28).
-Notation "imap[ M N ]  f" :=
-  (@imap _ _ (λ X, M (N X)) _ _ _ f) (at level 26).
-Notation "imap[ M N O ]  f" :=
-  (@imap _ _ (λ X, M (N (O X))) _ _ _ f) (at level 24).
+Notation "pmap[ M ]  f" := (@pmap _ _ M _ _ _ f) (at level 28).
+Notation "pmap[ M N ]  f" :=
+  (@pmap _ _ (λ X, M (N X)) _ _ _ f) (at level 26).
+Notation "pmap[ M N O ]  f" :=
+  (@pmap _ _ (λ X, M (N (O X))) _ _ _ f) (at level 24).
 
-Coercion iobj : IFunctor >-> Funclass.
+Coercion pobj : PFunctor >-> Funclass.
 
-Lemma ifun_irrelevance `(F : IFunctor)
+Lemma pfun_irrelevance `(F : PFunctor)
   : ∀ (f g : ∀ {X Y}, (X :→ Y) → (F X :→ F Y))
       i i' c c',
   @f = @g →
-  {| imap := @f
-   ; ifun_identity    := i
-   ; ifun_composition := c |} =
-  {| imap := @g
-   ; ifun_identity    := i'
-   ; ifun_composition := c' |}.
+  {| pmap := @f
+   ; pfun_identity    := i
+   ; pfun_composition := c |} =
+  {| pmap := @g
+   ; pfun_identity    := i'
+   ; pfun_composition := c' |}.
 Proof.
   intros. subst. f_equal.
   apply proof_irrelevance.
@@ -90,7 +90,7 @@ Qed.
 
 (** * Path *)
 
-(** This is a demonstration of IFunctor, showing "type-aligned lists" as paths
+(** This is a demonstration of PFunctor, showing "type-aligned lists" as paths
     within a graph. *)
 
 Section Path.
@@ -171,15 +171,15 @@ Arguments Link {I g i j k} _ _.
 
 Notation "f :-: g" := (Link f g) (at level 50).
 
-Definition path_imap {I} {k h : (I * I) → Type} (f : k :→ h)
+Definition path_pmap {I} {k h : (I * I) → Type} (f : k :→ h)
   {x : I * I} (p : Path k x) : Path h x.
   induction p.
     apply Stop.
   apply (Link (f _ g) IHp).
 Defined.
 
-Program Instance Path_IFunctor {I} : @IFunctor (I * I) (I * I) (@Path I) := {
-    imap := @path_imap I
+Program Instance Path_PFunctor {I} : @PFunctor (I * I) (I * I) (@Path I) := {
+    pmap := @path_pmap I
 }.
 Obligation 1.
   compute.
@@ -196,10 +196,10 @@ Obligation 2.
   f_equal. apply IHp.
 Qed.
 
-Lemma path_imap_compose : ∀ I (q r : I * I → Type)
+Lemma path_pmap_compose : ∀ I (q r : I * I → Type)
   (f : q :→ r) i j k (z : Path q (i,j)) (s : Path q (j,k)),
-  path_compose I r (path_imap f z) (path_imap f s) =
-  path_imap f (path_compose I q z s).
+  path_compose I r (path_pmap f z) (path_pmap f s) =
+  path_pmap f (path_compose I q z s).
 Proof.
   intros.
   dependent induction z. auto.
@@ -209,18 +209,18 @@ Proof.
   f_equal.
 Qed.
 
-(** * IAssign *)
+(** * PAssign *)
 
-(** IAssign is "a particularly useful constructor of indexed sets, capturing
+(** PAssign is "a particularly useful constructor of indexed sets, capturing
     that idea of having an element of a given type at a particular key index."
     -- Conor *)
 
-Inductive IAssign {I : Type} (a : Type) (k : I) : I → Type :=
-  | V : a → IAssign a k k.
+Inductive PAssign {I : Type} (a : Type) (k : I) : I → Type :=
+  | V : a → PAssign a k k.
 
 Arguments V {I a k} _.
 
-Infix "::=" := IAssign (at level 50).
+Infix "::=" := PAssign (at level 50).
 
 Program Instance KeyIndex_Iso : ∀ (a I : Type) (t : I → Type) (k : I),
   ((a ::= k) :→ t) ≅ (a → t k).
@@ -290,43 +290,43 @@ Obligation 2.
   reflexivity.
 Qed.
 
-(** * IMonad *)
+(** * PMonad *)
 
-(** We now show that some endo-IFunctors can also be IMonads. *)
+(** We now show that some endo-PFunctors can also be PMonads. *)
 
 Reserved Notation "c ?>= f" (at level 25, left associativity).
 
-Class IMonad {I} (m : (I → Type) → (I → Type)) `{IFunctor I I m} := {
-    is_ifunctor :> IFunctor m;
+Class PMonad {I} (m : (I → Type) → (I → Type)) `{PFunctor I I m} := {
+    is_pfunctor :> PFunctor m;
 
-    iskip   : ∀ {p}, p :→ m p;
-    iextend : ∀ {p q}, (p :→ m q) → (m p :→ m q)
-      where "c ?>= f" := (iextend f _ c);
+    pskip   : ∀ {p}, p :→ m p;
+    pextend : ∀ {p q}, (p :→ m q) → (m p :→ m q)
+      where "c ?>= f" := (pextend f _ c);
 
     imonad_left_id : ∀ (p q : I → Type) (f : p :→ m q) (i : I) (a : p i),
-      iskip i a ?>= f = f i a;
+      pskip i a ?>= f = f i a;
     imonad_right_id : ∀ (p q : I → Type) (f : p :→ m q) (i : I) (m : m p i),
-      m ?>= iskip = m;
+      m ?>= pskip = m;
     imonad_assoc : ∀ (p q r : I → Type)
       (f : p :→ m q) (g : q :→ m r) (i : I) (m : m p i),
       (m ?>= f) ?>= g = m ?>= (λ x a, f x a ?>= g)
 }.
 
-Arguments iskip {I m H IMonad p _} _.
-Arguments iextend {I m H IMonad p q _} _ _.
+Arguments pskip {I m H PMonad p _} _.
+Arguments pextend {I m H PMonad p q _} _ _.
 
-Coercion is_ifunctor : IMonad >-> IFunctor.
+Coercion is_pfunctor : PMonad >-> PFunctor.
 
-Notation "c ?>= f" := (iextend f _ c) (at level 25, left associativity).
+Notation "c ?>= f" := (pextend f _ c) (at level 25, left associativity).
 
-Definition angbind `{m : IMonad}
+Definition angbind `{m : PMonad}
   {a j q} (f : a → m q j) : m (a ::= j) :→ m q :=
-  iextend ((λ _ x, match x with V a => f a end) : (a ::= j) :→ m q).
+  pextend ((λ _ x, match x with V a => f a end) : (a ::= j) :→ m q).
 
 Notation "c =>= f" := (angbind f _ c) (at level 25, left associativity).
 
-Definition ijoin {I} `{m : IMonad I} {p} : m (m p) :→ m p :=
-  iextend (λ (x : I) (X : m p x), X).
+Definition pjoin {I} `{m : PMonad I} {p} : m (m p) :→ m p :=
+  pextend (λ (x : I) (X : m p x), X).
 
 (** An ordinary monad on indexed types induces an indexed monad on ordinary
     types, packaging the restricted functionality offered by the angelic
@@ -335,17 +335,17 @@ Definition ijoin {I} `{m : IMonad I} {p} : m (m p) :→ m p :=
 Definition Atkey {I : Type} (m : (I → Type) → (I → Type)) i j a :=
   m (a ::= j) i.
 
-Definition ireturn `{m : IMonad} {i a} (x : a) : Atkey m i i a :=
-  iskip (V x).
+Definition ireturn `{m : PMonad} {i a} (x : a) : Atkey m i i a :=
+  pskip (V x).
 
-Definition ibind `{m : IMonad} {i j k a b}
+Definition ibind `{m : PMonad} {i j k a b}
   : Atkey m i j a → (a → Atkey m j k b) → Atkey m i k b :=
   fun x f => angbind f _ x.
 
-Definition iseq `{m : IMonad} {p q r} (f : p :→ m q) (g : q :→ m r)
-  : p :→ m r := iextend g :∘ f.
+Definition iseq `{m : PMonad} {p q r} (f : p :→ m q) (g : q :→ m r)
+  : p :→ m r := pextend g :∘ f.
 
-(** Paths are also IMonads. *)
+(** Paths are also PMonads. *)
 
 Fixpoint path_join {I : Type} {g : (I * I) → Type} {i}
   (p : Path (Path g) i) : Path g i :=
@@ -369,39 +369,39 @@ Proof.
   reflexivity.
 Qed.
 
-Program Instance Path_IMonad {I} : IMonad (@Path I) := {
-    iskip := fun p (x : I * I) =>
+Program Instance Path_PMonad {I} : PMonad (@Path I) := {
+    pskip := fun p (x : I * I) =>
       (let (i, j) as z return (p z → Path p z) := x in
        λ Y : p (i, j), Y :-: Stop)
 }.
 Obligation 1.
   unfold ":→" in *. intros.
-  apply (imap X) in X0.
+  apply (pmap X) in X0.
   apply path_join in X0.
   assumption.
 Defined.
 Obligation 2.
-  unfold Path_IMonad_obligation_1. simpl.
+  unfold Path_PMonad_obligation_1. simpl.
   apply path_right_id.
 Qed.
 Obligation 3.
-  unfold Path_IMonad_obligation_1. simpl.
+  unfold Path_PMonad_obligation_1. simpl.
   dependent induction m. reflexivity.
   specialize (IHm _ f).
   simpl. rewrite IHm.
   dependent destruction m; auto.
 Qed.
 Obligation 4.
-  unfold Path_IMonad_obligation_1. simpl.
+  unfold Path_PMonad_obligation_1. simpl.
   dependent induction m. reflexivity.
   simpl. rewrite <- IHm.
-  rewrite <- path_imap_compose.
+  rewrite <- path_pmap_compose.
   rewrite path_join_compose. reflexivity.
 Qed.
 
 (** We now formalize a notion of indexed monads ala Atkey, prove that the
     Atkey definition fulfills them, and thereafter we can trust that Atkey is
-    a specialization of IMonad.  We must keep IxApplicative, however, since we
+    a specialization of PMonad.  We must keep IxApplicative, however, since we
     do not have applicatives in the general case. *)
 
 Module Atkey.
@@ -462,10 +462,10 @@ Qed.
 
 End IxFunctor.
 
-Program Instance Atkey_IxFunctor {I : Type} `{H : IFunctor I I F}
+Program Instance Atkey_IxFunctor {I : Type} `{H : PFunctor I I F}
   : IxFunctor (Atkey F) := {
     ixmap := fun _ O X Y f x =>
-      imap (fun (i : I) (x : (X ::= O) i) =>
+      pmap (fun (i : I) (x : (X ::= O) i) =>
               match x with V a => V (f a) end) _ x
 }.
 Obligation 1.
@@ -477,18 +477,18 @@ Obligation 1.
         x0 as x1 in ((_ ::= _) i0) return (i0 = i → x1 ~= x0 → (X ::= O) i0)
       with
       | V a => λ (_ : O = i) (_ : V a ~= x0), V a
-      end eq_refl JMeq_refl) = iid).
+      end eq_refl JMeq_refl) = pid).
     extensionality i.
     extensionality x0.
-    destruct x0. unfold iid. reflexivity.
+    destruct x0. unfold pid. reflexivity.
     rewrite H. clear H.
-  rewrite ifun_identity0.
-  unfold iid. reflexivity.
+  rewrite pfun_identity0.
+  unfold pid. reflexivity.
 Qed.
 Obligation 2.
   destruct H. simpl in *.
   unfold compose.
-  unfold icompose in *.
+  unfold pcompose in *.
   extensionality x.
   remember
     (λ (i : I) (x0 : (Y ::= O) i),
@@ -505,7 +505,7 @@ Obligation 2.
       with
       | V a => λ (_ : O = i) (_ : V a ~= x0), V (g a)
       end eq_refl JMeq_refl) as g'.
-  specialize (ifun_composition0 (X ::= O) (Y ::= O) (Z ::= O) f' g').
+  specialize (pfun_composition0 (X ::= O) (Y ::= O) (Z ::= O) f' g').
   assert
     ((λ (i : I) (x0 : (X ::= O) i),
        match
@@ -520,7 +520,7 @@ Obligation 2.
     destruct x0.
     reflexivity.
     rewrite H. clear H.
-  rewrite <- ifun_composition0.
+  rewrite <- pfun_composition0.
   reflexivity.
 Qed.
 
@@ -581,7 +581,7 @@ Section IxApplicative.
 Variables I : Type.
 Context `{@IxApplicative I F}.
 
-Theorem app_imap_compose : ∀ I A B (f : A → B),
+Theorem app_pmap_compose : ∀ I A B (f : A → B),
   ixpure ∘ f = ixmap f ∘ @ixpure _ _ _ I _.
 Proof.
   intros.
@@ -592,7 +592,7 @@ Proof.
   reflexivity.
 Qed.
 
-Theorem app_imap_compose_x : ∀ J A B (f : A → B) (x : A),
+Theorem app_pmap_compose_x : ∀ J A B (f : A → B) (x : A),
   ixpure (f x) = ixmap f (@ixpure _ F _ J _ x).
 Proof.
   intros.
@@ -601,7 +601,7 @@ Proof.
   assert (ixmap f (ixpure x) = (ixmap f ∘ @ixpure _ _ _ J _) x).
     unfold compose. reflexivity.
   rewrite H0. rewrite H1.
-  rewrite app_imap_compose.
+  rewrite app_pmap_compose.
   reflexivity.
 Qed.
 
@@ -698,7 +698,7 @@ Qed.
     unfold app_prod, app_unit.
     rewrite_app_homomorphisms.
     split.
-      assert (imap (pair tt) =
+      assert (pmap (pair tt) =
               (@from (F (unit * A)) (F A)
                      (Functor_Isomorphism _ LTuple_Isomorphism))).
         reflexivity. rewrite H0. clear H0.
@@ -718,7 +718,7 @@ Qed.
     rewrite app_ixmap_unit.
     unfold compose.
     split.
-      assert (imap (fun x : A => (x, tt)) =
+      assert (pmap (fun x : A => (x, tt)) =
               (@from (F (A * unit)) (F A)
                      (Functor_Isomorphism _ RTuple_Isomorphism))).
         reflexivity. rewrite H0.
@@ -781,9 +781,9 @@ Qed.
     rewrite <- ixapp_composition;
     repeat f_equal;
     repeat (rewrite app_ixmap_unit);
-    rewrite ifun_composition_x;
-    rewrite ifun_composition_x;
-    rewrite <- app_imap_compose_x;
+    rewrite pfun_composition_x;
+    rewrite pfun_composition_x;
+    rewrite <- app_pmap_compose_x;
     rewrite ixapp_homomorphism;
     reflexivity.
   Qed.
@@ -795,9 +795,9 @@ Definition liftIA2 {I J K A B C} (f : A → B → C)
 
 End IxApplicative.
 
-Program Instance Atkey_IxApplicative {I : Type} `{H : IMonad I F}
+Program Instance Atkey_IxApplicative {I : Type} `{H : PMonad I F}
   : IxApplicative (Atkey F) := {
-  ixpure := fun _ _ x => iskip (V x)
+  ixpure := fun _ _ x => pskip (V x)
 }.
 Obligation 1.
   pose (@ibind I F H0 H I0 J K (X → Y) Y).
@@ -817,21 +817,21 @@ Obligation 2.
   extensionality X1. unfold id.
   destruct H. destruct H0. simpl in *.
   rewrite imonad_left_id0.
-  destruct is_ifunctor0.
+  destruct is_pfunctor0.
   assert
-    ((fun (H0 : I) (x : @IAssign I X I0 H0) =>
+    ((fun (H0 : I) (x : @PAssign I X I0 H0) =>
          match
-           x in (@IAssign _ _ _ y)
+           x in (@PAssign _ _ _ y)
            return
-             (@iobj I I
-                (@iobj I I F
-                   (Build_IFunctor I I F imap1 ifun_identity1
-                      ifun_composition1))
-                (Build_IFunctor I I F imap1 ifun_identity1 ifun_composition1)
-                (@IAssign I X I0) y)
+             (@pobj I I
+                (@pobj I I F
+                   (Build_PFunctor I I F pmap1 pfun_identity1
+                      pfun_composition1))
+                (Build_PFunctor I I F pmap1 pfun_identity1 pfun_composition1)
+                (@PAssign I X I0) y)
          with
-         | V a => iskip0 (@IAssign I X I0) I0 (@V I X I0 a)
-         end) = @iskip0 _).
+         | V a => pskip0 (@PAssign I X I0) I0 (@V I X I0 a)
+         end) = @pskip0 _).
     extensionality H1.
     extensionality x.
     destruct x. reflexivity.
@@ -862,7 +862,7 @@ Class IxMonad {I} (M : I → I → Type → Type) :=
     (m >>= f) >>= g = m >>= (λ x, f x >>= g)
 }.
 
-Program Instance Atkey_IxMonad {I : Type} `{H : IMonad I F}
+Program Instance Atkey_IxMonad {I : Type} `{H : PMonad I F}
   : IxMonad (Atkey F) := {
   ixbind := @ibind I F _ H
 }.
@@ -875,22 +875,22 @@ Obligation 2.
   unfold ibind, angbind.
   destruct H0. destruct H. simpl in *.
   assert
-    ((fun (H : I) (x : @IAssign I X O H) =>
+    ((fun (H : I) (x : @PAssign I X O H) =>
          match
-           x in (@IAssign _ _ _ y)
+           x in (@PAssign _ _ _ y)
            return
-             (@iobj I I (@iobj I I F is_ifunctor0) is_ifunctor0
-                (@IAssign I X O) y)
+             (@pobj I I (@pobj I I F is_pfunctor0) is_pfunctor0
+                (@PAssign I X O) y)
          with
-         | V a => iskip0 (@IAssign I X O) O (@V I X O a)
-         end) = @iskip0 _).
+         | V a => pskip0 (@PAssign I X O) O (@V I X O a)
+         end) = @pskip0 _).
     extensionality H.
     extensionality x.
     destruct x.
     reflexivity.
     rewrite H. clear H.
   apply (imonad_right_id0 _ (X ::= O)).
-  apply iskip0.
+  apply pskip0.
 Qed.
 Obligation 3.
   unfold ibind, angbind.
@@ -906,23 +906,35 @@ End Atkey.
 
 Module Kleene.
 
-Record Signature (I : Type) : Type := {
-    Operations : I → Type;
-    Arities    : forall i : I, Operations i → Type;
-    Sorts      : forall (i : I) (op : Operations i), Arities i op → I
+Record Signature (I O : Type) : Type := {
+    Operations : O → Type;
+    Arities    : forall o : O, Operations o → Type;
+    Sorts      : forall (o : O) (op : Operations o), Arities o op → I
 }.
 
-Arguments Operations {_} _ i.
-Arguments Arities {_} _ {_} op.
-Arguments Sorts {_} _ {_} {_} ar.
+Arguments Operations {I O} _ i.
+Arguments Arities {I O} _ {_} op.
+Arguments Sorts {I O} _ {_} {_} ar.
 
-Record WFunctor {I} (S : Signature I) (X : I → Type) (i : I) : Type := {
-    op : Operations S i;
+Infix "▷" := Signature (at level 60) : type_scope.
+Infix "o ◁ a / s" := ({| Operations := o
+                       ; Arities := a
+                       ; Sorts := s |}) (at level 40).
+
+Record WFunctor {I O} (S : I ▷ O) (X : I → Type) (o : O) : Type := {
+    op : Operations S o;
     ar : Arities S op;
     xx : X (Sorts S ar)
 }.
 
-Program Instance WFunctor_IFunctor {I} (S : Signature I) : IFunctor (WFunctor S).
+Arguments op {I O S X} o _.
+Arguments ar {I O S X} o _.
+Arguments xx {I O S X} o _.
+
+Coercion op : WFunctor >-> Operations.
+Coercion WFunctor : Signature >-> Funclass.
+
+Program Instance WFunctor_PFunctor {I O} (S : I ▷ O) : PFunctor (WFunctor S).
 Obligation 1.
   unfold ":→". intros.
   destruct X1.
@@ -942,66 +954,66 @@ Obligation 3.
   destruct F. reflexivity.
 Qed.
 
-Inductive Kleene {I} (S : Signature I) (p : I → Type) (i : I) :=
+Inductive Kleene {I O} (S : I ▷ O) (p : I → Type) (i : I) :=
 | Ret : p i → Kleene S p i
-| Do  : WFunctor S (Kleene S p) i → Kleene S p i.
+| Do  : forall o : O, WFunctor S (Kleene S p) o → Kleene S p i.
 
-Arguments Ret {I S p i} _.
-Arguments Do {I S p i} _.
+Arguments Ret {I O S p i} _.
+Arguments Do {I O S p i} o _.
 
 Infix ":*" := Kleene (at level 25, left associativity).
 
-Fixpoint Kleene_extend {I} (F : Signature I)
+Fixpoint Kleene_extend {I O} (F : I ▷ O)
   {p q : I → Type} (f : p :→ Kleene F q) i (x : Kleene F p i)
   {struct x} : Kleene F q i.
 Proof.
   destruct x as [y | r].
     apply (f i y).
-  apply Do.
-  destruct r.
+  apply (Do r).
+  destruct w.
   eexists.
-  apply (Kleene_extend _ _ p q f).
+  apply (Kleene_extend _ _ _ p q f).
   apply xx0.
 Defined.
 
-Fixpoint Kleene_map {I} (F : Signature I)
+Fixpoint Kleene_map {I O} (F : I ▷ O)
   {X Y} (f : X :→ Y) i (x : (F :* X) i) {struct x} : (F :* Y) i.
 Proof.
   destruct x.
     apply (Ret (f i x)).
-  apply Do.
+  apply (Do o).
   destruct w.
   eexists.
-  apply (Kleene_map I F X Y f).
+  apply (Kleene_map I O F X Y f).
   apply xx0.
 Defined.
 
-Fixpoint Kleene_identity {I} (F : Signature I)
+Fixpoint Kleene_identity {I O} (F : I ▷ O)
   {X : I → Type} {i : I} (x : (F :* X) i) :
-  Kleene_map F iid i x = iid i x.
+  Kleene_map F pid i x = pid i x.
 Proof.
   destruct x. reflexivity.
   destruct w.
-  unfold iid in *. simpl.
+  unfold pid in *. simpl.
   f_equal. f_equal.
   apply Kleene_identity.
 Qed.
 
-Fixpoint Kleene_composition {I} (F : Signature I)
+Fixpoint Kleene_composition {I O} (F : I ▷ O)
   (X Y Z : I → Type) (f : Y :→ Z) (g : X :→ Y)
   (i : I) (x : (F :* X) i) {struct x} :
   (Kleene_map F f :∘ Kleene_map F g) i x = Kleene_map F (f :∘ g) i x.
 Proof.
-  unfold icompose.
+  unfold pcompose.
   destruct x. reflexivity.
   destruct w. simpl.
   f_equal. f_equal.
   apply Kleene_composition.
 Qed.
 
-Program Instance Kleene_IFunctor {I} (F : Signature I)
-  : IFunctor (Kleene F) := {
-    imap := fun _ _ => Kleene_map F
+Program Instance Kleene_PFunctor {I O} (F : I ▷ O)
+  : PFunctor (Kleene F) := {
+    pmap := fun _ _ => Kleene_map F
 }.
 Obligation 1.
   extensionality i.
@@ -1014,18 +1026,18 @@ Obligation 2.
   apply Kleene_composition.
 Qed.
 
-Fixpoint Kleene_left_id {I} (F : Signature I)
+Fixpoint Kleene_left_id {I O} (F : I ▷ O)
   (p q : I → Type) (f : p :→ F :* q) (i : I) (m : (F :* p) i) :
   Kleene_extend F (λ H : I, Ret) i m = m.
 Proof.
   destruct m. reflexivity.
   destruct w. simpl.
   f_equal. f_equal.
-  apply (Kleene_left_id I F p q).
+  apply (Kleene_left_id I O F p q).
   assumption.
 Qed.
 
-Fixpoint Kleene_assoc {I} (F : Signature I)
+Fixpoint Kleene_assoc {I O} (F : I ▷ O)
   (p q r : I → Type) (f : p :→ F :* q) (g : q :→ F :* r)
   (i : I) (m : (F :* p) i) :
   Kleene_extend F g i (Kleene_extend F f i m) =
@@ -1034,13 +1046,13 @@ Proof.
   destruct m. reflexivity.
   destruct w. simpl.
   f_equal. f_equal.
-  apply (Kleene_assoc I F p q r).
+  apply (Kleene_assoc I O F p q r).
 Qed.
 
-Program Instance Kleene_IMonad {I} (F : Signature I)
-  : IMonad (Kleene F) := {
-    iskip := fun _ _ => Ret;
-    iextend := @Kleene_extend I F
+Program Instance Kleene_PMonad {I O} (F : I ▷ O)
+  : PMonad (Kleene F) := {
+    pskip := fun _ _ => Ret;
+    pextend := @Kleene_extend I O F
 }.
 Obligation 2.
   apply (Kleene_left_id F p q).
@@ -1052,6 +1064,8 @@ Qed.
 
 End Kleene.
 
+Module IAlgebra.
+
 Inductive RProd {I} (p q r : I → Type) (i : I) :=
   mkRProd : p i → (q :→ r) → RProd p q r i.
 
@@ -1060,8 +1074,8 @@ Arguments mkRProd {I p q r i} _ _.
 Infix ":>>:" := RProd (at level 25, left associativity).
 Infix ":&" := mkRProd (at level 25, left associativity).
 
-Program Instance RProd_IFunctor {I} (p q : I → Type) : IFunctor (p :>>: q) := {
-    imap := fun _ _ h _ x => match x with p :& k => p :& (h :∘ k) end
+Program Instance RProd_PFunctor {I} (p q : I → Type) : PFunctor (p :>>: q) := {
+    pmap := fun _ _ h _ x => match x with p :& k => p :& (h :∘ k) end
 }.
 Obligation 1.
   extensionality H.
@@ -1085,19 +1099,19 @@ Arguments InR {I O f g p i} _.
 
 Infix ":+:" := RSum (at level 25, left associativity).
 
-Program Instance RSum_IFunctor {I O} `{IFunctor I O f, IFunctor I O g}
-  : IFunctor (f :+: g) := {
-    imap := fun _ _ h _ x =>
+Program Instance RSum_PFunctor {I O} `{PFunctor I O f, PFunctor I O g}
+  : PFunctor (f :+: g) := {
+    pmap := fun _ _ h _ x =>
       match x with
-      | InL fp => InL (@imap I O f _ _ _ h _ fp)
-      | InR gp => InR (@imap I O g _ _ _ h _ gp)
+      | InL fp => InL (@pmap I O f _ _ _ h _ fp)
+      | InR gp => InR (@pmap I O g _ _ _ h _ gp)
       end
 }.
 Obligation 1.
   extensionality H1.
   extensionality x.
   destruct x;
-  rewrite ifun_identity; reflexivity.
+  rewrite pfun_identity; reflexivity.
 Qed.
 Obligation 2.
   extensionality H1.
@@ -1105,10 +1119,115 @@ Obligation 2.
   destruct x;
   [ destruct H | destruct H0 ];
   simpl in *;
-  unfold icompose in *; f_equal;
-  specialize (ifun_composition0 X Y Z f0 g0);
-  rewrite <- ifun_composition0; reflexivity.
+  unfold pcompose in *; f_equal;
+  specialize (pfun_composition0 X Y Z f0 g0);
+  rewrite <- pfun_composition0; reflexivity.
 Qed.
+
+End IAlgebra.
+
+Module SAlgebra.
+
+Import Kleene.
+
+Definition 𝒫 (X : Type) := X → Type.
+
+Definition Alg {O} (Σ : O ▷ O) (X : 𝒫 O) : Type := Σ X :→ X.
+
+(* jww (2014-10-10): WRONG *)
+Definition sdo {O C X} : @Alg O C (C :* X).
+Proof.
+  unfold Alg, ":→". intros.
+  apply (Do x).
+  apply X0.
+Defined.
+
+(* jww (2014-10-10): WRONG *)
+Definition generic {O} {Σ : O ▷ O} `{PMonad _ Σ} {o : O} (p : Operations Σ o)
+  : (Σ :* (λ o', forall a : Arities Σ p, Sorts Σ a = o')) o.
+Proof.
+  apply pskip. intros.
+Admitted.
+
+(*
+Inductive μ {O} (Σ : O ▷ O) (o : O) : Type := sup : Alg Σ (μ Σ) → μ Σ o.
+
+Fixpoint iter {O} {C : O ▷ O} {X} (φ : Alg C X)
+  {o : O} (x : μ C o) {struct x} : X o :=
+  match x with
+  | sup p k => φ p (pmap (fun a y => @iter O C X φ a y) p k)
+  end.
+*)
+
+Definition sid {O} : O ▷ O :=
+  {| Operations := λ _, True
+   ; Arities    := λ _ _, True
+   ; Sorts      := λ o _ _, o |}.
+
+(*
+Definition sconst {I O} (p : 𝒫 O) : I ▷ O :=
+  {| Operations := p
+   ; Arities    := λ _ _, False
+   ; Sorts      := λ x _ unit, undefined |}.
+*)
+
+Definition sor {I O} (x y : I ▷ O) : I ▷ O :=
+  match x with {| Operations := P₁
+                ; Arities    := A₁
+                ; Sorts      := s₁ |} =>
+  match y with {| Operations := P₂
+                ; Arities    := A₂
+                ; Sorts      := s₂ |} =>
+  {| Operations := λ x, P₁ x + P₂ x
+
+   ; Arities := λ o op,
+       match op with
+       | inl op' => A₁ o op'
+       | inr op' => A₂ o op'
+       end
+
+   ; Sorts := λ o op,
+       match op with
+       | inl op' => s₁ o op'
+       | inr op' => s₂ o op'
+       end
+   |}
+  end
+  end.
+
+(* This one is written using tactics because the dependent matching required
+   is rather ugly. *)
+Definition sand {I O} (x y : I ▷ O) : I ▷ O.
+  destruct x. destruct y.
+  eapply
+    {| Operations := λ x, Operations0 x * Operations1 x
+     ; Arities    := λ o op, let (op₁, op₂) := op in
+                             Arities0 o op₁ + Arities1 o op₂ |}.
+  Grab Existential Variables.
+  intros.
+  destruct op0.
+  destruct X.
+    apply (Sorts0 o o0 a).
+  apply (Sorts1 o o1 a).
+Defined.
+
+Definition State (S : Set) : S ▷ S :=
+  sor {| Operations := λ _, True
+       ; Arities    := λ s _, forall s' : S, s = s'
+       ; Sorts      := λ s _ _, s
+       |}
+      {| Operations := λ _, S
+       ; Arities    := λ _ _, True
+       ; Sorts      := λ _ s _, s
+       |}.
+
+(*
+Definition get {S} {s : S} : (State S :* ((forall s' : S, s = s') ::= s)) s.
+
+Definition put {S} {s s' : S} : (State S :* (unit ::= s')) s.
+*)
+
+End SAlgebra.
 
 Module Hoare.
 
@@ -1118,6 +1237,7 @@ Inductive FilePath := FilePath_.
 
 Inductive State := Open | Closed.
 
+(*
 Definition FH' : (State → Type) → State → Type :=
       ((FilePath ::= Closed) :>>: (fun _ => State))  (* fOpen *)
   :+: ((unit ::= Open) :>>: (option nat ::= Open))   (* fGetC *)
@@ -1127,6 +1247,7 @@ Definition FH : Signature State :=
   {| Operations := fun st : State => State -> Type
    ; Arities    := fun (st : State) ops => FH' ops st
    ; Sorts      := fun (st : State) ops ars => st |}.
+*)
 
 (*
 Definition fOpen (p : FilePath) : (FH :* (const State)) Closed.
@@ -1153,38 +1274,38 @@ Definition fClose : (FH :* (unit := Closed)) Open :=
 
 End Hoare.
 
-Module IState.
+Module PState.
 
-Inductive IState {I} (S P : I → Type) (i : I) :=
-  mkIState : (S i → (P i * S i)) → IState S P i.
+Inductive PState {I} (S P : I → Type) (i : I) :=
+  mkPState : (S i → (P i * S i)) → PState S P i.
 
-Arguments mkIState {I S P i} _.
+Arguments mkPState {I S P i} _.
 
-Definition runIState {I} {S P : I → Type} {i} (x : IState S P i) :=
-  match x with mkIState f => f end.
+Definition runPState {I} {S P : I → Type} {i} (x : PState S P i) :=
+  match x with mkPState f => f end.
 
-Definition iget {I} {S : I → Type} {i} : IState S S i :=
-  mkIState (fun s : S i => (s, s)).
+Definition pget {I} {S : I → Type} {i} : PState S S i :=
+  mkPState (fun s : S i => (s, s)).
 
-Definition igets {I} {S T : I → Type} {i} (f : S :→ T) : IState S T i :=
-  mkIState (fun s : S i => (f i s, s)).
+Definition pgets {I} {S T : I → Type} {i} (f : S :→ T) : PState S T i :=
+  mkPState (fun s : S i => (f i s, s)).
 
-Definition iput {I} {S : I → Type} {i} (s : S i) : IState S (const unit) i :=
-  mkIState (fun _ : S i => (tt, s)).
+Definition pput {I} {S : I → Type} {i} (s : S i) : PState S (const unit) i :=
+  mkPState (fun _ : S i => (tt, s)).
 
-Definition imodify {I} (S : I → Type) {i} (f : S :→ S)
-  : IState S (const unit) i :=
-  mkIState (fun s : S i => (tt, f i s)).
+Definition pmodify {I} (S : I → Type) {i} (f : S :→ S)
+  : PState S (const unit) i :=
+  mkPState (fun s : S i => (tt, f i s)).
 
-Program Instance IState_IFunctor {I} (S : I → Type)
-  : IFunctor (IState S) := {
-    imap := fun X Y f i x =>
-      mkIState (fun st => let (a,st') := runIState x st in (f i a, st'))
+Program Instance PState_PFunctor {I} (S : I → Type)
+  : PFunctor (PState S) := {
+    pmap := fun X Y f i x =>
+      mkPState (fun st => let (a,st') := runPState x st in (f i a, st'))
 }.
 Obligation 1.
   extensionality i.
   extensionality x.
-  unfold iid. destruct x.
+  unfold pid. destruct x.
   f_equal.
   extensionality st. simpl.
   destruct (p st).
@@ -1193,7 +1314,7 @@ Qed.
 Obligation 2.
   extensionality i.
   extensionality x.
-  unfold icompose.
+  unfold pcompose.
   f_equal.
   extensionality st.
   destruct x.
@@ -1202,11 +1323,11 @@ Obligation 2.
   reflexivity.
 Qed.
 
-Program Instance IState_IMonad {I} (S : I → Type) : IMonad (IState S) := {
-    iskip := fun p i x => mkIState (fun st => (x, st));
-    iextend := fun p q f i x => mkIState (fun st =>
-      let (y, st') := runIState x st in
-      runIState (f i y) st')
+Program Instance PState_PMonad {I} (S : I → Type) : PMonad (PState S) := {
+    pskip := fun p i x => mkPState (fun st => (x, st));
+    pextend := fun p q f i x => mkPState (fun st =>
+      let (y, st') := runPState x st in
+      runPState (f i y) st')
 }.
 Obligation 1.
   destruct (f i a). simpl.
@@ -1227,4 +1348,4 @@ Obligation 3.
   reflexivity.
 Qed.
 
-End IState.
+End PState.
