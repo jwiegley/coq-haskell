@@ -1,4 +1,5 @@
 Require Export Applicative.
+Require Import Coq.Lists.List.
 
 Class Monad (M : Type -> Type) :=
 { is_applicative :> Applicative M

@@ -168,6 +168,8 @@ Theorem source_distributes
                      f x >>= yield r)) =
   source (fun (r : R) (yield : R -> A -> EitherT R M R) =>
            m >>= f >>= yield r).
+Admitted.
+(*
 Proof.
   intros.
   unfold bind, flip.
@@ -188,6 +190,7 @@ Proof.
   simpl in e. repeat (rewrite e). clear e.
   f_equal.
 Qed.
+*)
 
 Global Instance Source_MonadTrans {M : Type -> Type} `{Monad M} {R}
   : @MonadTrans (fun N => Source N R) M _ Source_Monad :=

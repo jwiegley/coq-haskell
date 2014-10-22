@@ -1,5 +1,6 @@
 Require Export Applicative.
 Require Export FCompose.
+Require Import Tuple.
 
 (* Composition of applicatives produces an applicative. *)
 

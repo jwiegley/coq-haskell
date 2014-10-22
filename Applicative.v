@@ -1,4 +1,4 @@
-Require Import Endo.
+Require Export Endo.
 Require Import Tuple.
 Require Import Coq.Lists.List.
 
