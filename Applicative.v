@@ -1,6 +1,6 @@
-Require Export Endo.
-Require Export Tuple.
-Require Export Coq.Lists.List.
+Require Import Endo.
+Require Import Tuple.
+Require Import Coq.Lists.List.
 
 Generalizable All Variables.
 

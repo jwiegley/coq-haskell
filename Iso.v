@@ -1,3 +1,5 @@
+Require Import Ssreflect.choice.
+
 Require Export Basics.
 Require Export Endo.
 Require Export FCompose.
@@ -323,6 +325,7 @@ Proof.
   reflexivity.
 *)
 
+(*
 Lemma representable_unique `(F : Functor)
   : forall A B, Hom A [≅] F -> Hom B [≅] F -> A ≅ B.
 Proof.
@@ -441,3 +444,4 @@ Proof.
     rewrite iso_from0. reflexivity.
   reflexivity.
 Qed.
+*)
