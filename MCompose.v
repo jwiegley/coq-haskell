@@ -83,3 +83,129 @@ Proof.
     rewrite <- H4.
     reflexivity.
 Defined.
+
+(*--------------------------------------------------------------------------*)
+
+
+Inductive Identity {a : Type} := Identity_ : a -> Identity.
+
+Program Instance Identity_Functor : Functor (@Identity) := {
+    fmap := fun _ _ f x => match x with Identity_ x' => Identity_ (f x') end
+}.
+Obligation 1. Admitted.
+Obligation 2. Admitted.
+
+Program Instance Identity_Applicative : Applicative (@Identity) := {
+    eta := fun _ => Identity_;
+    apply := fun _ _ mf mx => match mf with
+        Identity_ f => match mx with
+          Identity_ x => Identity_ (f x)
+        end
+      end
+}.
+Obligation 1. Admitted.
+Obligation 2. Admitted.
+
+Inductive Compose {f g : Type -> Type} {a : Type} :=
+  Compose_ : f (g a) -> Compose.
+
+Definition getCompose {f g : Type -> Type} {a : Type} (x : @Compose f g a) :
+  f (g a) := match x with Compose_ x' => x' end.
+
+Program Instance Compose_Functor
+  {f g : Type -> Type} `{Functor f} `{Functor g} :
+  Functor (@Compose f g) := {
+    fmap := fun _ _ f x => match x with
+        Compose_ k => Compose_ (fmap (fmap f) k)
+      end
+}.
+Obligation 1. Admitted.
+Obligation 2. Admitted.
+
+Program Instance Compose_Applicative
+  {f g : Type -> Type} `{Applicative f} `{Applicative g} :
+  Applicative (@Compose f g) := {
+    eta := fun _ x => Compose_ (eta (eta x));
+    apply := fun _ _ mf mx => match mf with
+        Compose_ f => match mx with
+          Compose_ x => Compose_ (eta apply <*> f <*> x)
+        end
+      end
+}.
+Obligation 1. Admitted.
+Obligation 2. Admitted.
+Obligation 3. Admitted.
+Obligation 4. Admitted.
+Obligation 5. Admitted.
+
+Class Traversable (t : Type -> Type) `{Functor t} := {
+    traverse : forall {f a b} `{Applicative f}, (a -> f b) -> t a -> f (t b);
+    sequenceA : forall {f a} `{Applicative f}, t (f a) -> f (t a);
+
+    _ : forall a h `{Applicative h} k `{Applicative k}
+               (f : forall {a}, k a -> h a) (g : a -> k a),
+          f ∘ traverse g = traverse (f ∘ g);
+    _ : forall a, traverse Identity_ = @Identity_ (t a);
+    _ : forall a h `{Applicative h} k `{Applicative k}
+               (f g : forall {a}, a -> a),
+          traverse (@Compose_ h k a ∘ fmap g ∘ f)
+            = Compose_ ∘ fmap (traverse g) ∘ traverse f;
+
+    _ : forall a h `{Applicative h} k `{Applicative k}
+               (f : forall {a b}, a -> b),
+          f ∘ sequenceA = sequenceA ∘ @fmap t _ (k a) (k a) f;
+    _ : forall a, sequenceA ∘ fmap Identity_ = @Identity_ (t a)
+    (* _ : forall a h `{Applicative h} k `{Applicative k}, *)
+    (*       sequenceA ∘ fmap Compose_ = @Compose_ h k a ∘ fmap sequenceA ∘ sequenceA *)
+}.
+
+Program Instance Compose_Monad
+  {f g : Type -> Type} `{Monad f} `{Monad g} `{is_trav : Traversable g} :
+  Monad (@Compose f g) := {
+    mu := fun a mm =>
+     match mm with
+        Compose_ fgm =>
+          let x := fmap (fmap getCompose) fgm in
+          Compose_ (fmap mu (mu (fmap sequenceA x)))
+     end
+}.
+Obligation 1.
+  intros.
+  unfold compose.
+  extensionality x.
+  destruct x. simpl.
+  repeat rewrite fun_composition_x.
+  f_equal.
+  f_equal.
+  f_equal.
+  admit.
+Admitted.
+Obligation 2.
+  intros.
+  unfold compose, getCompose.
+  extensionality x.
+  destruct x. simpl.
+  unfold id. f_equal.
+  repeat rewrite fun_composition_x.
+  unfold compose. simpl.
+  admit.
+Admitted.
+Obligation 3.
+  intros.
+  unfold compose, getCompose.
+  extensionality x.
+  destruct x. simpl.
+  unfold id. f_equal.
+  admit.
+Admitted.
+Obligation 4.
+  intros.
+  unfold compose, getCompose.
+  extensionality x.
+  destruct x. simpl.
+  repeat rewrite fun_composition_x.
+  set (f' := sequenceA ∘ _) at 1.
+  set (f'' := sequenceA ∘ _) at 1.
+  repeat rewrite <- fun_composition_x.
+  admit.
+Admitted.
