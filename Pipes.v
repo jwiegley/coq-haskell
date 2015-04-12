@@ -40,6 +40,7 @@ Program Instance Container_Functor {S : Type} (P : S -> Type) :
 }.
 Obligation 1. extensionality x; destruct x; reflexivity. Qed.
 
+(*
 Record Monoid (a : Type) := {
     mempty  : a;
     mappend : a -> a -> a;
@@ -49,42 +50,64 @@ Record Monoid (a : Type) := {
     m_assoc : forall x y z, mappend x (mappend y z) = mappend (mappend x y) z
 }.
 
-Definition AContainer
-  `(IndexType : Shape -> Type)
-  (M : Monoid Shape) (MP : forall s : Shape, Monoid (IndexType s)) (a : Type) :=
-  Container IndexType a.
+Definition AContainer {S : Type} (P : S -> Type)
+  (D : forall a, a -> Container P a)
+  (F : forall a b,
+         Container P (a -> b) -> Container P a -> Container P b) := Container P.
+*)
 
 Require Export Applicative.
 
+(*
 Program Instance AContainer_Functor
-  {S : Type} (P : S -> Type) (M : Monoid S) (MP : forall s : S, Monoid (P s)) :
-  Functor (AContainer P M MP) := Container_Functor P.
+  {S : Type} (P : S -> Type) (D : forall a, a -> Container P a)
+  (F : forall a b,
+         Container P (a -> b) -> Container P a -> Container P b) :
+  Functor (AContainer P D F) := Container_Functor P.
 
 Program Instance AContainer_Applicative
-  {S : Type} (P : S -> Type) (M : Monoid S) (MP : forall s : S, Monoid (P s)) :
-  Applicative (AContainer P M MP) := {
-  pure := fun X x =>
-    {| shape  := mempty S M
-     ; getter := fun _ => x
-     |};
-  ap := fun X Y f x =>
-    {| shape  := mappend S M (shape f) (shape x)
-     ; getter := fun i => getter f i (getter x i)
-     |}
+  {S : Type} (P : S -> Type) (D : forall a, a -> Container P a)
+  (F : forall a b,
+         Container P (a -> b) -> Container P a -> Container P b) :
+  Applicative (AContainer P D F) := {
+  pure := fun X x => D _ x;
+  ap := fun X Y f x => F _ _ f x
 }.
-Obligation 1. Admitted.
+Obligation 1.
+  extensionality x.
+  unfold id.
+  destruct x; simpl in *.
+  clear -m_left0.
+  admit.
+Admitted.
 Obligation 2. Admitted.
 Obligation 3. Admitted.
 Obligation 4. Admitted.
 Obligation 5. Admitted.
-Obligation 6. Admitted.
-Obligation 7. Admitted.
+*)
 
-Inductive FreeF {A : Type} (P : A -> Type) (a b : Type) :=
+Require Export Monad.
+
+(*
+Program Instance AContainer_Monad
+  {S : Type} (P : S -> Type) (M : Monoid S)
+  (MP1 : forall s1 s2 : S, P (mappend S M s1 s2) -> P s1)
+  (MP2 : forall s1 s2 : S, P (mappend S M s1 s2) -> P s2) :
+  Monad (AContainer P M MP1 MP2) := {
+  join := fun _ x =>
+    {| shape  := mappend S M (shape f) (shape x)
+     ; getter := fun i => getter f (MP1 _ _ i) (getter x (MP2 _ _ i))
+     |}
+}.
+*)
+
+Inductive FreeF `(P : A -> Type) (a b : Type) :=
   | Pure : a -> FreeF P a b
   | Free : Container P b -> FreeF P a b.
 
-Inductive FreeT {CM CF : Type} (PM : CM -> Type) (PF : CF -> Type) (a : Type) :=
+Inductive FreeT
+  `(PM : CM -> Type) `{Monad (Container PM)}
+  `(PF : CF -> Type) (a : Type) :=
   runFreeT : Container PM (FreeF PF a (FreeT PM PF a)) -> FreeT PM PF a.
 
 (* The pipes Proxy functor has only two shapes: requesting and responding.
@@ -105,23 +128,35 @@ Definition ProxyFP (a' a b' b : Type) (proxy : ProxyFS a' b) :=
    that it is always capable of producing a value. This restricts the set of
    monads that can be used with our Proxy to only those that are strictly
    positive functors. *)
-Definition Proxy a' a b' b (M : Type) (P : M -> Type) r :=
-  FreeT P (ProxyFP a' a b' b) r.
+Definition Proxy a' a b' b `(m : A -> Type)
+  `{Monad (Container m)} r := FreeT m (ProxyFP a' a b' b) r.
+
+Fixpoint runEffect (n : nat) `(dflt : r)
+  `{m : A -> Type} {H : Monad (Container m)}
+  `(x : Proxy False unit unit False m r) {struct n} : Container m r :=
+  match n with
+  | S n =>
+      match x with
+      | runFreeT v =>
+          y <- v ;
+          match y return Container m r with
+          | Free {| shape := Request _; getter := f |} =>
+              runEffect n dflt (f tt)
+          | Free {| shape := Respond _; getter := f |} =>
+              runEffect n dflt (f tt)
+          | Pure r => pure r
+          end
+      end
+  | Z => pure dflt
+  end.
 
 (*
-Definition runEffect (x : Proxy Void () () Void m r) : m r :=
-  let c := runFreeT x in
-
-runEffect = go . runProxy
-  where
-    go p = runFreeT p >>= \case
-        Free (Request _ f) -> go (f ())
-        Free (Respond _ f) -> go (f ())
-        Pure r             -> return r
-
-respond :: Monad m => a -> Proxy x' x a' a m a'
-respond a = Proxy $ FreeT $ return $ Free $ Respond a (FreeT . return . Pure)
+Program Definition respond `{m : A -> Type} `{Monad (Container m)}
+  {x' x a' a} (z : a) : Proxy x' x a' a m a' :=
+  runFreeT _ _ _ $ pure $
+    Free _ _ _ {| shape  := Respond a
+                  ; getter := runFreeT _ _ _ ∘ pure ∘ Pure _ _ _ |}.
 *)
 
-Definition Producer  b := Proxy False unit unit b.
-Definition Producer' b m p r := forall x' x, Proxy x' x unit b m p r.
+(* Definition Producer  b := Proxy False unit unit b. *)
+(* Definition Producer' b m r := forall x' x, Proxy x' x unit b m r. *)
