@@ -1,3 +1,5 @@
+Generalizable All Variables.
+
 (* A container takes a set of shapes [S] and a family of types [P] indexed by
    [S]. Using these two, we may construct a box for one such shape [x : S]
    along with a function (unnamed, but let's call it [f]) that, given some
@@ -19,8 +21,64 @@
    container must be strictly positive, since its elements are demonstrably
    finite (its use is contingent on the inhabitants of [S] and [P x]). *)
 
-Inductive Container {S : Type} (P : S -> Type) (a : Type) :=
-  Box : forall x : S, (P x -> a) -> Container P a.
+Record Container `(IndexType : Shape -> Type) (a : Type) := {
+    shape  : Shape;
+    getter : IndexType shape -> a
+}.
+
+Arguments shape  [Shape IndexType a] c.
+Arguments getter [Shape IndexType a] c idx.
+
+Require Export Endo.
+
+Program Instance Container_Functor {S : Type} (P : S -> Type) :
+  Functor (Container P) := {
+  fmap := fun X Y f x =>
+    {| shape  := shape x
+     ; getter := fun i => f (getter x i)
+     |}
+}.
+Obligation 1. extensionality x; destruct x; reflexivity. Qed.
+
+Record Monoid (a : Type) := {
+    mempty  : a;
+    mappend : a -> a -> a;
+
+    m_left  : forall x, mappend mempty x = x;
+    m_right : forall x, mappend x mempty = x;
+    m_assoc : forall x y z, mappend x (mappend y z) = mappend (mappend x y) z
+}.
+
+Definition AContainer
+  `(IndexType : Shape -> Type)
+  (M : Monoid Shape) (MP : forall s : Shape, Monoid (IndexType s)) (a : Type) :=
+  Container IndexType a.
+
+Require Export Applicative.
+
+Program Instance AContainer_Functor
+  {S : Type} (P : S -> Type) (M : Monoid S) (MP : forall s : S, Monoid (P s)) :
+  Functor (AContainer P M MP) := Container_Functor P.
+
+Program Instance AContainer_Applicative
+  {S : Type} (P : S -> Type) (M : Monoid S) (MP : forall s : S, Monoid (P s)) :
+  Applicative (AContainer P M MP) := {
+  pure := fun X x =>
+    {| shape  := mempty S M
+     ; getter := fun _ => x
+     |};
+  ap := fun X Y f x =>
+    {| shape  := mappend S M (shape f) (shape x)
+     ; getter := fun i => getter f i (getter x i)
+     |}
+}.
+Obligation 1. Admitted.
+Obligation 2. Admitted.
+Obligation 3. Admitted.
+Obligation 4. Admitted.
+Obligation 5. Admitted.
+Obligation 6. Admitted.
+Obligation 7. Admitted.
 
 Inductive FreeF {A : Type} (P : A -> Type) (a b : Type) :=
   | Pure : a -> FreeF P a b
@@ -50,9 +108,20 @@ Definition ProxyFP (a' a b' b : Type) (proxy : ProxyFS a' b) :=
 Definition Proxy a' a b' b (M : Type) (P : M -> Type) r :=
   FreeT P (ProxyFP a' a b' b) r.
 
+(*
+Definition runEffect (x : Proxy Void () () Void m r) : m r :=
+  let c := runFreeT x in
+
+runEffect = go . runProxy
+  where
+    go p = runFreeT p >>= \case
+        Free (Request _ f) -> go (f ())
+        Free (Respond _ f) -> go (f ())
+        Pure r             -> return r
+
+respond :: Monad m => a -> Proxy x' x a' a m a'
+respond a = Proxy $ FreeT $ return $ Free $ Respond a (FreeT . return . Pure)
+*)
+
 Definition Producer  b := Proxy False unit unit b.
 Definition Producer' b m p r := forall x' x, Proxy x' x unit b m p r.
-
-Require Export Endo.
-Require Export Applicative.
-Require Export Monad.
