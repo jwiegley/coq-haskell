@@ -21,13 +21,13 @@ Generalizable All Variables.
    container must be strictly positive, since its elements are demonstrably
    finite (its use is contingent on the inhabitants of [S] and [P x]). *)
 
-Record Container `(IndexType : Shape -> Type) (a : Type) := {
+Record Container `(Position : Shape -> Type) (a : Type) := {
     shape  : Shape;
-    getter : IndexType shape -> a
+    getter : Position shape -> a
 }.
 
-Arguments shape  [Shape IndexType a] c.
-Arguments getter [Shape IndexType a] c idx.
+Arguments shape  [Shape Position a] c.
+Arguments getter [Shape Position a] c idx.
 
 Require Export Endo.
 
