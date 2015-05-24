@@ -276,8 +276,9 @@ Qed.
 
 Definition nat_equiv (x y : F ⟾ G) : Prop :=
   match x with
-  | Build_Natural transport0 _ => match y with
-    | Build_Natural transport1 _ => forall {X}, transport0 X = transport1 X
+  | Build_Natural _ _ _ _ transport0 _ => match y with
+    | Build_Natural _ _ _ _ transport1 _ =>
+        forall {X}, transport0 X = transport1 X
     end
   end.
 
@@ -760,7 +761,8 @@ Proof.
   unfold Const. intros.
   destruct X. destruct F.
   refine (Build_Natural _ _ _ _ _ _); intros; simpl.
-  crush. rewrite right_identity. reflexivity.
+  crush. rewrite right_identity.
+  apply cone_law0.
 Defined.
 
 (* jww (2014-08-24): Need Coq 8.5

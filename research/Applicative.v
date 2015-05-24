@@ -223,7 +223,7 @@ Section Applicatives.
     unfold app_prod.
     repeat (rewrite <- app_fmap_unit).
     rewrite <- app_composition.
-    f_equal. f_equal.
+    f_equal.
     repeat (rewrite app_fmap_unit).
     rewrite fun_composition_x.
     repeat (rewrite <- app_fmap_unit).

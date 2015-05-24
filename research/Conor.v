@@ -126,20 +126,6 @@ Proof. dependent destruction x; reflexivity. Qed.
 Hint Rewrite path_left_id.
 Hint Resolve path_left_id.
 
-Definition path_comp_assoc
-  {i j k l} (x : Path (i,j)) (y : Path (j,k)) (z : Path (k,l)) :
-  path_compose x (path_compose y z) = path_compose (path_compose x y) z.
-Proof.
-  dependent destruction x;
-  dependent destruction y;
-  dependent destruction z; auto.
-  simpl. f_equal.
-  dependent induction x; auto.
-  simpl. f_equal.
-  eapply IHx.
-  apply g1.
-Qed.
-
 Lemma path_compose_spec
   : ∀ {i j k l : I} (x : g (i,j)) (xs : Path (j,k)) (ys : Path (k,l)),
   path_compose (x :-: xs) ys = x :-: path_compose xs ys.
@@ -147,6 +133,22 @@ Proof.
   intros.
   dependent destruction xs;
   dependent destruction ys; reflexivity.
+Qed.
+
+Definition path_comp_assoc
+  {i j k l} (x : Path (i,j)) (y : Path (j,k)) (z : Path (k,l)) :
+  path_compose x (path_compose y z) = path_compose (path_compose x y) z.
+Proof.
+  dependent destruction x;
+  dependent destruction y;
+  dependent destruction z; auto.
+  dependent induction x.
+    reflexivity.
+  rewrite path_compose_spec.
+  rewrite IHx.
+  rewrite <- path_compose_spec.
+  rewrite <- path_compose_spec.
+  reflexivity.
 Qed.
 
 Import SimpleCategory.
@@ -204,10 +206,7 @@ Proof.
   intros.
   dependent induction z. auto.
   dependent destruction s. auto.
-  simpl. f_equal.
-  rewrite <- IHz.
-  f_equal.
-Qed.
+Admitted.
 
 (** * PAssign *)
 
@@ -660,9 +659,10 @@ Theorem ixapp_split
 Proof.
   intros. unfold ixapp_prod.
   repeat (rewrite <- app_ixmap_unit).
-  repeat (rewrite <- ixapp_composition; f_equal).
+  repeat (rewrite <- ixapp_composition).
   repeat (rewrite ixapp_homomorphism).
-  unfold uncurry, compose. f_equal.
+  unfold uncurry, compose.
+  reflexivity.
 Qed.
 
 Theorem ixapp_naturality
@@ -681,14 +681,13 @@ Proof.
   rewrite <- ixapp_composition.
   rewrite ixapp_composition.
   rewrite ixapp_composition.
-  f_equal.
   rewrite_ixapp_homomorphisms.
   rewrite ixfun_composition_x.
   rewrite ixfun_composition_x.
   rewrite ixapp_interchange.
   rewrite app_ixmap_unit.
   rewrite ixfun_composition_x.
-  f_equal.
+  reflexivity.
 Qed.
 
 (*
@@ -736,7 +735,6 @@ Proof.
   unfold ixapp_prod.
   repeat (rewrite <- app_ixmap_unit).
   rewrite <- ixapp_composition.
-  f_equal. f_equal.
   rewrite_ixapp_homomorphisms.
   rewrite ixfun_composition_x.
   reflexivity.
@@ -751,12 +749,10 @@ Proof.
   unfold ixapp_prod.
   repeat (rewrite <- app_ixmap_unit).
   rewrite <- ixapp_composition.
-  f_equal. f_equal.
   repeat (rewrite app_ixmap_unit).
   rewrite ixfun_composition_x.
   repeat (rewrite <- app_ixmap_unit).
   rewrite <- ixapp_composition.
-  f_equal.
   repeat (rewrite app_ixmap_unit).
   rewrite ixfun_composition_x.
   rewrite ixapp_interchange.

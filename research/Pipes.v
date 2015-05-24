@@ -40,75 +40,21 @@ Program Instance Container_Functor {S : Type} (P : S -> Type) :
 }.
 Obligation 1. extensionality x; destruct x; reflexivity. Qed.
 
-(*
-Record Monoid (a : Type) := {
-    mempty  : a;
-    mappend : a -> a -> a;
-
-    m_left  : forall x, mappend mempty x = x;
-    m_right : forall x, mappend x mempty = x;
-    m_assoc : forall x y z, mappend x (mappend y z) = mappend (mappend x y) z
-}.
-
-Definition AContainer {S : Type} (P : S -> Type)
-  (D : forall a, a -> Container P a)
-  (F : forall a b,
-         Container P (a -> b) -> Container P a -> Container P b) := Container P.
-*)
-
 Require Export Applicative.
-
-(*
-Program Instance AContainer_Functor
-  {S : Type} (P : S -> Type) (D : forall a, a -> Container P a)
-  (F : forall a b,
-         Container P (a -> b) -> Container P a -> Container P b) :
-  Functor (AContainer P D F) := Container_Functor P.
-
-Program Instance AContainer_Applicative
-  {S : Type} (P : S -> Type) (D : forall a, a -> Container P a)
-  (F : forall a b,
-         Container P (a -> b) -> Container P a -> Container P b) :
-  Applicative (AContainer P D F) := {
-  pure := fun X x => D _ x;
-  ap := fun X Y f x => F _ _ f x
-}.
-Obligation 1.
-  extensionality x.
-  unfold id.
-  destruct x; simpl in *.
-  clear -m_left0.
-  admit.
-Admitted.
-Obligation 2. Admitted.
-Obligation 3. Admitted.
-Obligation 4. Admitted.
-Obligation 5. Admitted.
-*)
-
 Require Export Monad.
-
-(*
-Program Instance AContainer_Monad
-  {S : Type} (P : S -> Type) (M : Monoid S)
-  (MP1 : forall s1 s2 : S, P (mappend S M s1 s2) -> P s1)
-  (MP2 : forall s1 s2 : S, P (mappend S M s1 s2) -> P s2) :
-  Monad (AContainer P M MP1 MP2) := {
-  join := fun _ x =>
-    {| shape  := mappend S M (shape f) (shape x)
-     ; getter := fun i => getter f (MP1 _ _ i) (getter x (MP2 _ _ i))
-     |}
-}.
-*)
 
 Inductive FreeF `(P : A -> Type) (a b : Type) :=
   | Pure : a -> FreeF P a b
   | Free : Container P b -> FreeF P a b.
 
-Inductive FreeT
-  `(PM : CM -> Type) `{Monad (Container PM)}
+Arguments Pure {A P a b} _.
+Arguments Free {A P a b} _.
+
+Inductive FreeT `(PM : CM -> Type) `{Monad (Container PM)}
   `(PF : CF -> Type) (a : Type) :=
   runFreeT : Container PM (FreeF PF a (FreeT PM PF a)) -> FreeT PM PF a.
+
+Arguments runFreeT {CM PM _ CF PF a} _.
 
 (* The pipes Proxy functor has only two shapes: requesting and responding.
    This is equivalent to [a' + b]. *)
@@ -128,8 +74,8 @@ Definition ProxyFP (a' a b' b : Type) (proxy : ProxyFS a' b) :=
    that it is always capable of producing a value. This restricts the set of
    monads that can be used with our Proxy to only those that are strictly
    positive functors. *)
-Definition Proxy a' a b' b `(m : A -> Type)
-  `{Monad (Container m)} r := FreeT m (ProxyFP a' a b' b) r.
+Definition Proxy a' a b' b `(m : A -> Type) `{Monad (Container m)} r :=
+  FreeT m (ProxyFP a' a b' b) r.
 
 Fixpoint runEffect (n : nat) `(dflt : r)
   `{m : A -> Type} {H : Monad (Container m)}
@@ -140,23 +86,21 @@ Fixpoint runEffect (n : nat) `(dflt : r)
       | runFreeT v =>
           y <- v ;
           match y return Container m r with
-          | Free {| shape := Request _; getter := f |} =>
-              runEffect n dflt (f tt)
-          | Free {| shape := Respond _; getter := f |} =>
-              runEffect n dflt (f tt)
           | Pure r => pure r
+          | Free {| shape  := Request _
+                  ; getter := f |} => runEffect n dflt (f tt)
+          | Free {| shape  := Respond _
+                  ; getter := f |} => runEffect n dflt (f tt)
           end
       end
   | Z => pure dflt
   end.
 
-(*
 Program Definition respond `{m : A -> Type} `{Monad (Container m)}
   {x' x a' a} (z : a) : Proxy x' x a' a m a' :=
-  runFreeT _ _ _ $ pure $
-    Free _ _ _ {| shape  := Respond a
-                  ; getter := runFreeT _ _ _ ∘ pure ∘ Pure _ _ _ |}.
-*)
+  runFreeT $ pure/Container m $
+    Free {| shape  := Respond a
+          ; getter := runFreeT ∘ pure ∘ Pure |}.
 
-(* Definition Producer  b := Proxy False unit unit b. *)
-(* Definition Producer' b m r := forall x' x, Proxy x' x unit b m r. *)
+Definition Producer  b := Proxy False unit unit b.
+Definition Producer' b m r := forall x' x, Proxy x' x unit b m r.

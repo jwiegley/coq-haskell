@@ -326,7 +326,7 @@ equalities.
 
 *)
 
-Program Instance iso_identity `{C : Category} : X ≅ X := {
+Program Instance iso_identity `{C : Category} (X : C) : X ≅ X := {
     to   := id/X;
     from := id/X
 }.
@@ -368,8 +368,8 @@ Qed.
 
 Definition iso_equiv `{C : Category} {a b : C} (x y : a ≅ b) : Prop :=
   match x with
-  | Build_Isomorphism to0 from0 _ _ => match y with
-    | Build_Isomorphism to1 from1 _ _ =>
+  | Build_Isomorphism _ _ _ to0 from0 _ _ => match y with
+    | Build_Isomorphism _ _ _ to1 from1 _ _ =>
       to0 = to1 ∧ from0 = from1
     end
   end.

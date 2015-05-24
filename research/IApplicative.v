@@ -164,14 +164,14 @@ Section IApplicatives.
     rewrite <- iapp_composition.
     rewrite iapp_composition.
     rewrite iapp_composition.
-    f_equal.
     rewrite_iapp_homomorphisms.
     rewrite ifun_composition_x.
     rewrite ifun_composition_x.
     rewrite iapp_interchange.
     rewrite app_imap_unit.
     rewrite ifun_composition_x.
-    f_equal.
+    unfold compose.
+    reflexivity.
   Qed.
 
 (*

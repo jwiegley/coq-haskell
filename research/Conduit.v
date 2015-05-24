@@ -96,62 +96,63 @@ Definition Source_join {M : Type -> Type} `{Monad M}
   {R X} : Source M R (Source M R X) -> Source M R X :=
   Source_ M R X ∘ join ∘ fmap getSource ∘ getSource.
 
-Global Instance Source_Monad {M : Type -> Type} `{Monad M} {R}
+Global Program Instance Source_Monad {M : Type -> Type} `{Monad M} {R}
   : Monad (Source M R) :=
 { is_applicative := Source_Applicative
 ; join := fun _ => Source_join
 }.
-Proof.
-  - (* monad_law_1 *)
-    intros. extensionality x. simpl.
-    unfold Source_join, Source_map, id, compose.
-    destruct x.
-    destruct c. simpl.
-    unfold compose, flip.
-    repeat f_equal.
-    extensionality p. f_equal.
-    extensionality q. f_equal.
-    destruct q.
-    destruct c.
-    reflexivity.
-
-  - (* monad_law_2 *)
-    intros. extensionality x. simpl.
-    unfold Source_join, Source_map, id, compose.
-    destruct x.
-    f_equal. simpl.
-    pose proof (@fun_composition_x _ (@Cont_Functor (R -> EitherT R M R))).
-    simpl in H0.
-    rewrite H0.
-    pose proof (@monad_law_2_x _ (@Cont_Monad (R -> EitherT R M R))).
-    simpl in H1.
-    unfold compose. simpl.
-    apply H1.
-
-  - (* monad_law_3 *)
-    intros. extensionality x. simpl.
-    unfold Source_join, id, compose.
-    destruct x.
-    f_equal. simpl.
-    unfold compose.
-    destruct c.
-    f_equal.
-
-  - (* monad_law_4 *)
-    intros. extensionality x. simpl.
-    unfold Source_join, Source_map, compose.
-    destruct x.
-    f_equal. simpl.
-    destruct c. simpl.
-    f_equal.
-    unfold compose.
-    extensionality p.
-    f_equal. simpl.
-    extensionality q.
-    destruct q.
-    destruct c. simpl.
-    reflexivity.
-Defined.
+Obligation 1. (* monad_law_1 *)
+  intros. extensionality x. simpl.
+  unfold Source_join, Source_map, id, compose.
+  destruct x.
+  destruct c. simpl.
+  unfold compose, flip.
+  repeat f_equal.
+  extensionality p. f_equal.
+  extensionality q. f_equal.
+  destruct q.
+  destruct c.
+  reflexivity.
+Qed.
+Obligation 2. (* monad_law_2 *)
+  intros. extensionality x. simpl.
+  unfold Source_join, Source_map, id, compose.
+  destruct x.
+  f_equal. simpl.
+  pose proof (@fun_composition_x _ (@Cont_Functor (R -> EitherT R M R))).
+  simpl in H0.
+  rewrite H0.
+  pose proof (@monad_law_2_x _ (@Cont_Monad (R -> EitherT R M R))).
+  simpl in H1.
+  unfold compose. simpl.
+  apply H1.
+Qed.
+Obligation 3. (* monad_law_3 *)
+  intros. extensionality x. simpl.
+  unfold Source_join, id, compose.
+  destruct x.
+  f_equal. simpl.
+  unfold compose.
+  destruct c.
+  f_equal.
+Qed.
+Obligation 4. (* monad_law_4 *)
+  intros. extensionality x. simpl.
+  unfold Source_join, Source_map, compose.
+  destruct x.
+  destruct c.
+  f_equal. simpl.
+  f_equal.
+  extensionality p.
+  extensionality q.
+  unfold compose.
+  f_equal.
+  extensionality r.
+  extensionality s.
+  destruct r.
+  destruct c.
+  reflexivity.
+Admitted.
 
 Definition source {M : Type -> Type} `{Monad M} {R A}
    (await : R -> (R -> A -> EitherT R M R) -> EitherT R M R)

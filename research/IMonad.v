@@ -25,10 +25,10 @@ Definition ibind {M : Type -> Type -> Type -> Type} `{IMonad M} {I J K X Y}
 Notation "m >>>= f" := (ibind f m) (at level 25, left associativity).
 
 Notation "X <<- A ;; B" := (A >>>= (fun X => B))
-  (right associativity, at level 84, A1 at next level).
+  (right associativity, at level 84).
 
 Notation "A ;;; B" := (_ <<- A ;; B)
-  (right associativity, at level 84, A1 at next level).
+  (right associativity, at level 84).
 
 Theorem imonad_law_1_x
   : forall M (m_dict : IMonad M) I J K O A (x : M I J (M J K (M K O A))),
