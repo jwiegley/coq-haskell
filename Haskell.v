@@ -173,4 +173,4 @@ Extract Inlined Constant vnth     => "LinearScan.Utils.nth".
 Extract Inlined Constant vfoldl_with_index
   => "(LinearScan.Utils.vfoldl'_with_index)".
 
-Extraction Blacklist String List Vector NonEmpty.
+Extraction Blacklist String List Vector Prelude.
