@@ -1,5 +1,6 @@
 Require Import Hask.Prelude.
 Require Import Hask.Control.Monad.
+Require Import Hask.Control.Monad.State.
 
 Generalizable All Variables.
 Set Implicit Arguments.
@@ -49,6 +50,12 @@ Program Instance StateT_Monad `{Monad m} {s : Type} : Monad (StateT s m) := {
 
 Definition lift `{Monad m} {s} `(x : m a) : StateT s m a :=
   fun st => (fun z => (z, st)) <$> x.
+
+Definition liftStateT `{Monad m} `(x : State s a) : StateT s m a :=
+  st <-- getT ;;
+  let (a, st') := x st in
+  putT st' ;;
+  pure a.
 
 Module StateTLaws.
 
