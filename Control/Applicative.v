@@ -77,11 +77,6 @@ Proof.
   exact: ap_fmap.
 Qed.
 
-Ltac rewrite_ap_homos :=
-  (repeat (rewrite <- ap_fmap);
-   rewrite ap_homo;
-   repeat (rewrite ap_fmap)).
-
 Program Instance Applicative_Compose (F : Type -> Type) (G : Type -> Type)
   `{ApplicativeLaws F} `{ApplicativeLaws G} : ApplicativeLaws (F \o G).
 Obligation 1. (* app_identity *)
