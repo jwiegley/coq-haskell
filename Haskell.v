@@ -102,12 +102,6 @@ Extract Inductive comparison =>
 
 Extract Inlined Constant Arith.Plus.tail_plus => "(Prelude.+)".
 
-Extraction Implicit widen_id [ n ].
-Extraction Implicit widen_fst [ n ].
-
-Extract Inlined Constant widen_id  => "".
-Extract Inlined Constant widen_fst => "Prelude.id".
-
 (* Data.IntMap *)
 
 (* Extract Inductive IntMap => "Data.IntMap.IntMap" *)

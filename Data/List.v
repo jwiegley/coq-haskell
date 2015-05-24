@@ -607,20 +607,6 @@ Proof.
   by rewrite mem_filter => /= /andP [/eqP/=-> pIxs ->].
 Qed.
 
-Lemma map_widen_fst : forall (a : eqType) n (xs : seq ('I_n * a)),
-  [seq fst i | i <- [seq (@widen_fst n a) i | i <- xs]] =
-  [seq (@widen_id n) i | i <- [seq fst i | i <- xs]].
-Proof. move=> a n xs. by rewrite -!map_comp. Qed.
-
-Lemma no_ord_max : forall n (xs : seq ('I_n)),
-  ord_max \notin [ seq widen_id i | i <- xs ].
-Proof.
-  move=> n; elim=> // [x xs IHxs] /=.
-  rewrite in_cons /=.
-  apply/norP; split; last assumption.
-  exact: lift_bounded.
-Qed.
-
 Lemma has_size : forall (a : eqType) x (xs : seq a), x \in xs -> 0 < size xs.
 Proof. move=> a x; elim=> //. Qed.
 
@@ -878,24 +864,4 @@ Proof.
   case E: (y == x); first exact.
   move/IHys => Hsub {IHys}.
   exact: subseq_cons_add.
-Qed.
-
-Lemma widen_ord_refl : forall n (H : n <= n) x, widen_ord (m := n) H x = x.
-Proof.
-  move=> n H.
-  case=> m Hm.
-  rewrite /widen_ord /=.
-  congr (Ordinal _).
-  exact: eq_irrelevance.
-Qed.
-
-Lemma map_widen_ord_refl : forall b n (H : n <= n) (xs : seq ('I_n * b)),
-  [seq (let: (xid, reg) := i in (widen_ord (m:=n) H xid, reg)) | i <- xs] = xs.
-Proof.
-  move=> b n H.
-  elim=> //= [x xs IHxs].
-  rewrite IHxs.
-  case: x => [xid reg].
-  congr ((_, reg) :: xs).
-  exact: widen_ord_refl.
 Qed.

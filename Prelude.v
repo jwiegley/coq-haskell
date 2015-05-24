@@ -121,54 +121,5 @@ Proof.
   by ordered.
 Qed.
 
-Lemma lift_bounded : forall n (x : 'I_n), ord_max != widen_ord (leqnSn n) x.
-Proof.
-  move=> n.
-  case=> /= m Hlt.
-  rewrite /ord_max /lift.
-  apply/eqP; invert.
-  move: H0 Hlt => ->.
-  by rewrite ltnn.
-Qed.
-
-Definition widen_id {n} := widen_ord (leqnSn n).
-Arguments widen_id [n] i /.
-Definition widen_fst {n a} p := (@widen_id n (@fst _ a p), snd p).
-
-Lemma widen_ord_inj : forall m n (H : m <= n), injective (widen_ord H).
-Proof.
-  move=> m n H.
-  rewrite /injective => x1 x2.
-  by invert; apply ord_inj.
-Qed.
-
-Lemma widen_ord_spec : forall n x (H : n <= n), widen_ord H x = x.
-Proof.
-  move=> ? [? ?] ?.
-  rewrite /widen_ord.
-  congr (Ordinal _).
-  exact: eq_irrelevance.
-Qed.
-
-Lemma widen_fst_inj : forall a n, injective (@widen_fst n a).
-Proof.
-  move=> a n.
-  rewrite /injective => [[[x1a H1] x1b] [[x2a H2] x2b]].
-  invert.
-  congr (_, _).
-  rewrite H0 in H1 *.
-  congr (Ordinal _).
-  exact: eq_irrelevance.
-Qed.
-
 Lemma and_swap : forall x y z, [&& x, y & z] = [&& y, x & z].
 Proof. by case; case; case. Qed.
-
-Lemma widen_ord_refl : forall n (H : n <= n) x, widen_ord (m := n) H x = x.
-Proof.
-  move=> n H.
-  case=> m Hm.
-  rewrite /widen_ord /=.
-  congr (Ordinal _).
-  exact: eq_irrelevance.
-Qed.
