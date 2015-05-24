@@ -1,4 +1,6 @@
 .*.aux
-/.coq-native/
+.coq-native/
 *.d
+*.vo
+*.glob
 /Makefile.coq
