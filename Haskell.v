@@ -1,9 +1,14 @@
-Require Import Hask.Prelude.
-Require Import Hask.Data.IntMap.
-Require Import Hask.Data.IntSet.
-Require Import Hask.Data.List.
-Require Import Hask.Data.NonEmpty.
-Require Import Hask.Data.Vector.
+Require Export Hask.Prelude.
+Require Export Hask.Data.IntMap.
+Require Export Hask.Data.IntSet.
+Require Export Hask.Data.List.
+Require Export Hask.Data.NonEmpty.
+Require Export Hask.Data.Vector.
+
+Generalizable All Variables.
+Set Implicit Arguments.
+Unset Strict Implicit.
+Unset Printing Implicit Defensive.
 
 Extraction Language Haskell.
 
@@ -13,7 +18,6 @@ Set Extraction Optimize.
 Set Extraction AccessOpaque.
 
 (* Ssr *)
-
 
 Extract Inductive unit    => "()" [ "()" ].
 Extract Inductive bool    => "Prelude.Bool" ["Prelude.True" "Prelude.False"].
@@ -80,7 +84,7 @@ Extraction Implicit nat_of_ord [ n ].
 Extraction Implicit widen_ord [ n m ].
 
 Extract Inlined Constant nat_of_ord => "".
-Extract Inlined Constant widen_ord => "".
+Extract Inlined Constant widen_ord  => "".
 
 Extract Inlined Constant ssr_have => "(Prelude.flip (Prelude.$))".
 
@@ -101,8 +105,8 @@ Extract Inlined Constant Arith.Plus.tail_plus => "(Prelude.+)".
 Extraction Implicit widen_id [ n ].
 Extraction Implicit widen_fst [ n ].
 
-Extract Inlined Constant widen_id           => "".
-Extract Inlined Constant widen_fst          => "Prelude.id".
+Extract Inlined Constant widen_id  => "".
+Extract Inlined Constant widen_fst => "Prelude.id".
 
 (* Data.IntMap *)
 
