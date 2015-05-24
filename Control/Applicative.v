@@ -61,65 +61,64 @@ Corollary fmap_pure_x `{ApplicativeLaws m} : forall (a b : Type) (f : a -> b) x,
   fmap f (pure x) = pure (f x).
 Proof. exact: fmap_pure. Qed.
 
-(* Program Instance Applicative_Compose (F : Type -> Type) (G : Type -> Type) *)
-(*   `{ApplicativeLaws F} `{ApplicativeLaws G} : ApplicativeLaws (F \o G). *)
-(* Obligation 1. (* app_identity *) *)
-(*   move=> e. *)
-(*   rewrite <- ap_fmap_unit. *)
-(*   rewrite ap_homomorphism. *)
-(*   rewrite ap_identity. *)
-(*   rewrite ap_fmap_unit. *)
-(*   rewrite fun_identity. *)
-(*   reflexivity. *)
-(* Qed. *)
-(* Obligation 2. (* ap_composition *) *)
-(*   intros. *)
-(*   (* apply <$> (apply <$> (apply <$> pure (pure compose) <*> u) <*> v) <*> w = *)
-(*      apply <$> u <*> (apply <$> v <*> w) *) *)
-(*   unfold compose_apply, compose_pure, compose. *)
-(*   rewrite <- ap_composition. *)
-(*   f_equal. *)
-(*   rewrite_ap_homomorphisms. *)
-(*   rewrite fun_composition_x. *)
-(*   rewrite ap_split. *)
-(*   rewrite ap_split. *)
-(*   rewrite <- ap_naturality. *)
-(*   rewrite fun_composition_x. *)
-(*   rewrite fun_composition_x. *)
-(*   f_equal. extensionality x. *)
-(*   destruct x. *)
-(*   unfold compose at 3. *)
-(*   unfold ap_merge. *)
-(*   rewrite uncurry_works. *)
-(*   unfold compose at 1. *)
-(*   unfold compose at 1. *)
-(*   rewrite uncurry_works. *)
-(*   extensionality e. *)
-(*   rewrite <- ap_fmap_unit. *)
-(*   rewrite ap_composition. *)
-(*   unfold compose. *)
-(*   reflexivity. *)
+Corollary ap_id_ext `{ApplicativeLaws f} : forall a : Type,
+  ap (pure (@id a)) = id.
+Proof.
+  move=> a.
+  extensionality x.
+  exact: ap_id.
+Qed.
 
-(* - (* ap_homomorphism *) intros. *)
-(*   unfold compose_apply, compose_pure, compose. *)
-(*   rewrite <- ap_fmap_unit. *)
-(*   repeat (rewrite ap_homomorphism). *)
-(*   reflexivity. *)
+Corollary ap_fmap_ext `{ApplicativeLaws F} : forall (a b : Type) (f : a -> b),
+  ap (pure f) = @fmap _ is_functor _ _ f.
+Proof.
+  move=> a b f.
+  extensionality x.
+  exact: ap_fmap.
+Qed.
 
-(* - (* ap_interchange *) intros. *)
-(*   unfold compose_apply, compose_pure, compose. *)
-(*   repeat (rewrite <- ap_fmap_unit). *)
-(*   rewrite ap_interchange. *)
-(*   rewrite_ap_homomorphisms. *)
-(*   rewrite fun_composition_x. *)
-(*   unfold compose. f_equal. extensionality e. *)
-(*   rewrite <- ap_fmap_unit. *)
-(*   rewrite ap_interchange. *)
-(*   reflexivity. *)
+Ltac rewrite_ap_homos :=
+  (repeat (rewrite <- ap_fmap);
+   rewrite ap_homo;
+   repeat (rewrite ap_fmap)).
 
-(* - (* ap_fmap_unit *) intros. *)
-(*   unfold compose_apply, compose_pure, compose. *)
-(*   rewrite_ap_homomorphisms. *)
-(*   reflexivity. *)
+Program Instance Applicative_Compose (F : Type -> Type) (G : Type -> Type)
+  `{ApplicativeLaws F} `{ApplicativeLaws G} : ApplicativeLaws (F \o G).
+Obligation 1. (* app_identity *)
+  move=> e.
+  by rewrite -ap_fmap ap_homo ap_id_ext ap_fmap fmap_id.
+Qed.
+Obligation 2. (* ap_composition *)
+  (* Discharge w *)
+  rewrite -ap_comp.
+  f_equal.
+  (* Discharge v *)
+  rewrite -ap_fmap_ext -ap_comp -[X in _ <*> _ <*> X v]ap_fmap_ext -ap_comp.
+  f_equal.
+  (* Discharge u *)
+  rewrite fmap_pure_x ap_homo !ap_fmap !fmap_comp_x ap_interchange
+          ap_fmap fmap_comp_x ap_fmap_ext.
+  f_equal.
+  (* Discharge compose *)
+  extensionality u'.
+  rewrite [_ ap _]/compose [compose _ ap]/compose.
+  extensionality v'.
+  rewrite -ap_fmap_ext.
+  extensionality w'.
+  by rewrite /= ap_comp.
+Qed.
+Obligation 3. (* ap_homo *)
+  by rewrite -ap_fmap !ap_homo.
+Qed.
+Obligation 4. (* ap_interchange *)
+  rewrite -!ap_fmap ap_interchange ap_homo !ap_fmap fmap_comp_x.
+  f_equal.
+  extensionality e.
+  by rewrite ap_interchange.
+Qed.
+Obligation 5. (* ap_fmap *)
+  move=> x.
+  by rewrite -ap_fmap ap_homo ap_fmap ap_fmap_ext.
+Qed.
 
 End ApplicativeLaws.
