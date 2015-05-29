@@ -1,25 +1,11 @@
 Require Import Hask.Prelude.
 Require Import Hask.Control.Monad.
+Require Import Hask.Data.Functor.Identity.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 Generalizable All Variables.
-
-Definition Identity (a : Type) := a.
-
-Program Instance Identity_Functor : Functor Identity := {
-  fmap := fun _ _ => id
-}.
-
-Program Instance Identity_Applicative : Applicative Identity := {
-  pure := fun _ => id;
-  ap := fun _ _ => id
-}.
-
-Program Instance Identity_Monad : Monad Identity := {
-  join := fun _ => id
-}.
 
 Definition Const (c a : Type) := c.
 

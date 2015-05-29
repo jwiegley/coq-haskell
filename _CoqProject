@@ -1,16 +1,22 @@
 -R . Hask
 Control/Applicative.v
+Control/Comonad.v
 Control/Iso.v
 Control/Lens.v
 Control/Monad.v
 Control/Monad/State.v
+Control/Monad/Trans/Free.v
 Control/Monad/Trans/State.v
+Control/Pipes.v
 Data/Functor.v
+Data/Functor/Container.v
+Data/Functor/Identity.v
 Data/Functor/Yoneda.v
 Data/IntMap.v
 Data/IntSet.v
 Data/NonEmpty.v
 Data/List.v
+Data/List/Church.v
 Data/Vector.v
 Haskell.v
 Ltac.v

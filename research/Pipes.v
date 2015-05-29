@@ -1,48 +1,5 @@
 Generalizable All Variables.
 
-(* A container takes a set of shapes [S] and a family of types [P] indexed by
-   [S]. Using these two, we may construct a box for one such shape [x : S]
-   along with a function (unnamed, but let's call it [f]) that, given some
-   "index" [i : P x], yields the contained element corresponding to [i], of
-   type [a].
-
-   For example, the shape of a list of type [list a] may be described by its
-   length [n : nat], along with an accessor of type [Fin n -> a]. Thus:
-
-     S = nat
-     P = forall n : S, Fin n
-     x : S
-     f : P x -> a := fun (i : P x) => nth i <some Vector x a>
-
-   The accessor in this case need not be a closure over [Vector x a], but is
-   always isomorphic to it.
-
-   The benefit of this abstraction is that any type representable as a
-   container must be strictly positive, since its elements are demonstrably
-   finite (its use is contingent on the inhabitants of [S] and [P x]). *)
-
-Record Container `(Position : Shape -> Type) (a : Type) := {
-    shape  : Shape;
-    getter : Position shape -> a
-}.
-
-Arguments shape  [Shape Position a] c.
-Arguments getter [Shape Position a] c idx.
-
-Require Export Endo.
-
-Program Instance Container_Functor {S : Type} (P : S -> Type) :
-  Functor (Container P) := {
-  fmap := fun X Y f x =>
-    {| shape  := shape x
-     ; getter := fun i => f (getter x i)
-     |}
-}.
-Obligation 1. extensionality x; destruct x; reflexivity. Qed.
-
-Require Export Applicative.
-Require Export Monad.
-
 Inductive FreeF `(P : A -> Type) (a b : Type) :=
   | Pure : a -> FreeF P a b
   | Free : Container P b -> FreeF P a b.

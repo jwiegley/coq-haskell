@@ -12,32 +12,16 @@ Require Import FunctionalExtensionality.
 Require Import Hask.Prelude.
 Require Import Hask.Control.Lens.
 Require Import Hask.Control.Monad.
+Require Import Hask.Control.Monad.Trans.Free.
+Require Import Hask.Data.Functor.Identity.
 
 (* Set Universe Polymorphism. *)
 
 Generalizable All Variables.
 
-Definition FreeT (f m : Type -> Type) (a : Type) :=
-  forall r, (a -> m r) -> (forall x, (x -> m r) -> f x -> m r) -> m r.
-
-Program Instance FreeT_Functor {f m} : Functor (FreeT f m) := {
-  fmap := fun _ _ f k => fun _ a fr => k _ (a \o f) fr
-}.
-
-Program Instance FreeT_Applicative {f m} : Applicative (FreeT f m) := {
-  pure := fun _ a => fun _ k _ => k a;
-  ap   := fun _ _ fk ak => fun _ b fr =>
-    fk _ (fun e => ak _ (fun d => b (e d)) fr) fr
-}.
-
-Program Instance FreeT_Monad {f m} : Monad (FreeT f m) := {
-  join := fun _ x => fun _ k g => undefined
-}.
-
 Inductive ProxyF a' a b' b r :=
   | Request of a' & (a  -> r)
   | Respond of b  & (b' -> r).
-
 Arguments Request {a' a b' b r} _ _.
 Arguments Respond {a' a b' b r} _ _.
 
@@ -57,7 +41,6 @@ Definition Producer' b m r := forall x' x, Proxy x' x unit b m r.
 
 Definition yieldxx `{Monad m} {a} (z : a) : Producer' a m unit :=
   fun _ _ => respond z.
-
 Definition yield `{Monad m} {a x' x} (z : a) : Proxy x' x unit a m unit :=
   @yieldxx m _ a z x' x.
 
@@ -81,24 +64,6 @@ Definition toListM `{Monad m} `(p : Producer a m unit) : m (seq a) :=
     | Respond x f => @fmap m _ _ _ (cons x) (h (f tt))
     end.
 
-Inductive Identity (a : Type) := Id of a.
-
-Definition runIdentity `(x : Identity a) : a :=
-  match x with Id y => y end.
-
-Program Instance Identity_Functor : Functor Identity := {
-  fmap := fun _ _ f x => Id _ (f (runIdentity x))
-}.
-
-Program Instance Identity_Applicative : Applicative Identity := {
-  pure := fun _ => Id _;
-  ap := fun _ _ f x => Id _ (runIdentity f (runIdentity x))
-}.
-
-Program Instance Identity_Monad : Monad Identity := {
-  join := fun _ => runIdentity
-}.
-
 Module PipesLaws.
 
 Include MonadLaws.
@@ -107,6 +72,9 @@ Section Examples.
 
 Context `{H : Monad m}.
 Context `{HL : MonadLaws m}.
+
+Theorem single_step `(f : FreeT f m a) :
+  f _ k h = (exists a m, k a ;; 
 
 Axiom fmap_cps : forall `{Functor f} a b c (k : forall r, (a -> r) -> f r)
   (g : b -> c) (h : a -> b), fmap g (k _ h) = k _ (g \o h).
