@@ -53,9 +53,9 @@ Obligation 2.
   by rewrite /funcomp fmap_id.
 Qed.
 
-Program Instance Yoneda_Functor {f : Type -> Type} : FunctorLaws (Yoneda f).
+Program Instance Yoneda_FunctorLaws {f : Type -> Type} : FunctorLaws (Yoneda f).
 
-Program Instance Yoneda_Applicative `{ApplicativeLaws f} :
+Program Instance Yoneda_ApplicativeLaws `{ApplicativeLaws f} :
   ApplicativeLaws (Yoneda f).
 Obligation 1.
   move=> x /=.
@@ -91,7 +91,7 @@ Obligation 5.
   f_equal.
 Qed.
 
-Program Instance Yoneda_Monad `{MonadLaws m} : MonadLaws (Yoneda m).
+Program Instance Yoneda_MonadLaws `{MonadLaws m} : MonadLaws (Yoneda m).
 Obligation 1.
   move=> k /=.
   rewrite /Yoneda_join.

@@ -85,7 +85,7 @@ Module MonadLaws.
 
 Include ApplicativeLaws.
 
-Class MonadLaws (m : Type -> Type) `{Monad m} := {
+Class MonadLaws (m : Type -> Type) `{H : Monad m} := {
   has_applicative_laws :> ApplicativeLaws m;
 
   join_fmap_join : forall a : Type, join \o fmap (@join m _ a) =1 join \o join;
