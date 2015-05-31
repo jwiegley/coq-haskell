@@ -2,39 +2,72 @@ Require Import Hask.Prelude.
 Require Import Hask.Control.Lens.
 Require Import Hask.Control.Monad.
 Require Import Hask.Control.Monad.Trans.Free.
-Require Import Hask.Data.Functor.Identity.
 
 (* Set Universe Polymorphism. *)
 
 Generalizable All Variables.
 
-Inductive ProxyF a' a b' b r :=
-  | Request of a' & (a  -> r)
-  | Respond of b  & (b' -> r).
+Inductive Proxy (a' a b' b : Type) (m : Type -> Type) (r : Type) : Type :=
+    | Request of a' & (a  -> Proxy a' a b' b m r)
+    | Respond of b  & (b' -> Proxy a' a b' b m r)
+    | M : forall x, (x -> Proxy a' a b' b m r) -> m x
+                       -> Proxy a' a b' b m r
+    | Pure    of r.
 
-Arguments Request {a' a b' b r} _ _.
-Arguments Respond {a' a b' b r} _ _.
+Arguments Request {a' a b' b m r} _ _.
+Arguments Respond {a' a b' b m r} _ _.
+Arguments M {a' a b' b m r x} _ _.
+Arguments Pure {a' a b' b m r} _.
 
-Program Instance ProxyF_Functor : Functor (ProxyF a' a b' b) := {
-  fmap := fun _ _ f x => match x with
-    | Request a' fa => Request a' (f \o fa)
-    | Respond b  fb => Respond b  (f \o fb)
-    end
+Program Instance Proxy_Functor {a' a b' b} `{Monad m} :
+  Functor (Proxy a' a b' b m) := {
+  fmap := fun _ _ f p0 =>
+    let fix go p := match p with
+      | Request a' fa  => Request a' (fun a  => go (fa  a))
+      | Respond b  fb' => Respond b  (fun b' => go (fb' b'))
+      | M _     f  t   => M (go \o f) t
+      | Pure    r      => Pure (f r)
+      end in
+    go p0
 }.
 
-Definition Proxy a' a b' b m r := FreeT (ProxyF a' a b' b) m r.
+Program Instance Proxy_Applicative {a' a b' b} `{Monad m} :
+  Applicative (Proxy a' a b' b m) := {
+  pure := fun _ => Pure;
+  ap := fun _ _ pf px =>
+    let fix go p := match p with
+      | Request a' fa  => Request a' (fun a  => go (fa  a))
+      | Respond b  fb' => Respond b  (fun b' => go (fb' b'))
+      | M _     f  t   => M (go \o f) t
+      | Pure    f      => fmap f px
+      end in
+    go pf
+}.
 
-Definition runEffect `{Applicative m}
-  `(p : Proxy False unit unit False m r) : m r :=
-  p _ pure $ fun _ k x => match x with
-    | Request _ f => k (f tt)
-    | Respond _ f => k (f tt)
-    end.
+Program Instance Proxy_Monad {a' a b' b} `{Monad m} :
+  Monad (Proxy a' a b' b m) := {
+  join := fun _ x =>
+    let fix go p := match p with
+      | Request a' fa  => Request a' (fun a  => go (fa  a))
+      | Respond b  fb' => Respond b  (fun b' => go (fb' b'))
+      | M _     f  t   => M (go \o f) t
+      | Pure    f      => f
+      end in
+    go x
+}.
 
-Definition respond `(z : a) {x' x a' m} : Proxy x' x a' a m a' :=
-  fun _ k g => g _ id $ Respond z k.
+Fixpoint runEffect `{Monad m} `(p : Proxy False unit unit False m r) : m r :=
+  match p with
+  | Request v f => False_rect _ v
+  | Respond v f => False_rect _ v
+  | M _     f t => t >>= (runEffect \o f)
+  | Pure    r   => pure r
+  end.
 
-Definition Producer  b m r := Proxy False unit unit b m r.
+Definition respond {x' x a' a m} (z : a) : Proxy x' x a' a m a' :=
+  Respond z Pure.
+
+Definition Producer := Proxy False unit unit.
 Definition Producer' b m r := forall x' x, Proxy x' x unit b m r.
 
 Definition yieldxx {a m} (z : a) : Producer' a m unit :=
@@ -42,69 +75,203 @@ Definition yieldxx {a m} (z : a) : Producer' a m unit :=
 Definition yield {a x' x m} (z : a) : Proxy x' x unit a m unit :=
   @yieldxx a m z x' x.
 
-Definition forP `(p0 : Proxy x' x b' b m a')
-  `(fb : b -> Proxy x' x c' c m b') : Proxy x' x c' c m a' :=
-  fun _ k g => p0 _ k $ fun _ h x => match x with
-    | Request x' fx  => g _ h $ Request x' fx
-    | Respond b  fb' => fb b _ (h \o fb') g
-    end.
+Definition forP {x' x a' b' b c' c} `{Monad m} (p0 : Proxy x' x b' b m a')
+  (fb : b -> Proxy x' x c' c m b') : Proxy x' x c' c m a' :=
+  let fix go p := match p with
+    | Request x' fx  => Request x' (fun x => go (fx x))
+    | Respond b  fb' => fb b >>= fun b' => go (fb' b')
+    | M _     f  t   => M (go \o f) t
+    | Pure       a   => Pure a
+    end in
+  go p0.
 
 Notation "x //> y" := (forP x y) (at level 60).
 
-Definition each {a m} : seq a -> Producer a m unit :=
+Notation "f />/ g" := (fun a => f a //> g) (at level 60).
+
+Definition each `{Monad m} {a} : seq a -> Producer a m unit :=
   mapM_ yield.
 
-Definition toListM `{Applicative m} `(p : Producer a m unit) : m (seq a) :=
-  p _ (fun _ => pure [::]) $ fun X h p => match p with
-    | Request v f  => h (f tt)
-    | Respond x f => @fmap m _ _ _ (cons x) (h (f tt))
-    end.
+Fixpoint toListM `{Monad m} `(p : Producer a m unit) : m (seq a) :=
+  match p with
+  | Request v _  => False_rect _ v
+  | Respond x fu =>
+        xs <-- toListM (fu tt) ;;
+        pure (x::xs)
+  | M _     f t  => t >>= (toListM \o f)
+  | Pure    _    => pure [::]
+  end.
+
+(* jww (2015-05-30): Make \o bind tighter than >>= *)
 
 Module PipesLaws.
 
 Include MonadLaws.
 
-Section Examples.
+Require Import FunctionalExtensionality.
 
-Example toListM_ex1 : @toListM id _ _ (yield 1) = [:: 1].
-Proof. reflexivity. Qed.
+Program Instance Proxy_FunctorLaws {a' a b' b} `{Monad m} :
+  FunctorLaws (Proxy a' a b' b m).
+Obligation 1.
+  move=> x.
+  elim: x => [A' fa IHx|B fb' IHx|f t IHx| x].
+  - f_equal.
+    extensionality a1.
+    exact: IHx.
+  - f_equal.
+    extensionality b'1.
+    exact: IHx.
+  - move=> m0.
+    f_equal.
+    extensionality x.
+    exact: IHx.
+  - by [].
+Qed.
+Obligation 2.
+  move=> x.
+  rewrite /funcomp.
+  elim: x => [A' fa IHx|B fb' IHx|mf t IHx| x].
+  - f_equal.
+    extensionality a1.
+    exact: IHx.
+  - f_equal.
+    extensionality b'1.
+    exact: IHx.
+  - move=> m0.
+    f_equal.
+    extensionality x.
+    exact: IHx.
+  - by [].
+Qed.
 
-Example toListM_ex2 : @toListM id _ _ (yield 1 ;; yield 2) = [:: 1; 2].
-Proof. reflexivity. Qed.
+Program Instance Proxy_Applicative {a' a b' b} `{Monad m} :
+  ApplicativeLaws (Proxy a' a b' b m).
+Obligation 1.
+  move=> x.
+  elim: x => [A' fa IHx|B fb' IHx|mf t IHx| x].
+  - f_equal.
+    extensionality a1.
+    exact: IHx.
+  - f_equal.
+    extensionality b'1.
+    exact: IHx.
+  - move=> m0.
+    f_equal.
+    extensionality x.
+    exact: IHx.
+  - by [].
+Qed.
+Obligation 2.
+Admitted.
 
-Example toListM_ex3 : @toListM id _ _ (mapM_ yield [:: 1; 2]) = [:: 1; 2].
-Proof. reflexivity. Qed.
+Program Instance Proxy_Monad {a' a b' b} `{Monad m} :
+  MonadLaws (Proxy a' a b' b m).
+Obligation 1.
+  move=> x.
+  rewrite /funcomp.
+  elim: x => [A' fa IHx|B fb' IHx|mf t IHx| x].
+  - f_equal.
+    extensionality a1.
+    exact: IHx.
+  - f_equal.
+    extensionality b'1.
+    exact: IHx.
+  - move=> m0.
+    f_equal.
+    extensionality x.
+    exact: IHx.
+  - by [].
+Qed.
+Obligation 2.
+  move=> x.
+  rewrite /funcomp.
+  elim: x => [A' fa IHx|B fb' IHx|mf t IHx| x].
+  - f_equal.
+    extensionality a1.
+    exact: IHx.
+  - f_equal.
+    extensionality b'1.
+    exact: IHx.
+  - move=> m0.
+    f_equal.
+    extensionality x.
+    exact: IHx.
+  - by [].
+Qed.
+Obligation 4.
+  move=> x.
+  rewrite /funcomp.
+  elim: x => [A' fa IHx|B fb' IHx|mf t IHx| x].
+  - f_equal.
+    extensionality a1.
+    exact: IHx.
+  - f_equal.
+    extensionality b'1.
+    exact: IHx.
+  - move=> m0.
+    f_equal.
+    extensionality x.
+    exact: IHx.
+  - by [].
+Qed.
 
-Example toListM_ex4 : @toListM id _ _ (each [:: 1; 2]) = [:: 1; 2].
-Proof. reflexivity. Qed.
+Theorem respond_left_id `{MonadLaws m} :
+  forall (a' a b' b : Type) (r : Type) (f : a -> Proxy a' a b' b m r),
+  (respond />/ f) =1 f.
+Proof.
+  move=> a' a b' b r f x.
+  exact: join_fmap_pure_x.
+Qed.
 
-Axiom FreeT_fmap :
-  forall `{Monad m} a r (g : r -> r) f (l : FreeT f m a) k h,
-  @fmap m _ _ _ g (l r k h) = l r k (fun n s => @fmap m _ _ _ g \o h n s).
+Theorem respond_right_id `{MonadLaws m} :
+  forall (a' a b' b : Type) (r : Type) (f : a -> Proxy a' a b' b m r),
+  (f />/ respond) =1 f.
+Proof.
+  move=> a' a b' b r f x.
+  rewrite /respond.
+  elim: (f x) => //= [A' fa IHx|B fb' IHx|mf t IHx].
+  - f_equal.
+    extensionality a1.
+    exact: IHx.
+  - rewrite /bind /=.
+    f_equal.
+    extensionality b'1.
+    exact: IHx.
+  - move=> m0.
+    f_equal.
+    rewrite /funcomp.
+    extensionality y.
+    exact: IHx.
+Qed.
 
-Variable f : Type -> Type.
-Context `{Functor f}.
-Context `{FunctorLaws f}.
+Theorem respond_assoc `{MonadLaws m} :
+  forall (x' x a' a b' b c' c d' d : Type)
+         (f : a -> Proxy x' x b' b m a')
+         (g : b -> Proxy x' x c' c m b')
+         (h : c -> Proxy x' x d' d m c'),
+  (f />/ g) />/ h =1 f />/ (g />/ h).
+Proof.
+  move=> x' x a' a b' b c' c d' d f g h z.
+  elim: (f z) => //= [A' fa IHx|B fb' IHx|mf t IHx].
+  - f_equal.
+    extensionality a1.
+    exact: IHx.
+  - rewrite /bind /=.
+    f_equal.
+    extensionality b'1.
+    exact: IHx.
+  - move=> m0.
+    f_equal.
+    rewrite /funcomp.
+    extensionality y.
+    exact: IHx.
+Qed.
 
-Variable m : Type -> Type.
-Context `{HM : Monad m}.
-Context `{MonadLaws m}.
-
-Theorem toListM_each : forall a (xs : seq a), toListM (each xs) = pure xs.
+Theorem toListM_each_id : forall a, toListM \o each =1 pure (a:=seq a).
 Proof.
   move=> a xs.
   elim: xs => //= [x xs IHxs].
-  rewrite -ap_homo -IHxs ap_fmap_ext.
-  rewrite FreeT_fmap /funcomp /=.
-  rewrite /each /mapM_ /= -/mapM.
-  rewrite /toListM.
-  (* set k := (X in mapM_ yield xs _ _ X). *)
-  set g := (X in _ _ X = _).
-  (* set l := mapM_ yield xs. *)
-  set r := seq a.
-  (* rewrite fmap_pure_x. *)
-Abort.
-
-End Examples.
+  by rewrite IHxs.
+Qed.
 
 End PipesLaws.

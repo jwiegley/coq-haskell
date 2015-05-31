@@ -19,9 +19,10 @@ Notation "m >>= f" := (bind f m) (at level 25, left associativity).
 Notation "a >> b" := (a >>= fun _ => b) (at level 25, left associativity).
 
 Notation "X <-- A ;; B" := (A >>= (fun X => B))
-  (right associativity, at level 92, A at next level).
+  (right associativity, at level 92, A at next level, only parsing).
 
-Notation "A ;; B" := (_ <-- A ;; B) (at level 92, right associativity).
+Notation "A ;; B" := (_ <-- A ;; B) (at level 92, right associativity,
+                                     only parsing).
 
 Fixpoint mapM `{Applicative m} {A B} (f : A -> m B) (l : seq A) :
   m (seq B) :=
