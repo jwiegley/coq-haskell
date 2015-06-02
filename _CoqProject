@@ -1,5 +1,6 @@
 -R . Hask
 Control/Applicative.v
+Control/Category.v
 Control/Comonad.v
 Control/Iso.v
 Control/Lens.v
@@ -9,6 +10,7 @@ Control/Monad/Free.v
 Control/Monad/Trans/Free.v
 Control/Monad/Trans/State.v
 Control/Pipes.v
+Crush.v
 Data/Functor.v
 Data/Functor/Container.v
 Data/Functor/Identity.v

@@ -136,7 +136,7 @@ Ltac inster e trace :=
           (** We only reach this case if the trace is nonempty, ensuring that [inster] fails if no progress can be made. *)
           match goal with
             | [ H : done (trace, _) |- _ ] =>
-              (** Uh oh, found a record of this trace in the context!  Abort to backtrack to try another trace. *)
+              (** Uh oh, found a record of this trace in the context!  Backtrack to try another trace. *)
               fail 1
             | _ =>
               (** What is the type of the proof [e] now? *)

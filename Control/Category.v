@@ -9,7 +9,13 @@
 
 (** %\chapter{Category}% *)
 
-Require Export Basics.
+Require Import Hask.Prelude.
+Require Import Hask.Crush.
+Require Import Coq.Unicode.Utf8.
+Require Import FunctionalExtensionality.
+
+Axiom propositional_extensionality : forall P : Prop, P -> P = True.
+Axiom proof_irrelevance : forall (P : Prop) (u v : P), u = v.
 
 (* Set Universe Polymorphism. *)
 Generalizable All Variables.
@@ -59,8 +65,9 @@ polymorphism.
 
 *)
 
-    id : ∀ {A}, A ~> A;
-    compose : ∀ {A B C}, (B ~> C) → (A ~> B) → (A ~> C) where "f ∘ g" := (compose f g);
+    c_id : ∀ {A}, A ~> A;
+    c_comp : ∀ {A B C}, (B ~> C) → (A ~> B) → (A ~> C)
+      where "f ∘ g" := (c_comp f g);
 (**
 
 If [ob] and [hom] are the nouns of category theory, [id] and [compose] are its
@@ -71,9 +78,9 @@ identity and composition under three laws:
 
 *)
 
-    right_identity : ∀ A B (f : A ~> B), f ∘ id = f;
-    left_identity : ∀ A B (f : A ~> B), id ∘ f = f;
-    comp_assoc : ∀ A B C D (f : C ~> D) (g : B ~> C) (h : A ~> B),
+    c_right_id : ∀ A B (f : A ~> B), f ∘ c_id = f;
+    c_left_id : ∀ A B (f : A ~> B), c_id ∘ f = f;
+    c_comp_assoc : ∀ A B C D (f : C ~> D) (g : B ~> C) (h : A ~> B),
         f ∘ (g ∘ h) = (f ∘ g) ∘ h
 }.
 
@@ -91,10 +98,10 @@ Coercion ob : Category >-> Sortclass.
 
 Infix "~>"       := hom : category_scope.
 Infix "~{ C }~>" := (@hom C) (at level 100) : category_scope.
-Infix "∘"        := compose (at level 40, left associativity) : category_scope.
+Infix "∘"        := c_comp (at level 40, left associativity) : category_scope.
 
 Notation "ob/ C" := (@ob C) (at level 1) : category_scope.
-Notation "id/ X" := (@id _ X) (at level 1) : category_scope.
+Notation "id/ X" := (@c_id _ X) (at level 1) : category_scope.
 
 Open Scope category_scope.
 
@@ -104,21 +111,21 @@ Lemma cat_irrelevance `(C : Category) `(D : Category)
       l l' r r' c c',
   @m = @n →
   @p = @q →
-  {| ob              := C
-   ; hom             := @hom C
-   ; id              := @m
-   ; compose         := @p
-   ; left_identity   := l
-   ; right_identity  := r
-   ; comp_assoc      := c
+  {| ob           := C
+   ; hom          := @hom C
+   ; c_id         := @m
+   ; c_comp       := @p
+   ; c_left_id    := l
+   ; c_right_id   := r
+   ; c_comp_assoc := c
  |} =
-  {| ob              := C
-   ; hom             := @hom C
-   ; id              := @n
-   ; compose         := @q
-   ; left_identity   := l'
-   ; right_identity  := r'
-   ; comp_assoc      := c'
+  {| ob           := C
+   ; hom          := @hom C
+   ; c_id         := @n
+   ; c_comp       := @q
+   ; c_left_id    := l'
+   ; c_right_id   := r'
+   ; c_comp_assoc := c'
  |}.
 Proof.
   intros. subst. f_equal.
@@ -127,8 +134,8 @@ Proof.
   apply proof_irrelevance.
 Qed.
 
-Hint Extern 1 => apply left_identity.
-Hint Extern 1 => apply right_identity.
+Hint Extern 1 => apply c_left_id.
+Hint Extern 1 => apply c_right_id.
 
 Hint Extern 4 (?A = ?A) => reflexivity.
 Hint Extern 7 (?X = ?Z) =>
@@ -151,7 +158,7 @@ Context `{C : Category}.
 (* end hide *)
 
 Definition Idempotent `(f : X ~> X) := f ∘ f = f.
-Definition Involutive `(f : X ~> X) := f ∘ f = id.
+Definition Involutive `(f : X ~> X) := f ∘ f = c_id.
 
 (**
 
@@ -159,8 +166,8 @@ We can also define relationships between two functions:
 
 *)
 
-Definition Section'   `(f : X ~> Y) := { g : Y ~> X & g ∘ f = id }.
-Definition Retraction `(f : X ~> Y) := { g : Y ~> X & f ∘ g = id }.
+Definition Section'   `(f : X ~> Y) := { g : Y ~> X & g ∘ f = c_id }.
+Definition Retraction `(f : X ~> Y) := { g : Y ~> X & f ∘ g = c_id }.
 
 Class SplitIdempotent {X Y : C} := {
     split_idem_retract := Y;
@@ -204,10 +211,10 @@ Hint Unfold SplitEpi.
 Hint Unfold SplitMono.
 (* end hide *)
 
-Lemma id_idempotent : ∀ X, Idempotent (id (A := X)).
+Lemma id_idempotent : ∀ X, Idempotent (c_id (A := X)).
 Proof. auto. Qed.
 
-Lemma id_involutive : ∀ X, Involutive (id (A := X)).
+Lemma id_involutive : ∀ X, Involutive (c_id (A := X)).
 Proof. auto. Qed.
 
 (**
@@ -225,11 +232,11 @@ Proof.
   autounfold.
   intros.
   destruct X0.
-  rewrite <- right_identity.
+  rewrite <- c_right_id.
   symmetry.
-  rewrite <- right_identity.
+  rewrite <- c_right_id.
   rewrite <- e.
-  repeat (rewrite comp_assoc); try f_equal; auto.
+  repeat (rewrite c_comp_assoc); try f_equal; auto.
 Qed.
 
 Lemma sections_are_monic : Section' f → Monic f.
@@ -237,11 +244,11 @@ Proof.
   autounfold.
   intros.
   destruct X0.
-  rewrite <- left_identity.
+  rewrite <- c_left_id.
   symmetry.
-  rewrite <- left_identity.
+  rewrite <- c_left_id.
   rewrite <- e.
-  repeat (rewrite <- comp_assoc); try f_equal; auto.
+  repeat (rewrite <- c_comp_assoc); try f_equal; auto.
 Qed.
 
 (* begin hide *)
@@ -255,7 +262,7 @@ Proof.
   unfold Epic in *. intros.
   apply ef.
   apply eg.
-  repeat (rewrite <- comp_assoc); auto.
+  repeat (rewrite <- c_comp_assoc); auto.
 Qed.
 
 Definition monic_compose `{C : Category} {X Y Z : C}
@@ -264,7 +271,7 @@ Proof.
   unfold Monic in *. intros.
   apply eg.
   apply ef.
-  repeat (rewrite comp_assoc); auto.
+  repeat (rewrite c_comp_assoc); auto.
 Qed.
 
 (** * Isomorphism
@@ -349,27 +356,28 @@ Program Instance iso_compose `{C : Category} {X Y Z : C}
 Obligation 1.
   destruct iso_a.
   destruct iso_b. simpl.
-  rewrite <- comp_assoc.
-  rewrite (comp_assoc _ _ _ _ to1).
+  rewrite <- c_comp_assoc.
+  rewrite (c_comp_assoc _ _ _ _ to1).
   rewrite iso_to1.
-  rewrite left_identity.
+  rewrite c_left_id.
   assumption.
 Qed.
 Obligation 2.
   destruct iso_a.
   destruct iso_b. simpl.
-  rewrite <- comp_assoc.
-  rewrite (comp_assoc _ _ _ _ from0).
+  rewrite <- c_comp_assoc.
+  rewrite (c_comp_assoc _ _ _ _ from0).
   rewrite iso_from0.
-  rewrite left_identity.
+  rewrite c_left_id.
   assumption.
 Qed.
 (* end hide *)
 
+(*
 Definition iso_equiv `{C : Category} {a b : C} (x y : a ≅ b) : Prop :=
   match x with
-  | Build_Isomorphism _ _ _ to0 from0 _ _ => match y with
-    | Build_Isomorphism _ _ _ to1 from1 _ _ =>
+  | Build_Isomorphism to0 from0 _ _ => match y with
+    | Build_Isomorphism to1 from1 _ _ =>
       to0 = to1 ∧ from0 = from1
     end
   end.
@@ -409,6 +417,7 @@ Add Parametric Relation `(C : Category) (a b : C) : (a ≅ b) (@iso_equiv C a b)
     inversion H. inversion H0.
     split; crush.
 Defined.
+*)
 
 (**
 
@@ -420,28 +429,28 @@ therefore an isomorphism.
 Program Instance Groupoid `(C : Category) : Category := {
     ob      := @ob C;
     hom     := @Isomorphism C;
-    id      := @iso_identity C
+    c_id    := @iso_identity C
 }.
 (* begin hide *)
 Obligation 1.
   unfold iso_compose, iso_identity.
   destruct f. simpl in *.
   apply iso_irrelevance.
-  apply right_identity.
-  apply left_identity.
+  apply c_right_id.
+  apply c_left_id.
 Qed.
 Obligation 2.
   unfold iso_compose, iso_identity.
   destruct f. simpl in *.
   apply iso_irrelevance.
-  apply left_identity.
-  apply right_identity.
+  apply c_left_id.
+  apply c_right_id.
 Qed.
 Obligation 3.
   unfold iso_compose.
   destruct f. destruct g. destruct h.
   simpl; apply iso_irrelevance;
-  rewrite comp_assoc; reflexivity.
+  rewrite c_comp_assoc; reflexivity.
 Qed.
 (* end hide *)
 
@@ -467,13 +476,13 @@ Obligation 2.
   autounfold in *.
   destruct r.
   simpl.
-  specialize (m X (x ∘ f) id).
+  specialize (m X (x ∘ f) c_id).
   apply m.
-  rewrite comp_assoc.
+  rewrite c_comp_assoc.
   rewrite e.
   auto.
-  rewrite left_identity.
-  rewrite right_identity.
+  rewrite c_left_id.
+  rewrite c_right_id.
   reflexivity.
 Qed.
 (* end hide *)
@@ -488,18 +497,18 @@ Obligation 1.
   autounfold in *.
   destruct s.
   simpl.
-  specialize (e Y (f ∘ x) id).
+  specialize (e Y (f ∘ x) c_id).
   apply e.
-  rewrite <- comp_assoc.
+  rewrite <- c_comp_assoc.
   rewrite e0.
-  rewrite left_identity.
-  rewrite right_identity.
+  rewrite c_left_id.
+  rewrite c_right_id.
   reflexivity.
 Qed.
 Obligation 2.
   autounfold in *.
   destruct s.
-  specialize (e Y (f ∘ x) id).
+  specialize (e Y (f ∘ x) c_id).
   auto.
 Qed.
 
@@ -554,10 +563,10 @@ the plural is used instead.
 *)
 
 Program Instance Sets : Category := {
-    ob      := Type;
-    hom     := fun X Y => X → Y;
-    id      := fun _ x => x;
-    compose := fun _ _ _ f g x => f (g x)
+    ob     := Type;
+    hom    := fun X Y => X → Y;
+    c_id   := fun _ x => x;
+    c_comp := fun _ _ _ f g x => f (g x)
 }.
 (**
 
@@ -620,12 +629,12 @@ operation.
 *)
 
 Program Instance Opposite `(C : Category) : Category := {
-    ob      := @ob C;
-    hom     := fun x y => @hom C y x;
-    id      := @id C;
-    compose := fun _ _ _ f g => g ∘ f
+    ob     := @ob C;
+    hom    := fun x y => @hom C y x;
+    c_id   := @c_id C;
+    c_comp := fun _ _ _ f g => g ∘ f
 }.
-Obligation 3. rewrite comp_assoc. auto. Defined.
+Obligation 3. rewrite c_comp_assoc. auto. Defined.
 
 (* begin hide *)
 Notation "C ^op" := (Opposite C) (at level 90) : category_scope.

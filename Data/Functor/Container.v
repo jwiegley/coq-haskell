@@ -57,8 +57,8 @@ Program Instance Container_Functor {S : Type} (P : S -> Type) :
 (*     {| is_container := *)
 (*          {| shape  := shape x *)
 (*           ; getter := *)
-(*      ; positions := undefined *)
-(*      ; focus := undefined *)
+(*      ; positions :=  *)
+(*      ; focus :=  *)
 (*      |} *)
 (* }. *)
 
