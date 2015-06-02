@@ -96,6 +96,88 @@ Notation "x >\\ y" := (rofP x y) (at level 60).
 
 Notation "f \>\ g" := (fun a => f >\\ g a) (at level 60).
 
+CoInductive CoProxy (a' a b' b : Type) (m : Type -> Type) (r : Type) : Type :=
+    | CoRequest of a' & (a  -> CoProxy a' a b' b m r)
+    | CoRespond of b  & (b' -> CoProxy a' a b' b m r)
+    | CoM : forall x, (x -> CoProxy a' a b' b m r) -> m x
+                       -> CoProxy a' a b' b m r
+    | CoPure    of r.
+
+Arguments CoRequest {a' a b' b m r} _ _.
+Arguments CoRespond {a' a b' b m r} _ _.
+Arguments CoM {a' a b' b m r x} _ _.
+Arguments CoPure {a' a b' b m r} _.
+
+CoFixpoint push `{Monad m} {a' a r} : a -> CoProxy a' a a' a m r :=
+  CoRespond ^~ (CoRequest ^~ push).
+
+(*
+Fixpoint copushR `{Monad m} {a' a b' b c' c r} (p0 : CoProxy a' a b' b m r)
+  (fb : b -> CoProxy b' b c' c m r) {struct p0} : CoProxy a' a c' c m r :=
+  let fix go p := match p with
+    | CoRequest a' fa  => CoRequest a' (go \o fa)
+    | CoRespond b  fb' => copullR fb' (fb b)
+    | CoM _     f  t   => CoM (go \o f) t
+    | CoPure       a   => CoPure a
+    end in
+  go p0
+
+with copullR `{Monad m} {a' a b' b c' c r} (fb' : b' -> CoProxy a' a b' b m r)
+  (p1 : CoProxy b' b c' c m r) {struct p1} : CoProxy a' a c' c m r :=
+   let fix go p := match p with
+     | CoRequest b' fb  => copushR (fb' b') fb
+     | CoRespond c  fc' => CoRespond c (go \o fc')
+     | CoM _     f  t   => CoM (go \o f) t
+     | CoPure       a   => CoPure a
+     end in
+   go p1.
+*)
+
+Fixpoint pushR `{Monad m} {a' a b' b c' c r} (p0 : Proxy a' a b' b m r)
+  (fb : b -> Proxy b' b c' c m r) {struct p0} : Proxy a' a c' c m r :=
+  let fix go p := match p with
+    | Request a' fa  => Request a' (go \o fa)
+    | Respond b  fb' =>
+        let fix go' p := match p with
+          | Request b' fb  => go (fb' b')
+          | Respond c  fc' => Respond c (go' \o fc')
+          | M _     f  t   => M (go' \o f) t
+          | Pure       a   => Pure a
+          end in
+        go' (fb b)
+    | M _     f  t   => M (go \o f) t
+    | Pure       a   => Pure a
+    end in
+  go p0.
+
+Notation "x >>~ y" := (pushR x y) (at level 60).
+
+Notation "f >~> g" := (fun a => f a >>~ g) (at level 60).
+
+CoFixpoint pull `{Monad m} {a' a r} : a' -> CoProxy a' a a' a m r :=
+  CoRequest ^~ (CoRespond ^~ pull).
+
+Fixpoint pullR `{Monad m} {a' a b' b c' c r} (fb' : b' -> Proxy a' a b' b m r)
+  (p0 : Proxy b' b c' c m r) {struct p0} : Proxy a' a c' c m r :=
+  let fix go p := match p with
+    | Request b' fb  =>
+        let fix go' p := match p with
+          | Request a' fa  => Request a' (go' \o fa)
+          | Respond b  fb' => go (fb b)
+          | M _     f  t   => M (go' \o f) t
+          | Pure       a   => Pure a
+          end in
+        go' (fb' b')
+    | Respond c  fc' => Respond c (go \o fc')
+    | M _     f  t   => M (go \o f) t
+    | Pure       a   => Pure a
+    end in
+  go p0.
+
+Notation "x +>> y" := (pullR x y) (at level 60).
+
+Notation "f >+> g" := (fun a => f +>> g a) (at level 60).
+
 Definition each `{Monad m} {a} : seq a -> Producer a m unit :=
   mapM_ yield.
 
@@ -225,9 +307,7 @@ Obligation 3. (* Associativity *)
     exact: IHx.
 Qed.
 
-(*
-Theorem respond_zero
-*)
+(* Theorem respond_zero *)
 
 Program Instance Request_Category {x a' a} `{MonadLaws m} : Category := {
   ob     := Type;
@@ -261,22 +341,42 @@ Obligation 3. (* Associativity *)
     exact: IHx.
 Qed.
 
-(*
-Theorem request_zero
+(* Theorem request_zero *)
 
+(*
+Program Instance Push_Category {r} `{MonadLaws m} : Category := {
+  ob     := Type * Type;
+  hom    := fun A B => snd A -> CoProxy (fst A) (snd A) (fst B) (snd B) m r;
+  c_id   := fun A => @push m _ (fst A) (snd A) r;
+  c_comp := fun _ _ _ f g => undefined (* g >~> f *)
+}.
+Obligation 1. (* Right identity *)
+Abort.
+Obligation 2. (* Left identity *)
+Abort.
+(* Obligation 3. (* Associativity *) *)
+(* Abort. *)
+*)
+
+(* Theorem push_zero *)
+
+(*
 Program Instance Pull_Category {x' x a'} `{MonadLaws m} : Category := {
   ob     := Type;
   hom    := fun A B => A -> Proxy x' x a' B m a';
-  c_id   := fun A => @respond x' x a' A m;
-  c_comp := fun _ _ _ f g => g />/ f
+  c_id   := fun A => @pull x' x a' A m;
+  c_comp := fun _ _ _ f g => f >+> g
 }.
 Obligation 1. (* Right identity *)
 Obligation 2. (* Left identity *)
 Obligation 3. (* Associativity *)
+*)
 
-Theorem pull_zero
+(* Theorem pull_zero *)
 
-Theorem push_pull_assoc
+(* Theorem push_pull_assoc *)
+
+(* Duals
 
 Theorem request_id
 
