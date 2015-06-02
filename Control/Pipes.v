@@ -19,41 +19,31 @@ Arguments Respond {a' a b' b m r} _ _.
 Arguments M {a' a b' b m r x} _ _.
 Arguments Pure {a' a b' b m r} _.
 
+Definition Proxy_bind {a' a b' b c d} `{Monad m}
+  (f : c -> Proxy a' a b' b m d) (p0 : Proxy a' a b' b m c) :
+  Proxy a' a b' b m d :=
+  let fix go p := match p with
+    | Request a' fa  => Request a' (go \o fa)
+    | Respond b  fb' => Respond b  (go \o fb')
+    | M _     f  t   => M (go \o f) t
+    | Pure    r      => f r
+    end in
+  go p0.
+
 Program Instance Proxy_Functor {a' a b' b} `{Monad m} :
   Functor (Proxy a' a b' b m) := {
-  fmap := fun _ _ f p0 =>
-    let fix go p := match p with
-      | Request a' fa  => Request a' (fun a  => go (fa  a))
-      | Respond b  fb' => Respond b  (fun b' => go (fb' b'))
-      | M _     f  t   => M (go \o f) t
-      | Pure    r      => Pure (f r)
-      end in
-    go p0
+  fmap := fun _ _ f p0 => Proxy_bind (Pure \o f) p0
 }.
 
 Program Instance Proxy_Applicative {a' a b' b} `{Monad m} :
   Applicative (Proxy a' a b' b m) := {
   pure := fun _ => Pure;
-  ap := fun _ _ pf px =>
-    let fix go p := match p with
-      | Request a' fa  => Request a' (fun a  => go (fa  a))
-      | Respond b  fb' => Respond b  (fun b' => go (fb' b'))
-      | M _     f  t   => M (go \o f) t
-      | Pure    f      => fmap f px
-      end in
-    go pf
+  ap   := fun _ _ pf px => Proxy_bind (flip fmap px) pf
 }.
 
 Program Instance Proxy_Monad {a' a b' b} `{Monad m} :
   Monad (Proxy a' a b' b m) := {
-  join := fun _ x =>
-    let fix go p := match p with
-      | Request a' fa  => Request a' (fun a  => go (fa  a))
-      | Respond b  fb' => Respond b  (fun b' => go (fb' b'))
-      | M _     f  t   => M (go \o f) t
-      | Pure    f      => f
-      end in
-    go x
+  join := fun _ x => Proxy_bind id x
 }.
 
 Fixpoint runEffect `{Monad m} `(p : Proxy False unit unit False m r) : m r :=
@@ -75,11 +65,11 @@ Definition yieldxx {a m} (z : a) : Producer' a m unit :=
 Definition yield {a x' x m} (z : a) : Proxy x' x unit a m unit :=
   @yieldxx a m z x' x.
 
-Definition forP {x' x a' b' b c' c} `{Monad m} (p0 : Proxy x' x b' b m a')
+Definition forP `{Monad m} {x' x a' b' b c' c} (p0 : Proxy x' x b' b m a')
   (fb : b -> Proxy x' x c' c m b') : Proxy x' x c' c m a' :=
   let fix go p := match p with
-    | Request x' fx  => Request x' (fun x => go (fx x))
-    | Respond b  fb' => fb b >>= fun b' => go (fb' b')
+    | Request x' fx  => Request x' (go \o fx)
+    | Respond b  fb' => fb b >>= (go \o fb')
     | M _     f  t   => M (go \o f) t
     | Pure       a   => Pure a
     end in
@@ -95,9 +85,7 @@ Definition each `{Monad m} {a} : seq a -> Producer a m unit :=
 Fixpoint toListM `{Monad m} `(p : Producer a m unit) : m (seq a) :=
   match p with
   | Request v _  => False_rect _ v
-  | Respond x fu =>
-        xs <-- toListM (fu tt) ;;
-        pure (x::xs)
+  | Respond x fu => cons x <$> toListM (fu tt)
   | M _     f t  => t >>= (toListM \o f)
   | Pure    _    => pure [::]
   end.
@@ -114,7 +102,8 @@ Program Instance Proxy_FunctorLaws {a' a b' b} `{Monad m} :
   FunctorLaws (Proxy a' a b' b m).
 Obligation 1.
   move=> x.
-  elim: x => [A' fa IHx|B fb' IHx|f t IHx| x].
+  elim: x => [A' fa IHx|B fb' IHx|f t IHx| x];
+  rewrite /funcomp /Proxy_bind.
   - f_equal.
     extensionality a1.
     exact: IHx.
@@ -130,7 +119,8 @@ Qed.
 Obligation 2.
   move=> x.
   rewrite /funcomp.
-  elim: x => [A' fa IHx|B fb' IHx|mf t IHx| x].
+  elim: x => [A' fa IHx|B fb' IHx|mf t IHx| x];
+  rewrite /funcomp /Proxy_bind.
   - f_equal.
     extensionality a1.
     exact: IHx.
@@ -148,7 +138,8 @@ Program Instance Proxy_Applicative {a' a b' b} `{Monad m} :
   ApplicativeLaws (Proxy a' a b' b m).
 Obligation 1.
   move=> x.
-  elim: x => [A' fa IHx|B fb' IHx|mf t IHx| x].
+  elim: x => [A' fa IHx|B fb' IHx|mf t IHx| x];
+  rewrite /funcomp /Proxy_bind /flip.
   - f_equal.
     extensionality a1.
     exact: IHx.
@@ -169,7 +160,8 @@ Program Instance Proxy_Monad {a' a b' b} `{Monad m} :
 Obligation 1.
   move=> x.
   rewrite /funcomp.
-  elim: x => [A' fa IHx|B fb' IHx|mf t IHx| x].
+  elim: x => [A' fa IHx|B fb' IHx|mf t IHx| x];
+  rewrite /funcomp /Proxy_bind /flip.
   - f_equal.
     extensionality a1.
     exact: IHx.
@@ -185,7 +177,8 @@ Qed.
 Obligation 2.
   move=> x.
   rewrite /funcomp.
-  elim: x => [A' fa IHx|B fb' IHx|mf t IHx| x].
+  elim: x => [A' fa IHx|B fb' IHx|mf t IHx| x];
+  rewrite /funcomp /Proxy_bind /flip.
   - f_equal.
     extensionality a1.
     exact: IHx.
@@ -201,7 +194,8 @@ Qed.
 Obligation 4.
   move=> x.
   rewrite /funcomp.
-  elim: x => [A' fa IHx|B fb' IHx|mf t IHx| x].
+  elim: x => [A' fa IHx|B fb' IHx|mf t IHx| x];
+  rewrite /funcomp /Proxy_bind /flip.
   - f_equal.
     extensionality a1.
     exact: IHx.
@@ -244,6 +238,18 @@ Proof.
     exact: IHx.
 Qed.
 
+Definition kleisli_compose `{Monad m} `(f : b -> m c) `(g : a -> m b) :
+  a -> m c := fun x => g x >>= f.
+
+Notation "f >=> g" := (kleisli_compose f g) (at level 25, left associativity).
+
+Theorem respond_distributes_over_bind `{Monad m} :
+  forall (x' x a' a b' b c' c d' d : Type)
+         (f : a -> Proxy x' x b' b m a')
+         (g : b -> Proxy x' x c' c m b')
+         (h : c -> Proxy x' x d' d m c'),
+  f >=> g />/ h =1 (f />/ h) >=> (g />/ h).
+
 Theorem respond_assoc `{MonadLaws m} :
   forall (x' x a' a b' b c' c d' d : Type)
          (f : a -> Proxy x' x b' b m a')
@@ -252,12 +258,19 @@ Theorem respond_assoc `{MonadLaws m} :
   (f />/ g) />/ h =1 f />/ (g />/ h).
 Proof.
   move=> x' x a' a b' b c' c d' d f g h z.
-  elim: (f z) => //= [A' fa IHx|B fb' IHx|mf t IHx].
+  elim: (f z) => //= [A' fa IHx|B fb' IHx|mf t IHx];
+  rewrite /funcomp /Proxy_bind /flip.
   - f_equal.
     extensionality a1.
     exact: IHx.
-  - rewrite /bind /=.
-    f_equal.
+  - Set Printing All.
+    rewrite /bind /funcomp.
+    replace (fun b0 => fb' b0 //> (g />/ h))
+           with (fun b0 => (fb' b0 //> g) //> h); last first.
+      extensionality b0.
+      by rewrite IHx.
+    move=> IHx.
+    rewrite -IHx /= /funcomp /Proxy_bind /=.
     extensionality b'1.
     exact: IHx.
   - move=> m0.
