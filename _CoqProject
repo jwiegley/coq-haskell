@@ -5,6 +5,7 @@ Control/Iso.v
 Control/Lens.v
 Control/Monad.v
 Control/Monad/State.v
+Control/Monad/Free.v
 Control/Monad/Trans/Free.v
 Control/Monad/Trans/State.v
 Control/Pipes.v

@@ -115,3 +115,71 @@ Obligation 3.
 Qed.
 
 End YonedaLaws.
+
+(**************************************************************************)
+
+Inductive Coyoneda (f : Type -> Type) (a : Type) :=
+  COYO : forall x : Type, (x -> a) -> f x -> Coyoneda f a.
+
+Arguments COYO {f a x} _ _.
+
+Definition liftCoyoneda {f : Type -> Type} {a : Type} : f a -> Coyoneda f a :=
+  COYO id.
+
+Definition lowerCoyoneda `{Functor f} {a : Type} (c : Coyoneda f a) : f a :=
+  let: COYO _ g h := c in fmap g h.
+
+Program Instance Coyoneda_Functor (f : Type -> Type) : Functor (Coyoneda f) := {
+  fmap := fun _ _ f x => let: COYO _ g h := x in COYO (f \o g) h
+}.
+
+Module CoyonedaLaws.
+
+Include FunctorLaws.
+
+Require Import FunctionalExtensionality.
+
+Program Instance Coyoneda_FunctorLaws (f : Type -> Type) :
+  FunctorLaws (Coyoneda f).
+Obligation 1. by move=> [*]. Qed.
+Obligation 2. by move=> [*]. Qed.
+
+Theorem coyo_to `{FunctorLaws f} : forall a (x : f a),
+  lowerCoyoneda (liftCoyoneda x) = x.
+Proof.
+  move=> a x.
+  rewrite /lowerCoyoneda /liftCoyoneda.
+  exact: fmap_id.
+Qed.
+
+Theorem coyo_lower_naturality `{FunctorLaws f} : forall a b (g : a -> b),
+  fmap g \o lowerCoyoneda (f:=f) = lowerCoyoneda \o fmap g.
+Proof.
+  move=> a b k.
+  extensionality x.
+  move: x => [x g h] /=.
+  exact: fmap_comp.
+Qed.
+
+Theorem coyo_lift_naturality `{FunctorLaws f} : forall a b (g : a -> b),
+  fmap g \o liftCoyoneda (f:=f) = liftCoyoneda \o fmap g.
+Proof.
+  move=> a b g.
+  rewrite /liftCoyoneda.
+  extensionality x.
+  rewrite /=.
+  recomp.
+  congr (_ x).
+  replace (g \o id) with g; last by [].
+Admitted.
+
+Theorem coyo_from `{FunctorLaws f} : forall a (x : Coyoneda f a),
+  liftCoyoneda (lowerCoyoneda x) = x.
+Proof.
+  move=> a [x g h].
+  rewrite /lowerCoyoneda.
+  recomp.
+  by rewrite -coyo_lift_naturality.
+Qed.
+
+End CoyonedaLaws.
