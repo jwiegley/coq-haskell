@@ -16,6 +16,9 @@ Fixpoint iter `{Functor f} `(phi : f a -> a) (fr : Free f a) : a :=
     | Join _ g h => phi $ fmap (iter phi \o g) h
   end.
 
+Definition liftF {f : Type -> Type} {a : Type} : f a -> Free f a :=
+  Join Pure.
+
 Fixpoint retract `{Monad f} `(fr : Free f a) : f a :=
   match fr with
     | Pure x => pure x
@@ -50,8 +53,7 @@ Fixpoint cutoff (n : nat) `(fr : Free f a) : Free f (option a) :=
 (*   end. *)
 
 (* Definition wrap {f : Type -> Type} {a : Type} : *)
-(*   f (Free f a) -> Free f a := *)
-(*   Join \o liftCoyoneda. *)
+(*   f (Free f a) -> Free f a := Join id. *)
 
 Definition Free_bind `(k : a -> Free f b) : Free f a -> Free f b :=
   fun x0 => let fix go x := match x with
@@ -105,5 +107,28 @@ Program Instance Free_MonadLaws `{FunctorLaws f} : MonadLaws (Free f).
 Obligation 1. by reduce_free IHx. Qed.
 Obligation 2. by reduce_free IHx. Qed.
 Obligation 4. by reduce_free IHx. Qed.
+
+Theorem retract_liftF_id `{MonadLaws f} : forall a,
+  retract \o liftF =1 @id (f a).
+Proof.
+  move=> *.
+  rewrite /retract /liftF.
+  exact: join_fmap_pure.
+Qed.
+
+Theorem retract_distributes `{MonadLaws f} : forall a (x y : Free f a),
+  retract (x >> y) = retract x >> retract y.
+Proof.
+  rewrite /bind.
+  move=> ? x y.
+  elim: x => [?|? ? IHx ?] in y *;
+  case: y => [?|? ? ?] //=;
+  try (by rewrite fmap_pure_x join_pure_x);
+  rewrite /funcomp -join_fmap_fmap_x fmap_comp_x
+          -join_fmap_join_x fmap_comp_x;
+  f_equal; f_equal;
+  extensionality z;
+  exact: IHx.
+Qed.
 
 End FreeLaws.
