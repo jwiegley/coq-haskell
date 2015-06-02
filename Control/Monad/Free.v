@@ -131,4 +131,32 @@ Proof.
   exact: IHx.
 Qed.
 
+Theorem retract_naturality `{MonadLaws f} : forall a b (g : a -> b),
+  fmap g \o retract (f:=f) =1 retract \o fmap g.
+Proof.
+  move=> a b g x.
+  rewrite /=.
+  elim: x => [?|? ? IHx ?] /=.
+    by rewrite fmap_pure_x.
+  rewrite -join_fmap_fmap_x fmap_comp_x.
+  congr (join (fmap _ _)).
+  extensionality y => /=.
+  exact: IHx.
+Qed.
+
+Axiom Free_parametricity : forall `{FunctorLaws f} a b (g : a -> b),
+  Join (Pure \o g) =1 Join Pure \o fmap g.
+
+Theorem liftF_naturality `{FunctorLaws f} : forall a b (g : a -> b),
+  fmap g \o liftF (f:=f) =1 liftF \o fmap g.
+Proof.
+  move=> a b g x.
+  rewrite /= /liftF.
+  have ->: ([eta Free_bind (Pure \o g)] \o Pure) = Pure \o g.
+    move=> ?.
+    extensionality y.
+    by rewrite /funcomp /Free_bind.
+  exact: Free_parametricity.
+Qed.
+
 End FreeLaws.
