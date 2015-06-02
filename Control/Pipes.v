@@ -57,6 +57,9 @@ Fixpoint runEffect `{Monad m} `(p : Proxy False unit unit False m r) : m r :=
 Definition respond {x' x a' a m} (z : a) : Proxy x' x a' a m a' :=
   Respond z Pure.
 
+Definition request {x' x a' a m} (z : x') : Proxy x' x a' a m x :=
+  Request z Pure.
+
 Definition Producer := Proxy False unit unit.
 Definition Producer' b m r := forall x' x, Proxy x' x unit b m r.
 
@@ -78,6 +81,20 @@ Definition forP `{Monad m} {x' x a' b' b c' c} (p0 : Proxy x' x b' b m a')
 Notation "x //> y" := (forP x y) (at level 60).
 
 Notation "f />/ g" := (fun a => f a //> g) (at level 60).
+
+Definition rofP `{Monad m} {y' y a' a b' b c} (fb' : b' -> Proxy a' a y' y m b)
+  (p0 : Proxy b' b y' y m c) : Proxy a' a y' y m c :=
+  let fix go p := match p with
+    | Request b' fb  => fb' b' >>= (go \o fb)
+    | Respond x  fx' => Respond x (go \o fx')
+    | M _     f  t   => M (go \o f) t
+    | Pure       a   => Pure a
+    end in
+  go p0.
+
+Notation "x >\\ y" := (rofP x y) (at level 60).
+
+Notation "f \>\ g" := (fun a => f >\\ g a) (at level 60).
 
 Definition each `{Monad m} {a} : seq a -> Producer a m unit :=
   mapM_ yield.
@@ -148,6 +165,31 @@ Proof.
     exact: IHx.
 Qed.
 
+Theorem request_distrib `{MonadLaws m} :
+  forall (y' y a' a b' b c' c r : Type)
+         (f : c -> Proxy b' b y' y m c')
+         (g : c'  -> Proxy b' b y' y m r)
+         (h : b' -> Proxy a' a y' y m b),
+  h \>\ (f >=> g) =1 (h \>\ f) >=> (h \>\ g).
+Proof.
+  move=> ? ? ? ? ? ? ? ? ? f ? ? x.
+  rewrite /kleisli_compose.
+  elim: (f x) => // [? ? IHx|? ? IHx|? ? IHx].
+  - apply functional_extensionality in IHx.
+    by rewrite /= /funcomp IHx /bind /funcomp
+               -join_fmap_fmap_x fmap_comp_x
+               -join_fmap_join_x fmap_comp_x.
+  - rewrite /bind /=.
+    f_equal.
+    extensionality a1.
+    exact: IHx.
+  - move=> m0.
+    rewrite /bind /=.
+    f_equal.
+    extensionality y.
+    exact: IHx.
+Qed.
+
 Require Import Hask.Control.Category.
 
 Program Instance Respond_Category {x' x a'} `{MonadLaws m} : Category := {
@@ -178,9 +220,79 @@ Obligation 3. (* Associativity *)
     rewrite /=.
     f_equal.
     rewrite /funcomp.
+
     extensionality y.
     exact: IHx.
 Qed.
+
+(*
+Theorem respond_zero
+*)
+
+Program Instance Request_Category {x a' a} `{MonadLaws m} : Category := {
+  ob     := Type;
+  hom    := fun A B => B -> Proxy A x a' a m x;
+  c_id   := fun A => @request A x a' a m;
+  c_comp := fun _ _ _ f g => g \>\ f
+}.
+Obligation 1. (* Right identity *)
+  extensionality z.
+  move: (f z).
+  by reduce_proxy IHx (rewrite /= /bind /funcomp /=).
+Qed.
+Obligation 2. (* Left identity *)
+  extensionality z.
+  exact: join_fmap_pure_x.
+Qed.
+Obligation 3. (* Associativity *)
+  extensionality z.
+  elim: (f z) => // [y p IHx|? ? IHx|? ? IHx].
+  - apply functional_extensionality in IHx.
+    by rewrite /= /funcomp IHx request_distrib.
+  - rewrite /=.
+    f_equal.
+    extensionality a1.
+    exact: IHx.
+  - move=> m0.
+    rewrite /=.
+    f_equal.
+    rewrite /funcomp.
+    extensionality y.
+    exact: IHx.
+Qed.
+
+(*
+Theorem request_zero
+
+Program Instance Pull_Category {x' x a'} `{MonadLaws m} : Category := {
+  ob     := Type;
+  hom    := fun A B => A -> Proxy x' x a' B m a';
+  c_id   := fun A => @respond x' x a' A m;
+  c_comp := fun _ _ _ f g => g />/ f
+}.
+Obligation 1. (* Right identity *)
+Obligation 2. (* Left identity *)
+Obligation 3. (* Associativity *)
+
+Theorem pull_zero
+
+Theorem push_pull_assoc
+
+Theorem request_id
+
+Theorem request_comp
+
+Theorem respond_id
+
+Theorem respond_comp
+
+Theorem distributivity
+
+Theorem zero_law
+
+Theorem involution
+
+*)
 
 Section GeneralTheorems.
 
