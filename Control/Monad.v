@@ -18,6 +18,11 @@ Definition bind `{Monad m} {X Y : Type} (f : (X -> m Y)) : m X -> m Y :=
 Notation "m >>= f" := (bind f m) (at level 25, left associativity).
 Notation "a >> b" := (a >>= fun _ => b) (at level 25, left associativity).
 
+Definition kleisli_compose `{Monad m} `(f : b -> m c) `(g : a -> m b) :
+  a -> m c := fun x => g x >>= f.
+
+Notation "f >=> g" := (kleisli_compose g f) (at level 25, left associativity).
+
 Notation "X <-- A ;; B" := (A >>= (fun X => B))
   (right associativity, at level 92, A at next level, only parsing).
 
