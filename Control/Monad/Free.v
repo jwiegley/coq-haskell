@@ -52,6 +52,7 @@ Fixpoint cutoff (n : nat) `(fr : Free f a) : Free f (option a) :=
 (*   | inr j => Join (unfold k) j *)
 (*   end. *)
 
+(* jww (2015-06-02): With universe polymorphism this should work fine. *)
 (* Definition wrap {f : Type -> Type} {a : Type} : *)
 (*   f (Free f a) -> Free f a := Join id. *)
 
