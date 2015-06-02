@@ -134,7 +134,7 @@ Obligation 2.
   - by [].
 Qed.
 
-Program Instance Proxy_Applicative {a' a b' b} `{Monad m} :
+Program Instance Proxy_ApplicativeLaws {a' a b' b} `{Monad m} :
   ApplicativeLaws (Proxy a' a b' b m).
 Obligation 1.
   move=> x.
@@ -155,7 +155,7 @@ Qed.
 Obligation 2.
 Admitted.
 
-Program Instance Proxy_Monad {a' a b' b} `{Monad m} :
+Program Instance Proxy_MonadLaws {a' a b' b} `{Monad m} :
   MonadLaws (Proxy a' a b' b m).
 Obligation 1.
   move=> x.
@@ -221,34 +221,20 @@ Theorem respond_right_id `{MonadLaws m} :
   forall (a' a b' b : Type) (r : Type) (f : a -> Proxy a' a b' b m r),
   (f />/ respond) =1 f.
 Proof.
-  move=> a' a b' b r f x.
-  rewrite /respond.
-  elim: (f x) => //= [A' fa IHx|B fb' IHx|mf t IHx].
+  move=> a' a b' b r k x.
+  elim: (k x) => //= [A' fa IHx|B fb' IHx|mf t IHx].
   - f_equal.
     extensionality a1.
     exact: IHx.
-  - rewrite /bind /=.
+  - rewrite /bind /funcomp /=.
     f_equal.
     extensionality b'1.
     exact: IHx.
   - move=> m0.
     f_equal.
-    rewrite /funcomp.
     extensionality y.
     exact: IHx.
 Qed.
-
-Definition kleisli_compose `{Monad m} `(f : b -> m c) `(g : a -> m b) :
-  a -> m c := fun x => g x >>= f.
-
-Notation "f >=> g" := (kleisli_compose f g) (at level 25, left associativity).
-
-Theorem respond_distributes_over_bind `{Monad m} :
-  forall (x' x a' a b' b c' c d' d : Type)
-         (f : a -> Proxy x' x b' b m a')
-         (g : b -> Proxy x' x c' c m b')
-         (h : c -> Proxy x' x d' d m c'),
-  f >=> g />/ h =1 (f />/ h) >=> (g />/ h).
 
 Theorem respond_assoc `{MonadLaws m} :
   forall (x' x a' a b' b c' c d' d : Type)
@@ -258,27 +244,46 @@ Theorem respond_assoc `{MonadLaws m} :
   (f />/ g) />/ h =1 f />/ (g />/ h).
 Proof.
   move=> x' x a' a b' b c' c d' d f g h z.
-  elim: (f z) => //= [A' fa IHx|B fb' IHx|mf t IHx];
-  rewrite /funcomp /Proxy_bind /flip.
-  - f_equal.
+  elim: (f z) => // [? ? IHx|B FB' IHx|? ? IHx].
+  - rewrite /=.
+    f_equal.
     extensionality a1.
     exact: IHx.
-  - Set Printing All.
-    rewrite /bind /funcomp.
-    replace (fun b0 => fb' b0 //> (g />/ h))
-           with (fun b0 => (fb' b0 //> g) //> h); last first.
-      extensionality b0.
-      by rewrite IHx.
-    move=> IHx.
-    rewrite -IHx /= /funcomp /Proxy_bind /=.
-    extensionality b'1.
-    exact: IHx.
+  - apply functional_extensionality in IHx.
+    rewrite /= /bind /funcomp -IHx.
+    elim: (g B) => // [? ? IHx'|B' FB'' IHx'|? ? IHx'].
+    + rewrite /=.
+      f_equal.
+      extensionality a2.
+      exact: IHx'.
+    + apply functional_extensionality in IHx'.
+      rewrite [fmap _ _]/=.
+      rewrite [join _ //> _]/=.
+      rewrite [Respond _ _ //> _]/=.
+      rewrite /bind /funcomp.
+      rewrite -join_fmap_fmap_x fmap_comp_x.
+      rewrite -join_fmap_join_x fmap_comp_x.
+      set i := (X in fmap X _).
+      set j := (X in _ = join (fmap X _)).
+      f_equal. by move=> H2; rewrite H2.
+      f_equal. by move=> H2; rewrite H2.
+      rewrite {}/i {}/j.
+      extensionality y.
+      rewrite /= /funcomp.
+      admit.
+    + move=> m2.
+      rewrite /=.
+      f_equal.
+      rewrite /funcomp.
+      extensionality y2.
+      exact: IHx'.
   - move=> m0.
+    rewrite /=.
     f_equal.
     rewrite /funcomp.
     extensionality y.
     exact: IHx.
-Qed.
+Admitted.
 
 Theorem toListM_each_id : forall a, toListM \o each =1 pure (a:=seq a).
 Proof.
