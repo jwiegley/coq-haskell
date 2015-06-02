@@ -104,8 +104,8 @@ Tactic Notation "reduce_proxy" ident(IHu) tactic(T) :=
 
 Program Instance Proxy_FunctorLaws {a' a b' b} `{MonadLaws m} :
   FunctorLaws (Proxy a' a b' b m).
-Obligation 1. reduce_proxy IHx simpl. Qed.
-Obligation 2. reduce_proxy IHx simpl. Qed.
+Obligation 1. by reduce_proxy IHx simpl. Qed.
+Obligation 2. by reduce_proxy IHx simpl. Qed.
 
 Program Instance Proxy_ApplicativeLaws {a' a b' b} `{MonadLaws m} :
   ApplicativeLaws (Proxy a' a b' b m).
@@ -114,31 +114,14 @@ Obligation 2.
   rewrite /flip.
   move: u; reduce_proxy IHu simpl.
   move: v; reduce_proxy IHv simpl.
-  move: w; reduce_proxy IHw simpl.
+  by move: w; reduce_proxy IHw simpl.
 Admitted.
 
 Program Instance Proxy_MonadLaws {a' a b' b} `{MonadLaws m} :
   MonadLaws (Proxy a' a b' b m).
-Obligation 1. reduce_proxy IHx simpl. Qed.
-Obligation 2. reduce_proxy IHx simpl. Qed.
-Obligation 4. reduce_proxy IHx simpl. Qed.
-
-Theorem respond_left_id `{MonadLaws m} :
-  forall (a' a b' b : Type) (r : Type) (f : a -> Proxy a' a b' b m r),
-  (respond />/ f) =1 f.
-Proof.
-  move=> a' a b' b r f x.
-  exact: join_fmap_pure_x.
-Qed.
-
-Theorem respond_right_id `{MonadLaws m} :
-  forall (a' a b' b : Type) (r : Type) (f : a -> Proxy a' a b' b m r),
-  (f />/ respond) =1 f.
-Proof.
-  move=> a' a b' b r k x.
-  move: (k x).
-  reduce_proxy IHx (rewrite /= /bind /funcomp /=).
-Qed.
+Obligation 1. by reduce_proxy IHx simpl. Qed.
+Obligation 2. by reduce_proxy IHx simpl. Qed.
+Obligation 4. by reduce_proxy IHx simpl. Qed.
 
 Theorem respond_distrib `{MonadLaws m} :
   forall (x' x a' a b' b c' c r : Type)
@@ -165,15 +148,26 @@ Proof.
     exact: IHx.
 Qed.
 
-Theorem respond_assoc `{MonadLaws m} :
-  forall (x' x a' a b' b c' c d' d : Type)
-         (f : a -> Proxy x' x b' b m a')
-         (g : b -> Proxy x' x c' c m b')
-         (h : c -> Proxy x' x d' d m c'),
-  (f />/ g) />/ h =1 f />/ (g />/ h).
-Proof.
-  move=> ? ? ? ? ? ? ? ? ? ? f ? ? z.
-  elim: (f z) => // [? ? IHx|? ? IHx|? ? IHx].
+Require Import Hask.Control.Category.
+
+Program Instance Respond_Category {x' x a'} `{MonadLaws m} : Category := {
+  ob     := Type;
+  hom    := fun A B => A -> Proxy x' x a' B m a';
+  c_id   := fun A => @respond x' x a' A m;
+  c_comp := fun _ _ _ f g => g />/ f
+}.
+Obligation 1. (* Right identity *)
+  extensionality z.
+  exact: join_fmap_pure_x.
+Qed.
+Obligation 2. (* Left identity *)
+  extensionality z.
+  move: (f z).
+  by reduce_proxy IHx (rewrite /= /bind /funcomp /=).
+Qed.
+Obligation 3. (* Associativity *)
+  extensionality z.
+  elim: (h z) => // [? ? IHx|? ? IHx|? ? IHx].
   - rewrite /=.
     f_equal.
     extensionality a1.
@@ -188,11 +182,15 @@ Proof.
     exact: IHx.
 Qed.
 
+Section GeneralTheorems.
+
 Theorem toListM_each_id : forall a, toListM \o each =1 pure (a:=seq a).
 Proof.
   move=> a xs.
   elim: xs => //= [x xs IHxs].
   by rewrite IHxs.
 Qed.
+
+End GeneralTheorems.
 
 End PipesLaws.
