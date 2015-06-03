@@ -29,18 +29,18 @@ Definition Proxy_bind {a' a b' b c d} `{Monad m}
     end in
   go p0.
 
-Instance Proxy_Functor {a' a b' b} `{Monad m} :
+Instance Proxy_Functor `{Monad m} {a' a b' b} :
   Functor (Proxy a' a b' b m) := {
   fmap := fun _ _ f p0 => Proxy_bind (Pure \o f) p0
 }.
 
-Instance Proxy_Applicative {a' a b' b} `{Monad m} :
+Instance Proxy_Applicative `{Monad m} {a' a b' b} :
   Applicative (Proxy a' a b' b m) := {
   pure := fun _ => Pure;
-  ap   := fun _ _ pf px => Proxy_bind (flip fmap px) pf
+  ap   := fun _ _ pf px => Proxy_bind (fmap ^~ px) pf
 }.
 
-Instance Proxy_Monad {a' a b' b} `{Monad m} :
+Instance Proxy_Monad `{Monad m} {a' a b' b} :
   Monad (Proxy a' a b' b m) := {
   join := fun _ x => Proxy_bind id x
 }.
@@ -95,6 +95,26 @@ Notation "x >\\ y" := (rofP x y) (at level 60).
 
 Notation "f \>\ g" := (fun a => f >\\ g a) (at level 60).
 
+Definition SProxy (a' a b' b : Type) (m : Type -> Type) (r : Type) : Type :=
+  forall s : Type,
+       (a' -> (a  -> s) -> s)           (* SRequest *)
+    -> (b  -> (b' -> s) -> s)           (* SRespond *)
+    -> (forall x, (x -> s) -> m x -> s) (* SM *)
+    -> (r -> s)                         (* SPure *)
+    -> s.
+
+Definition toProxy `(s : SProxy a' a b' b m r) : Proxy a' a b' b m r :=
+  s _ Request Respond (fun _ => M) Pure.
+
+Fixpoint fromProxy `(p : Proxy a' a b' b m r) : SProxy a' a b' b m r :=
+  fun _ req res mon k =>
+    match p with
+    | Request a' fa  => req a' (fun a  => fromProxy (fa  a)  _ req res mon k)
+    | Respond b  fb' => res b  (fun b' => fromProxy (fb' b') _ req res mon k)
+    | M _     g  h   => mon _ (fun x => fromProxy (g x) _ req res mon k) h
+    | Pure    x      => k x
+    end.
+
 CoInductive CoProxy (a' a b' b : Type) (m : Type -> Type) (r : Type) : Type :=
   | CoRequest of a' & (a  -> CoProxy a' a b' b m r)
   | CoRespond of b  & (b' -> CoProxy a' a b' b m r)
@@ -128,28 +148,6 @@ Definition render `(co : CoProxy a' a b' b m r) : Proxy a' a b' b m r :=
 
 CoFixpoint push `{Monad m} {a' a r} : a -> CoProxy a' a a' a m r :=
   CoRespond ^~ (CoRequest ^~ push).
-
-(*
-Fixpoint copushR `{Monad m} {a' a b' b c' c r} (p0 : CoProxy a' a b' b m r)
-  (fb : b -> CoProxy b' b c' c m r) {struct p0} : CoProxy a' a c' c m r :=
-  let fix go p := match p with
-    | CoRequest a' fa  => CoRequest a' (go \o fa)
-    | CoRespond b  fb' => copullR fb' (fb b)
-    | CoM _     f  t   => CoM (go \o f) t
-    | CoPure       a   => CoPure a
-    end in
-  go p0
-
-with copullR `{Monad m} {a' a b' b c' c r} (fb' : b' -> CoProxy a' a b' b m r)
-  (p1 : CoProxy b' b c' c m r) {struct p1} : CoProxy a' a c' c m r :=
-   let fix go p := match p with
-     | CoRequest b' fb  => copushR (fb' b') fb
-     | CoRespond c  fc' => CoRespond c (go \o fc')
-     | CoM _     f  t   => CoM (go \o f) t
-     | CoPure       a   => CoPure a
-     end in
-   go p1.
-*)
 
 Fixpoint pushR `{Monad m} {a' a b' b c' c r} (p0 : Proxy a' a b' b m r)
   (fb : b -> Proxy b' b c' c m r) {struct p0} : Proxy a' a c' c m r :=
@@ -219,24 +217,23 @@ Tactic Notation "reduce_proxy" ident(IHu) tactic(T) :=
   elim=> [? ? IHu|? ? IHu|? ? IHu| ?]; T;
   try (try move => m0; f_equal; extensionality RP_A; exact: IHu).
 
-Program Instance Proxy_FunctorLaws {a' a b' b} `{MonadLaws m} :
+Program Instance Proxy_FunctorLaws `{MonadLaws m} {a' a b' b} :
   FunctorLaws (Proxy a' a b' b m).
 Obligation 1. by reduce_proxy IHx simpl. Qed.
 Obligation 2. by reduce_proxy IHx simpl. Qed.
 
-Program Instance Proxy_ApplicativeLaws {a' a b' b} `{MonadLaws m} :
+Program Instance Proxy_ApplicativeLaws `{MonadLaws m} {a' a b' b} :
   ApplicativeLaws (Proxy a' a b' b m).
-Obligation 1. reduce_proxy IHx (rewrite /flip /=). Qed.
+Obligation 1. reduce_proxy IHx simpl. Qed.
 Obligation 2.
-  rewrite /flip.
-  move: u; reduce_proxy IHu simpl.
-  move: v; reduce_proxy IHv simpl.
+  move: u; reduce_proxy IHu (rewrite /funcomp /= /funcomp).
+  move: v; reduce_proxy IHv (rewrite /funcomp /= /funcomp).
   by move: w; reduce_proxy IHw simpl.
-Admitted.
+Qed.
 
-Program Instance Proxy_MonadLaws {a' a b' b} `{MonadLaws m} :
+Program Instance Proxy_MonadLaws `{MonadLaws m} {a' a b' b} :
   MonadLaws (Proxy a' a b' b m).
-Obligation 1. by reduce_proxy IHx simpl. Qed.
+Obligation 1. reduce_proxy IHx simpl. Qed.
 Obligation 2. by reduce_proxy IHx simpl. Qed.
 Obligation 4. by reduce_proxy IHx simpl. Qed.
 

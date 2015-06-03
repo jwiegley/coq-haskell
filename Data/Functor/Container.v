@@ -78,6 +78,20 @@ Program Instance IdentityContainer_Monad :
   join := fun _ x => getter x tt
 }.
 
+Inductive CFree {S : Type} (P : S -> Type) (a : Type) : Type :=
+  | CPure : a -> CFree P a
+  | CJoin : forall s : S, (P s -> CFree P a) -> CFree P a.
+
+Fixpoint fold `(r : x -> y) {S : Type} `(c : forall s : S, (P s -> y) -> y)
+  (fr : CFree P x) : y :=
+  match fr with
+    | CPure x   => r x
+    | CJoin s k => c s $ fun t => fold r c (k t)
+  end.
+
+Definition retract {S : Type} `(fr : CFree P a)
+  `(c : forall s : S, (P s -> a) -> a) : a := fold id c fr.
+
 Module ContainerLaws.
 
 Include MonadLaws.

@@ -8,8 +8,8 @@ Reserved Notation "f <*> g" (at level 28, left associativity).
 Class Applicative (f : Type -> Type) := {
   is_functor :> Functor f;
 
-  pure : forall {a : Type}, a -> f a;
-  ap   : forall {a b : Type}, f (a -> b) -> f a -> f b
+  pure : forall a : Type, a -> f a;
+  ap   : forall a b : Type, f (a -> b) -> f a -> f b
     where "f <*> g" := (ap f g)
 }.
 
@@ -34,7 +34,7 @@ Include FunctorLaws.
 
 Require Import FunctionalExtensionality.
 
-Class ApplicativeLaws (f : Type -> Type) `{H : Applicative f} := {
+Class ApplicativeLaws (f : Type -> Type) `{Applicative f} := {
   has_functor_laws :> FunctorLaws f;
 
   ap_id : forall a : Type, ap (pure (@id a)) =1 id;
@@ -77,7 +77,7 @@ Proof.
   exact: ap_fmap.
 Qed.
 
-Program Instance Applicative_Compose (F : Type -> Type) (G : Type -> Type)
+Program Instance ApplicativeLaws_Compose (F : Type -> Type) (G : Type -> Type)
   `{ApplicativeLaws F} `{ApplicativeLaws G} : ApplicativeLaws (F \o G).
 Obligation 1. (* app_identity *)
   move=> e.

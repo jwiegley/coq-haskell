@@ -22,7 +22,7 @@ Definition liftF {f : Type -> Type} {a : Type} : f a -> Free f a :=
 Fixpoint retract `{Monad f} `(fr : Free f a) : f a :=
   match fr with
     | Pure x => pure x
-    | Join _ g h => join $ fmap (retract \o g) h
+    | Join _ g h => h >>= (retract \o g)
   end.
 
 Fixpoint hoistFree `(n : forall a, f a -> g a) `(fr : Free f b) :
@@ -120,15 +120,12 @@ Qed.
 Theorem retract_distributes `{MonadLaws f} : forall a (x y : Free f a),
   retract (x >> y) = retract x >> retract y.
 Proof.
-  rewrite /bind.
-  move=> ? x y.
-  elim: x => [?|? ? IHx ?] in y *;
-  case: y => [?|? ? ?] //=;
+  rewrite /bind => ?.
+  elim=> [?|? ? IHx ?]; case=> [?|? ? ?] /=;
   try (by rewrite fmap_pure_x join_pure_x);
   rewrite /funcomp -join_fmap_fmap_x fmap_comp_x
-          -join_fmap_join_x fmap_comp_x;
-  f_equal; f_equal;
-  extensionality z;
+          -join_fmap_join_x fmap_comp_x /bind /funcomp;
+  f_equal; f_equal; extensionality x;
   exact: IHx.
 Qed.
 

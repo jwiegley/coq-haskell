@@ -63,7 +63,7 @@ Corollary fmap_compose  `{Functor F} `{Functor G} : forall {X Y} (f : X -> Y),
   @fmap F _ (G X) (G Y) (@fmap G _ X Y f) = @fmap (F \o G) _ X Y f.
 Proof. by []. Qed.
 
-Program Instance Functor_Compose `{FunctorLaws F} `{FunctorLaws G} :
+Program Instance FunctorLaws_Compose `{FunctorLaws F} `{FunctorLaws G} :
   FunctorLaws (F \o G).
 Obligation 1. (* fmap_id *)
   move=> x.
