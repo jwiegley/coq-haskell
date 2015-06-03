@@ -108,6 +108,26 @@ Arguments CoRespond {a' a b' b m r} _ _.
 Arguments CoM {a' a b' b m r x} _ _.
 Arguments CoPure {a' a b' b m r} _.
 
+Definition stream `(co : Proxy a' a b' b m r) : CoProxy a' a b' b m r :=
+  let cofix go p := match p with
+    | Request a' fa => CoRequest a' (go \o fa)
+    | Respond b  fb => CoRespond b  (go \o fb)
+    | M _     f  t  => CoM (go \o f) t
+    | Pure       a  => CoPure a
+    end in
+  go co.
+
+(*
+Definition render `(co : CoProxy a' a b' b m r) : Proxy a' a b' b m r :=
+  let fix go p := match p with
+    | CoRequest a' fa => Request a' (go \o fa)
+    | CoRespond b  fb => Respond b  (go \o fb)
+    | CoM _     f  t  => M (go \o f) t
+    | CoPure       a  => Pure a
+    end in
+  go co.
+*)
+
 CoFixpoint push `{Monad m} {a' a r} : a -> CoProxy a' a a' a m r :=
   CoRespond ^~ (CoRequest ^~ push).
 
@@ -346,9 +366,9 @@ Qed.
 (*
 Program Instance Push_Category {r} `{MonadLaws m} : Category := {
   ob     := Type * Type;
-  hom    := fun A B => snd A -> CoProxy (fst A) (snd A) (fst B) (snd B) m r;
+  hom    := fun A B => snd A -> Proxy (fst A) (snd A) (fst B) (snd B) m r;
   c_id   := fun A => @push m _ (fst A) (snd A) r;
-  c_comp := fun _ _ _ f g => undefined (* g >~> f *)
+  c_comp := fun _ _ _ f g => g >~> f
 }.
 Obligation 1. (* Right identity *)
 Abort.
