@@ -8,11 +8,10 @@ Require Import Hask.Control.Monad.Trans.Free.
 Generalizable All Variables.
 
 Inductive Proxy (a' a b' b : Type) (m : Type -> Type) (r : Type) : Type :=
-    | Request of a' & (a  -> Proxy a' a b' b m r)
-    | Respond of b  & (b' -> Proxy a' a b' b m r)
-    | M : forall x, (x -> Proxy a' a b' b m r) -> m x
-                       -> Proxy a' a b' b m r
-    | Pure    of r.
+  | Request of a' & (a  -> Proxy a' a b' b m r)
+  | Respond of b  & (b' -> Proxy a' a b' b m r)
+  | M : forall x, (x -> Proxy a' a b' b m r) -> m x -> Proxy a' a b' b m r
+  | Pure of r.
 
 Arguments Request {a' a b' b m r} _ _.
 Arguments Respond {a' a b' b m r} _ _.
@@ -97,11 +96,10 @@ Notation "x >\\ y" := (rofP x y) (at level 60).
 Notation "f \>\ g" := (fun a => f >\\ g a) (at level 60).
 
 CoInductive CoProxy (a' a b' b : Type) (m : Type -> Type) (r : Type) : Type :=
-    | CoRequest of a' & (a  -> CoProxy a' a b' b m r)
-    | CoRespond of b  & (b' -> CoProxy a' a b' b m r)
-    | CoM : forall x, (x -> CoProxy a' a b' b m r) -> m x
-                       -> CoProxy a' a b' b m r
-    | CoPure    of r.
+  | CoRequest of a' & (a  -> CoProxy a' a b' b m r)
+  | CoRespond of b  & (b' -> CoProxy a' a b' b m r)
+  | CoM : forall x, (x -> CoProxy a' a b' b m r) -> m x -> CoProxy a' a b' b m r
+  | CoPure of r.
 
 Arguments CoRequest {a' a b' b m r} _ _.
 Arguments CoRespond {a' a b' b m r} _ _.
