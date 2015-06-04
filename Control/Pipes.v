@@ -111,7 +111,7 @@ Fixpoint fromProxy `(p : Proxy a' a b' b m r) : SProxy a' a b' b m r :=
     match p with
     | Request a' fa  => req a' (fun a  => fromProxy (fa  a)  _ req res mon k)
     | Respond b  fb' => res b  (fun b' => fromProxy (fb' b') _ req res mon k)
-    | M _     g  h   => mon _ (fun x => fromProxy (g x) _ req res mon k) h
+    | M _     g  h   => mon _  (fun x  => fromProxy (g x) _ req res mon k) h
     | Pure    x      => k x
     end.
 
@@ -148,6 +148,25 @@ Definition render `(co : CoProxy a' a b' b m r) : Proxy a' a b' b m r :=
 
 CoFixpoint push `{Monad m} {a' a r} : a -> CoProxy a' a a' a m r :=
   CoRespond ^~ (CoRequest ^~ push).
+
+(*
+CoFixpoint pushR `{Monad m} {a' a b' b c' c r} (p0 : CoProxy a' a b' b m r)
+  (fb : b -> CoProxy b' b c' c m r) {struct p0} : CoProxy a' a c' c m r :=
+  let cofix go p := match p with
+    | CoRequest a' fa  => CoRequest a' (go \o fa)
+    | CoRespond b  fb' =>
+        let cofix go' p := match p with
+          | CoRequest b' fb  => go (fb' b')
+          | CoRespond c  fc' => CoRespond c (go' \o fc')
+          | CoM _     f  t   => CoM (go' \o f) t
+          | CoPure       a   => CoPure a
+          end in
+        go' (fb b)
+    | CoM _     f  t   => CoM (go \o f) t
+    | CoPure       a   => CoPure a
+    end in
+  go p0.
+*)
 
 Fixpoint pushR `{Monad m} {a' a b' b c' c r} (p0 : Proxy a' a b' b m r)
   (fb : b -> Proxy b' b c' c m r) {struct p0} : Proxy a' a c' c m r :=
@@ -408,6 +427,50 @@ Theorem zero_law
 Theorem involution
 
 *)
+
+Lemma SProxy_to_from : forall `(x : Proxy a' a b' b m r),
+  toProxy (fromProxy x) = x.
+Proof.
+  move=> a' a b' b m r.
+  reduce_proxy IHx
+    (rewrite /toProxy;
+     first [ congr (Request _)
+           | congr (Respond _)
+           | move=> m0; congr (M _)
+           | congr (Pure _) ]).
+Qed.
+
+Axiom elim : forall `(f : a -> (b -> s) -> s) (x : a) (y : s),
+  f x (const y) = y.
+
+Axiom flip_elim : forall `(f : (b -> s) -> a -> s) (x : a) (y : s),
+  f (const y) x = y.
+
+(* Lemma foo : forall `(x : SProxy a' a b' b m r) (z : r) s req res mon k, *)
+(*   x s req res mon k = k z -> toProxy x = Pure z. *)
+(* Proof. *)
+(*   move=> a' a b' b m r x z. *)
+(*   rewrite /toProxy. *)
+
+Lemma SProxy_from_to : forall `(x : SProxy a' a b' b m r),
+  fromProxy (toProxy x) = x.
+Proof.
+  move=> a' a b' b m r x.
+  extensionality s.
+  extensionality req.
+  extensionality res.
+  extensionality mon.
+  extensionality k.
+  (* elim E: (toProxy x) => [? ? IHu|? ? IHu|? ? IHu| ?]. *)
+  (* admit. admit. admit. *)
+  (* rewrite /fromProxy /=. *)
+  move: (toProxy x).
+  reduce_proxy IHx
+    (rewrite /fromProxy /=;
+     try (move/functional_extensionality in IHx;
+          try move=> m0;
+          rewrite IHx ?elim ?flip_elim)).
+Admitted.
 
 Section GeneralTheorems.
 

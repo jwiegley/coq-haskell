@@ -120,12 +120,13 @@ Qed.
 Theorem retract_distributes `{MonadLaws f} : forall a (x y : Free f a),
   retract (x >> y) = retract x >> retract y.
 Proof.
-  rewrite /bind => ?.
-  elim=> [?|? ? IHx ?]; case=> [?|? ? ?] /=;
-  try (by rewrite fmap_pure_x join_pure_x);
-  rewrite /funcomp -join_fmap_fmap_x fmap_comp_x
-          -join_fmap_join_x fmap_comp_x /bind /funcomp;
-  f_equal; f_equal; extensionality x;
+  move=> ?.
+  elim=> [?|? ? IHx ?] y; rewrite /bind /=.
+    by rewrite -ap_fmap ap_homo join_pure_x.
+  rewrite -join_fmap_fmap_x fmap_comp_x
+          -join_fmap_join_x fmap_comp_x.
+  congr (join (fmap _ _)).
+  extensionality x.
   exact: IHx.
 Qed.
 
