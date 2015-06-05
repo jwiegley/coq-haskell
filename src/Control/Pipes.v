@@ -385,11 +385,8 @@ Program Instance Push_Category {r} `{MonadLaws m} : Category := {
   c_comp := fun _ _ _ f g => g >~> f
 }.
 Obligation 1. (* Right identity *)
-Abort.
 Obligation 2. (* Left identity *)
-Abort.
 (* Obligation 3. (* Associativity *) *)
-(* Abort. *)
 *)
 
 (* Theorem push_zero *)
