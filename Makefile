@@ -19,63 +19,63 @@ MISSING = find src -name '*.v'						\
 		 xargs egrep -i -Hn '(abort|admit|undefined)'     |	\
 		       egrep -v 'Definition undefined'
 
-all: $(VOFILES) extracted/Hask/Main.hs		\
-     extracted/Hask/Eqtype.hs			\
-     extracted/Hask/Choice.hs			\
-     extracted/Hask/Fintype.hs			\
-     extracted/Hask/Seq.hs			\
-     extracted/Hask/Ssrbool.hs			\
-     extracted/Hask/Ssreflect.hs		\
-     extracted/Hask/Ssrfun.hs			\
-     extracted/Hask/Ssrnat.hs
+#     extract/Hask/Choice.hs			\
+#     extract/Hask/Ssreflect.hs			\
+
+all: $(VOFILES) extract/Hask/Extract.hs		\
+     extract/Hask/Eqtype.hs			\
+     extract/Hask/Fintype.hs			\
+     extract/Hask/Seq.hs			\
+     extract/Hask/Ssrbool.hs			\
+     extract/Hask/Ssrfun.hs			\
+     extract/Hask/Ssrnat.hs
 	$(MISSING) || exit 0
 
 %.vo: %.v Makefile.coq
 	@$(MAKE) -f Makefile.coq OPT=$(COQFLAGS)
-	@$(MAKE) extracted/Hask/Main.hs
+	@$(MAKE) extract/Hask/Extract.hs
 
 Makefile.coq: _CoqProject
 	@coq_makefile -f _CoqProject -o $@
 	@perl -i fixmake.pl $@
 
-extracted/Hask/Main.hs: src/Main.vo
+extract/Hask:
+	-mkdir -p extract/Hask
+
+extract/Hask/Extract.hs: extract/Hask src/Extract.vo
+	@perl -i fixcode.pl *.hs
 	@ls -1 *.hs | egrep -v 'Setup.hs' | \
-	    while read file; do mv $$file extracted/Hask; done
-	@perl -i fixcode.pl extracted/Hask/*.hs
+	    while read file; do mv $$file extract/Hask; done
 
 # These rules are for case-sensitive filesystems
-extracted/Hask/Eqtype.hs: extracted/Hask/eqtype.hs
+extract/Hask/Eqtype.hs: extract/Hask/eqtype.hs
 	@mv $< $@
 
-extracted/Hask/Choice.hs: extracted/Hask/choice.hs
+extract/Hask/Choice.hs: extract/Hask/choice.hs
 	@mv $< $@
 
-extracted/Hask/Fintype.hs: extracted/Hask/fintype.hs
+extract/Hask/Fintype.hs: extract/Hask/fintype.hs
 	@mv $< $@
 
-extracted/Hask/Seq.hs: extracted/Hask/seq.hs
+extract/Hask/Seq.hs: extract/Hask/seq.hs
 	@mv $< $@
 
-extracted/Hask/Ssrbool.hs: extracted/Hask/ssrbool.hs
+extract/Hask/Ssrbool.hs: extract/Hask/ssrbool.hs
 	@mv $< $@
 
-extracted/Hask/Ssreflect.hs: extracted/Hask/ssreflect.hs
+extract/Hask/Ssreflect.hs: extract/Hask/ssreflect.hs
 	@mv $< $@
 
-extracted/Hask/Ssrfun.hs: extracted/Hask/ssrfun.hs
+extract/Hask/Ssrfun.hs: extract/Hask/ssrfun.hs
 	@mv $< $@
 
-extracted/Hask/Ssrnat.hs: extracted/Hask/ssrnat.hs
+extract/Hask/Ssrnat.hs: extract/Hask/ssrnat.hs
 	@mv $< $@
-
-clean:
-	rm -f *.d *.vo *.glob Makefile.coq .*.aux
-	rm -fr .coq-native
 
 clean: Makefile.coq
 	$(MAKE) -f Makefile.coq clean
-	ls -1 extracted/Hask/* | egrep -v '(Utils).hs' | \
+	ls -1 extract/Hask/* | egrep -v '(Utils).hs' | \
 	    while read file; do rm -f $$file; done
 	rm -f Makefile.coq Setup
 	rm -fr dist .coq-native
-	rm -fr .hdevtools.sock *.glob *.d *.vo
+	rm -fr .hdevtools.sock *.glob *.d *.vo .*.aux

@@ -17,9 +17,38 @@ extra-source-files:  README.md
 cabal-version:       >=1.10
 
 library
-  exposed-modules:     Coq, Extracted, Transfer
-  -- other-modules:       
+  exposed-modules:
+    Hask.Coq
+  other-modules:
+    Hask.Applicative
+    Hask.Church
+    Hask.Comonad
+    Hask.Container
+    Hask.Datatypes
+    Hask.Eqtype
+    Hask.Fintype
+    Hask.Free
+    Hask.Functor
+    Hask.Identity
+    Hask.IntMap
+    Hask.IntSet
+    Hask.List0
+    Hask.Logic
+    Hask.Monad
+    Hask.Pipes
+    Hask.Prelude0
+    Hask.Seq
+    Hask.Specif
+    Hask.Ssrbool
+    Hask.Ssrfun
+    Hask.Ssrnat
+    Hask.State
+    Hask.State0
+    Hask.Vector0
+    Hask.Yoneda
   other-extensions:    ScopedTypeVariables
-  build-depends:       base >=4.8 && <4.9, free >=4.12 && <4.13
-  hs-source-dirs:      haskell
+  build-depends:  base >= 4.8 && < 4.9
+    , free     >= 4.12    && < 4.13
+    , ghc-prim >= 0.4.0.0 && < 0.5.0.0
+  hs-source-dirs:      haskell extract
   default-language:    Haskell2010

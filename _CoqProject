@@ -21,6 +21,7 @@ src/Data/NonEmpty.v
 src/Data/List.v
 src/Data/List/Church.v
 src/Data/Vector.v
+src/Extract.v
 src/Haskell.v
 src/Ltac.v
 src/Prelude.v

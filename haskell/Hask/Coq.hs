@@ -1,15 +1,19 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Transfer where
+module Hask.Coq where
 
 import           Control.Applicative
 import           Control.Monad
 import           Control.Monad.Free
 import           Data.Monoid hiding (Any)
-import qualified Extracted as Coq
+import qualified Hask.Functor as Coq
+import qualified Hask.Functor as Functor
+import qualified Hask.Applicative as Coq
+import qualified Hask.Monad as Coq
+import qualified Hask.Free as Coq
 import           Unsafe.Coerce
 
-type Any = Coq.Any
+type Any = Functor.Any
 
 coqFunctor :: forall f. Functor f => Coq.Functor (f Any)
 coqFunctor (_ :: Any) (_ :: Any) (g :: Any -> Any) x =
