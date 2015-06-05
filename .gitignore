@@ -4,3 +4,4 @@
 *.vo
 *.glob
 /Makefile.coq
+/extract

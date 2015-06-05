@@ -16,19 +16,16 @@ import           Unsafe.Coerce
 type Any = Functor.Any
 
 coqFunctor :: forall f. Functor f => Coq.Functor (f Any)
-coqFunctor (_ :: Any) (_ :: Any) (g :: Any -> Any) x =
+coqFunctor _ _ g x =
     unsafeCoerce (fmap g (unsafeCoerce x :: f Any))
 
 coqApplicative :: forall f. Applicative f => Coq.Applicative (f Any)
-coqApplicative = Coq.Build_Applicative coqFunctor
-    (\(_ :: Any) -> pure)
-    (\(_ :: Any) (_ :: Any) g x ->
-      unsafeCoerce (unsafeCoerce g <*> unsafeCoerce x :: f Any))
+coqApplicative = Coq.Build_Applicative coqFunctor (\_ -> pure)
+    (\_ _ g x -> unsafeCoerce (unsafeCoerce g <*> unsafeCoerce x :: f Any))
 
 coqMonad :: forall m. (Monad m, Applicative m) => Coq.Monad (m Any)
 coqMonad = Coq.Build_Monad coqApplicative
-    (\(_ :: Any) x ->
-      unsafeCoerce (join (unsafeCoerce x :: m (m Any)) :: m Any))
+    (\_ x -> unsafeCoerce (join (unsafeCoerce x :: m (m Any)) :: m Any))
 
 toCoqFree :: Functor f => Free f a -> Coq.Free (f Any) a
 toCoqFree (Pure x) = Coq.Pure x

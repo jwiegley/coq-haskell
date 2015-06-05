@@ -19,97 +19,100 @@ Require Export Hask.Data.NonEmpty.
 Require Export Hask.Data.Vector.
 Require Export Hask.Haskell.
 
-Separate Extraction Free.
-Separate Extraction FreeT.
-Separate Extraction apply.
-Separate Extraction bind.
-Separate Extraction catMaybes.
-Separate Extraction compose.
-Separate Extraction concatMapM.
-Separate Extraction const.
-Separate Extraction curry.
-Separate Extraction distance.
-Separate Extraction each.
-Separate Extraction emptyIntMap.
-Separate Extraction emptyIntSet.
-Separate Extraction eqIntMap.
-Separate Extraction eqIntSet.
-Separate Extraction exist_in_cons.
-Separate Extraction extend.
-Separate Extraction fin_contra.
-Separate Extraction fin_ind.
-Separate Extraction fin_rect.
-Separate Extraction first.
-Separate Extraction flip.
-Separate Extraction foldM.
-Separate Extraction foldl_with_index.
-Separate Extraction foldrM.
-Separate Extraction foldr_with_index.
-Separate Extraction forFold.
-Separate Extraction forFoldM.
-Separate Extraction forFoldr.
-Separate Extraction forFoldrM.
-Separate Extraction forM.
-Separate Extraction forM_.
-Separate Extraction forP.
-Separate Extraction fromChurch.
-Separate Extraction get.
-Separate Extraction getBy.
-Separate Extraction getT.
-Separate Extraction gets.
-Separate Extraction getsT.
-Separate Extraction isJust.
-Separate Extraction iterT.
-Separate Extraction kleisli_compose.
-Separate Extraction lebf.
-Separate Extraction lift.
-Separate Extraction liftA2.
-Separate Extraction liftCoyoneda.
-Separate Extraction liftF.
-Separate Extraction liftStateT.
-Separate Extraction list_membership.
-Separate Extraction lowerCoyoneda.
-Separate Extraction map_fst_filter_snd.
-Separate Extraction modify.
-Separate Extraction modifyT.
-Separate Extraction oddnum.
-Separate Extraction oends.
-Separate Extraction olast.
-Separate Extraction option_choose.
-Separate Extraction option_map.
-Separate Extraction partition.
-Separate Extraction put.
-Separate Extraction putT.
-Separate Extraction request.
-Separate Extraction respond.
-Separate Extraction retract.
-Separate Extraction rofP.
-Separate Extraction runIdentityF.
-Separate Extraction safe_hd.
-Separate Extraction safe_last.
-Separate Extraction second.
-Separate Extraction stream.
-Separate Extraction sumlist.
-Separate Extraction toChurch.
-Separate Extraction toProxy.
-Separate Extraction to_from_Church.
-Separate Extraction undefined.
-Separate Extraction vapp.
-Separate Extraction vcons.
-Separate Extraction vconst.
-Separate Extraction vec_ind.
-Separate Extraction vec_rect.
-Separate Extraction vecn_ind.
-Separate Extraction vecn_rect.
-Separate Extraction vfoldl.
-Separate Extraction vfoldl_with_index.
-Separate Extraction vmap.
-Separate Extraction vnil.
-Separate Extraction vnth.
-Separate Extraction vnth_vshiftin.
-Separate Extraction vreplace.
-Separate Extraction vshiftin.
-Separate Extraction vsing.
-Separate Extraction widen_id.
-Separate Extraction yield.
-Separate Extraction yieldxx.
+Separate Extraction
+  Applicative
+  Free
+  FreeT
+  Functor
+  Monad
+  apply
+  bind
+  catMaybes
+  compose
+  concatMapM
+  const
+  curry
+  distance
+  each
+  emptyIntMap
+  emptyIntSet
+  eqIntMap
+  eqIntSet
+  eq_op
+  exist_in_cons
+  extend
+  fin_contra
+  fin_ind
+  fin_rect
+  first
+  flip
+  foldM
+  foldl_with_index
+  foldrM
+  foldr_with_index
+  forFold
+  forFoldM
+  forFoldr
+  forFoldrM
+  forM
+  forM_
+  forP
+  fromChurch
+  get
+  getBy
+  getT
+  gets
+  getsT
+  isJust
+  iterT
+  kleisli_compose
+  lebf
+  lift
+  liftA2
+  liftCoyoneda
+  liftF
+  liftStateT
+  list_membership
+  lowerCoyoneda
+  map_fst_filter_snd
+  modify
+  modifyT
+  oddnum
+  oends
+  olast
+  option_choose
+  option_map
+  partition
+  put
+  putT
+  request
+  respond
+  retract
+  rofP
+  runIdentityF
+  safe_hd
+  safe_last
+  second
+  stream
+  sumlist
+  toChurch
+  toProxy
+  to_from_Church
+  undefined
+  vapp
+  vcons
+  vconst
+  vec_ind
+  vec_rect
+  vecn_ind
+  vecn_rect
+  vfoldl
+  vfoldl_with_index
+  vmap
+  vnil
+  vnth
+  vnth_vshiftin
+  vreplace
+  vshiftin
+  vsing
+  yield.

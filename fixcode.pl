@@ -5,6 +5,7 @@ while (<>) {
     s/import qualified Hask\.GHC/import qualified GHC/;
     s{import qualified Hask\.Prelude as Prelude}{
 import Debug.Trace (trace, traceShow)
+import qualified Data.List
 import qualified Prelude
 };
 
