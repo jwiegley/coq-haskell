@@ -16,8 +16,10 @@ Fixpoint iter `{Functor f} `(phi : f a -> a) (fr : Free f a) : a :=
     | Join _ g h => phi $ fmap (iter phi \o g) h
   end.
 
-Definition liftF {f : Type -> Type} {a : Type} : f a -> Free f a :=
-  Join Pure.
+Definition liftF {f : Type -> Type} {a : Type} : f a -> Free f a := Join Pure.
+
+Definition uniter `{Functor f} `(psi : Free f a -> a) : f a -> a :=
+  psi \o liftF.
 
 Fixpoint retract `{Monad f} `(fr : Free f a) : f a :=
   match fr with
@@ -157,5 +159,39 @@ Proof.
     by rewrite /funcomp /Free_bind.
   exact: Free_parametricity.
 Qed.
+
+Corollary liftF_naturality_x `{FunctorLaws f} : forall a b (g : a -> b) x,
+  fmap g (liftF x) = liftF (fmap g x).
+Proof. exact: liftF_naturality. Qed.
+
+Theorem uniter_iter_id `{MonadLaws f} : forall a,
+  uniter \o iter =1 @id (f a -> a).
+Proof.
+  move=> * x.
+  extensionality z.
+  rewrite /uniter /=.
+  have ->: iter x \o Pure = id by [].
+  by rewrite fmap_id.
+Qed.
+
+(*
+Theorem iter_uniter_id `{MonadLaws f} : forall a,
+  iter \o uniter =1 @id (Free f a -> a).
+Proof.
+  move=> a x.
+  extensionality z.
+  rewrite /uniter /=.
+  elim: z => /= [?|? ? IHz ?].
+    (* _a_ = x (Pure _a_) *)
+    (* This is true by parametricity. *)
+  move/functional_extensionality in IHz.
+  rewrite -liftF_naturality_x.
+  rewrite /funcomp IHz /= /funcomp.
+  congr (x (Join _ _)).
+  extensionality y.
+  rewrite /Free_bind.
+  (* Pure (x (_f_ y)) = _f_ y *)
+  (* This is false if _f_ y returns Join. *)
+*)
 
 End FreeLaws.
