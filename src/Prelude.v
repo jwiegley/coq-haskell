@@ -19,6 +19,10 @@ Definition apply `(f : a -> b) (x : a) : b := f x.
 
 Definition compose {a b c : Type} (f : b -> c) (g : a -> b) : a -> c := f \o g.
 
+Lemma compA {a b c d : Type} (h : a -> b) (g : b -> c) (f : c -> d) :
+  (f \o g) \o h =1 f \o (g \o h).
+Proof. done. Qed.
+
 Definition first `(f : a -> b) `(x : a * z) : b * z :=
   match x with (a, z) => (f a, z) end.
 
