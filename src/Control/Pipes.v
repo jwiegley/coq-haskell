@@ -62,10 +62,8 @@ Definition request {x' x a' a m} (z : x') : Proxy x' x a' a m x :=
 Definition Producer := Proxy False unit unit.
 Definition Producer' b m r := forall x' x, Proxy x' x unit b m r.
 
-Definition yieldxx {a m} (z : a) : Producer' a m unit :=
-  fun _ _ => respond z.
 Definition yield {a x' x m} (z : a) : Proxy x' x unit a m unit :=
-  @yieldxx a m z x' x.
+  let go : Producer' a m unit := fun _ _ => respond z in @go x' x.
 
 Definition forP `{Monad m} {x' x a' b' b c' c} (p0 : Proxy x' x b' b m a')
   (fb : b -> Proxy x' x c' c m b') : Proxy x' x c' c m a' :=
@@ -95,79 +93,6 @@ Notation "x >\\ y" := (rofP x y) (at level 60).
 
 Notation "f \>\ g" := (fun a => f >\\ g a) (at level 60).
 
-Definition SProxy (a' a b' b : Type) (m : Type -> Type) (r : Type) : Type :=
-  forall s : Type,
-       (a' -> (a  -> s) -> s)           (* SRequest *)
-    -> (b  -> (b' -> s) -> s)           (* SRespond *)
-    -> (forall x, (x -> s) -> m x -> s) (* SM *)
-    -> (r -> s)                         (* SPure *)
-    -> s.
-
-Definition toProxy `(s : SProxy a' a b' b m r) : Proxy a' a b' b m r :=
-  s _ Request Respond (fun _ => M) Pure.
-
-Fixpoint fromProxy `(p : Proxy a' a b' b m r) : SProxy a' a b' b m r :=
-  fun _ req res mon k =>
-    match p with
-    | Request a' fa  => req a' (fun a  => fromProxy (fa  a)  _ req res mon k)
-    | Respond b  fb' => res b  (fun b' => fromProxy (fb' b') _ req res mon k)
-    | M _     g  h   => mon _  (fun x  => fromProxy (g x) _ req res mon k) h
-    | Pure    x      => k x
-    end.
-
-CoInductive CoProxy (a' a b' b : Type) (m : Type -> Type) (r : Type) : Type :=
-  | CoRequest of a' & (a  -> CoProxy a' a b' b m r)
-  | CoRespond of b  & (b' -> CoProxy a' a b' b m r)
-  | CoM : forall x, (x -> CoProxy a' a b' b m r) -> m x -> CoProxy a' a b' b m r
-  | CoPure of r.
-
-Arguments CoRequest {a' a b' b m r} _ _.
-Arguments CoRespond {a' a b' b m r} _ _.
-Arguments CoM {a' a b' b m r x} _ _.
-Arguments CoPure {a' a b' b m r} _.
-
-Definition stream `(co : Proxy a' a b' b m r) : CoProxy a' a b' b m r :=
-  let cofix go p := match p with
-    | Request a' fa => CoRequest a' (go \o fa)
-    | Respond b  fb => CoRespond b  (go \o fb)
-    | M _     f  t  => CoM (go \o f) t
-    | Pure       a  => CoPure a
-    end in
-  go co.
-
-(*
-Definition render `(co : CoProxy a' a b' b m r) : Proxy a' a b' b m r :=
-  let fix go p := match p with
-    | CoRequest a' fa => Request a' (go \o fa)
-    | CoRespond b  fb => Respond b  (go \o fb)
-    | CoM _     f  t  => M (go \o f) t
-    | CoPure       a  => Pure a
-    end in
-  go co.
-*)
-
-CoFixpoint push `{Monad m} {a' a r} : a -> CoProxy a' a a' a m r :=
-  CoRespond ^~ (CoRequest ^~ push).
-
-(*
-CoFixpoint pushR `{Monad m} {a' a b' b c' c r} (p0 : CoProxy a' a b' b m r)
-  (fb : b -> CoProxy b' b c' c m r) {struct p0} : CoProxy a' a c' c m r :=
-  let cofix go p := match p with
-    | CoRequest a' fa  => CoRequest a' (go \o fa)
-    | CoRespond b  fb' =>
-        let cofix go' p := match p with
-          | CoRequest b' fb  => go (fb' b')
-          | CoRespond c  fc' => CoRespond c (go' \o fc')
-          | CoM _     f  t   => CoM (go' \o f) t
-          | CoPure       a   => CoPure a
-          end in
-        go' (fb b)
-    | CoM _     f  t   => CoM (go \o f) t
-    | CoPure       a   => CoPure a
-    end in
-  go p0.
-*)
-
 Fixpoint pushR `{Monad m} {a' a b' b c' c r} (p0 : Proxy a' a b' b m r)
   (fb : b -> Proxy b' b c' c m r) {struct p0} : Proxy a' a c' c m r :=
   let fix go p := match p with
@@ -188,9 +113,6 @@ Fixpoint pushR `{Monad m} {a' a b' b c' c r} (p0 : Proxy a' a b' b m r)
 Notation "x >>~ y" := (pushR x y) (at level 60).
 
 Notation "f >~> g" := (fun a => f a >>~ g) (at level 60).
-
-CoFixpoint pull `{Monad m} {a' a r} : a' -> CoProxy a' a a' a m r :=
-  CoRequest ^~ (CoRespond ^~ pull).
 
 Fixpoint pullR `{Monad m} {a' a b' b c' c r} (fb' : b' -> Proxy a' a b' b m r)
   (p0 : Proxy b' b c' c m r) {struct p0} : Proxy a' a c' c m r :=
@@ -377,14 +299,63 @@ Qed.
 
 (* Theorem request_zero *)
 
+CoInductive CoProxy (a' a b' b : Type) (m : Type -> Type) (r : Type) : Type :=
+  | CoRequest of a' & (a  -> CoProxy a' a b' b m r)
+  | CoRespond of b  & (b' -> CoProxy a' a b' b m r)
+  | CoM : forall x, (x -> CoProxy a' a b' b m r) -> m x -> CoProxy a' a b' b m r
+  | CoPure of r.
+
+Arguments CoRequest {a' a b' b m r} _ _.
+Arguments CoRespond {a' a b' b m r} _ _.
+Arguments CoM {a' a b' b m r x} _ _.
+Arguments CoPure {a' a b' b m r} _.
+
+CoFixpoint push `{Monad m} {a' a r} : a -> CoProxy a' a a' a m r :=
+  CoRespond ^~ (CoRequest ^~ push).
+
+Fixpoint render (n : nat) `(dflt : r) `(co : CoProxy a' a b' b m r) :
+  Proxy a' a b' b m r :=
+  if n isn't S n' then Pure dflt else
+  match co with
+    | CoRequest a' fa => Request a' (render n' dflt \o fa)
+    | CoRespond b  fb => Respond b  (render n' dflt \o fb)
+    | CoM _     f  t  => M (render n' dflt \o f) t
+    | CoPure       a  => Pure a
+    end.
+
+Definition stream `(co : Proxy a' a b' b m r) : CoProxy a' a b' b m r :=
+  let cofix go p := match p with
+    | Request a' fa => CoRequest a' (go \o fa)
+    | Respond b  fb => CoRespond b  (go \o fb)
+    | M _     f  t  => CoM (go \o f) t
+    | Pure       a  => CoPure a
+    end in
+  go co.
+
 (*
-Program Instance Push_Category {r} `{MonadLaws m} : Category := {
+Program Instance Push_Category
+  (n : nat) (_ : n > 0) {r} (dflt : r) `{MonadLaws m} :
+  Category := {
   ob     := Type * Type;
-  hom    := fun A B => snd A -> Proxy (fst A) (snd A) (fst B) (snd B) m r;
+  hom    := fun A B => snd A -> CoProxy (fst A) (snd A) (fst B) (snd B) m r;
   c_id   := fun A => @push m _ (fst A) (snd A) r;
   c_comp := fun _ _ _ f g => g >~> f
 }.
 Obligation 1. (* Right identity *)
+  rewrite /stream /= in f *.
+  case: n => // [n'] in H1 *.
+  extensionality z => /=.
+  move: (f z).
+  destruct f0.
+  simpl.
+  reduce_proxy IHx idtac.
+  f_equal.
+  extensionality x.
+  specialize (IHx x).
+  rewrite -IHx.
+  unfold funcomp in *. simpl in *.
+  rewrite -IHx.
+  rewrite /funcomp /=.
 Obligation 2. (* Left identity *)
 (* Obligation 3. (* Associativity *) *)
 *)
@@ -424,50 +395,6 @@ Theorem zero_law
 Theorem involution
 
 *)
-
-Lemma SProxy_to_from : forall `(x : Proxy a' a b' b m r),
-  toProxy (fromProxy x) = x.
-Proof.
-  move=> a' a b' b m r.
-  reduce_proxy IHx
-    (rewrite /toProxy;
-     first [ congr (Request _)
-           | congr (Respond _)
-           | move=> m0; congr (M _)
-           | congr (Pure _) ]).
-Qed.
-
-Axiom elim : forall `(f : a -> (b -> s) -> s) (x : a) (y : s),
-  f x (const y) = y.
-
-Axiom flip_elim : forall `(f : (b -> s) -> a -> s) (x : a) (y : s),
-  f (const y) x = y.
-
-(* Lemma foo : forall `(x : SProxy a' a b' b m r) (z : r) s req res mon k, *)
-(*   x s req res mon k = k z -> toProxy x = Pure z. *)
-(* Proof. *)
-(*   move=> a' a b' b m r x z. *)
-(*   rewrite /toProxy. *)
-
-Lemma SProxy_from_to : forall `(x : SProxy a' a b' b m r),
-  fromProxy (toProxy x) = x.
-Proof.
-  move=> a' a b' b m r x.
-  extensionality s.
-  extensionality req.
-  extensionality res.
-  extensionality mon.
-  extensionality k.
-  (* elim E: (toProxy x) => [? ? IHu|? ? IHu|? ? IHu| ?]. *)
-  (* admit. admit. admit. *)
-  (* rewrite /fromProxy /=. *)
-  move: (toProxy x).
-  reduce_proxy IHx
-    (rewrite /fromProxy /=;
-     try (move/functional_extensionality in IHx;
-          try move=> m0;
-          rewrite IHx ?elim ?flip_elim)).
-Admitted.
 
 Section GeneralTheorems.
 
