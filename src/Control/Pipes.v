@@ -332,18 +332,21 @@ Definition stream `(co : Proxy a' a b' b m r) : CoProxy a' a b' b m r :=
     end in
   go co.
 
+Inductive pushR_ev {a' a b' b m r} : CoProxy a' a b' b m r -> Prop :=
+  | ev_pushR_req p0  : forall aa' fa, p0 = CoRequest aa' fa -> pushR_ev p0
+  | ev_pushR_res p0  : forall bb  fb fb',
+      p0 = CoRespond bb fb -> pullR_ev (fb' bb) -> pushR_ev p0
+  | ev_pushR_mon p0  : forall x g (h : m x), p0 = CoM g h -> pushR_ev p0
+  | ev_pushR_pure p0 : forall x : r, p0 = CoPure x -> pushR_ev p0
+
+with pullR_ev {a' a b' b m r} : CoProxy a' a b' b m r -> Prop :=
+  | ev_pullR_req p0  : forall aa' fa fa',
+      p0 = CoRequest aa' fa -> pushR_ev (fa' aa') -> pullR_ev p0
+  | ev_pullR_res p0  : forall bb  fb, p0 = CoRequest bb fb -> pullR_ev p0
+  | ev_pullR_mon p0  : forall x g (h : m x), p0 = CoM g h -> pullR_ev p0
+  | ev_pullR_pure p0 : forall x : r, p0 = CoPure x -> pullR_ev p0.
 
 (*
-Inductive pushR_ev {a' a b' b c' c m r}
-  (p0 : CoProxy a' a b' b m r) (fb : b -> CoProxy b' b c' c m r) : Prop :=
-  | ev_pushR_req : forall aa' fa, p0 = CoRequest aa' fa -> pushR_ev p0 fb
-  | ev_pushR_res : forall bb  fb',
-      p0 = CoRespond bb fb' -> pullR_ev fb' (fb bb) -> pushR_ev p0 fb
-
-with pullR_ev {a' a b' b c' c m r}
-  (fb' : b' -> Proxy a' a b' b m r) (p0 : Proxy b' b c' c m r) : Prop :=
-  | ev_pullR_req : forall aa' fa, p0 = CoRequest aa' fa -> pullR_ev fb' p0.
-
 CoFixpoint pushR `{Monad m} {a' a b' b c' c r} (p0 : CoProxy a' a b' b m r)
   (fb : b -> CoProxy b' b c' c m r) {struct p0} : CoProxy a' a c' c m r :=
   let cofix go p := match p with
