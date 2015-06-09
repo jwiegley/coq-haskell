@@ -584,34 +584,63 @@ Variables m : Type -> Type.
 Context `{MonadLaws m}.
 
 Theorem request_id : reflect \o request =1 @respond a' a b' b m.
-Abort.
+Proof. move=> x; by congr (Respond _ _). Qed.
+
+Theorem reflect_distrib :
+  forall (f : a -> Proxy a' a b' b m r)
+         (g : r -> Proxy a' a b' b m r) (x : a),
+    reflect (f x >>= g) = reflect (f x) >>= (reflect \o g).
+Proof.
+  move=> f g x.
+  move: (f x).
+  by reduce_proxy IHx (rewrite /bind /=).
+Qed.
 
 Theorem request_comp :
   forall (f : a -> Proxy a' a b' b m r)
          (g : a -> Proxy a  r b' b m r),
     reflect \o (f \>\ g) =1 (reflect \o g) />/ (reflect \o f).
-Abort.
+Proof.
+  move=> f g x.
+  rewrite /=.
+  move: (g x).
+  reduce_proxy IHx simpl.
+  move/functional_extensionality in IHx.
+  by rewrite /funcomp -IHx reflect_distrib.
+Qed.
 
 Theorem respond_id : reflect \o respond =1 @request a' a b' b m.
-Abort.
+Proof. move=> x; by congr (Request _ _). Qed.
 
 Theorem respond_comp :
   forall (f : a -> Proxy a' a b' b m r)
          (g : b -> Proxy a' a b' b m b'),
     reflect \o (f />/ g) =1 (reflect \o g) \>\ (reflect \o f).
-Abort.
+Proof.
+  move=> f g x.
+  rewrite /=.
+  move: (f x).
+  reduce_proxy IHx simpl.
+  move/functional_extensionality in IHx.
+  (* jww (2015-06-09): We should be able to use [reflect_distrib] here, but
+     the types are not general enough, which means that the types of some of
+     these theorems are probably incorrect. *)
+  rewrite /funcomp -IHx.
+  move: (g _).
+  by reduce_proxy IHy (rewrite /bind /=).
+Qed.
 
-Theorem distributivity :
-  forall (f : a -> Proxy a' a b' b m a)
-         (g : a -> Proxy a' a b' b m r),
+Corollary distributivity :
+  forall (f : a -> Proxy a' a b' b m r)
+         (g : r -> Proxy a' a b' b m r),
     reflect \o (f >=[Proxy_Monad]=> g) =1 (reflect \o f) >=> (reflect \o g).
-Abort.
+Proof. exact: reflect_distrib. Qed.
 
 Theorem zero_law : @reflect m _ a' a b' b r \o pure =1 pure.
-Abort.
+Proof. by []. Qed.
 
 Theorem involution : @reflect m _ a' a b' b r \o reflect =1 id.
-Abort.
+Proof. by reduce_proxy IHx simpl. Qed.
 
 End Duals.
 
