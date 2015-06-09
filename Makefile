@@ -5,7 +5,14 @@ MODULES_DOC   := $(MODULES_PROSE) $(MODULES_CODE) Conclusion
 MODULES       := $(MODULES_NODOC) $(MODULES_DOC)
 TEX           := $(MODULES:%=%.v.tex)
 
-VFILES = $(wildcard src/*.v)
+VFILES = $(wildcard src/*.v)				\
+         $(wildcard src/Control/*.v)			\
+         $(wildcard src/Control/Monad/*.v)		\
+         $(wildcard src/Control/Monad/Trans/*.v)	\
+         $(wildcard src/Data/*.v)			\
+         $(wildcard src/Data/Functor/*.v)		\
+         $(wildcard src/Data/List/*.v)
+
 VOFILES = $(patsubst %.v,%.vo,$(VFILES))
 
 COQFLAGS = ""
