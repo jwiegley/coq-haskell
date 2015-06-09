@@ -18,6 +18,22 @@ Arguments Respond {a' a b' b m r} _ _.
 Arguments M {a' a b' b m r x} _ _.
 Arguments Pure {a' a b' b m r} _.
 
+Fixpoint foldProxyM `{Monad m}
+  `(ka : a' -> (a  -> s) -> s)
+  `(kb : b  -> (b' -> s) -> s)
+  `(km : forall x, (x -> s) -> m x -> s)
+  `(kp : r -> s)
+  (p : Proxy a' a b' b m r) : s :=
+  let fix go p := match p with
+    | Request a' fa  => ka a' (go \o fa)
+    | Respond b  fb' => kb b  (go \o fb')
+    | M _     g  h   => km _ (go \o g) h
+    | Pure    r      => kp r
+    end in
+  go p.
+
+(* This is equivalent to [foldProxyM Request Respond (fun _ => M)], but using
+   that definition makes some proofs harder. *)
 Definition Proxy_bind {a' a b' b c d} `{Monad m}
   (f : c -> Proxy a' a b' b m d) (p0 : Proxy a' a b' b m c) :
   Proxy a' a b' b m d :=
@@ -31,7 +47,7 @@ Definition Proxy_bind {a' a b' b c d} `{Monad m}
 
 Instance Proxy_Functor `{Monad m} {a' a b' b} :
   Functor (Proxy a' a b' b m) := {
-  fmap := fun _ _ f p0 => Proxy_bind (Pure \o f) p0
+  fmap := fun _ _ f => Proxy_bind (Pure \o f)
 }.
 
 Instance Proxy_Applicative `{Monad m} {a' a b' b} :
@@ -42,22 +58,8 @@ Instance Proxy_Applicative `{Monad m} {a' a b' b} :
 
 Instance Proxy_Monad `{Monad m} {a' a b' b} :
   Monad (Proxy a' a b' b m) := {
-  join := fun _ x => Proxy_bind id x
+  join := fun _ => Proxy_bind id
 }.
-
-Fixpoint foldProxyM `{Monad m}
-  `(ka : a' -> (a  -> m r) -> m r)
-  `(kb : b  -> (b' -> m r) -> m r)
-  `(km : forall x, (x -> m r) -> m x -> m r)
-  `(kp : r -> m r)
-  (p : Proxy a' a b' b m r) : m r :=
-  let fix go p := match p with
-    | Request a' fa  => ka a' (go \o fa)
-    | Respond b  fb' => kb b  (go \o fb')
-    | M _     g  h   => km _ (go \o g) h
-    | Pure    r      => kp r
-    end in
-  go p.
 
 Fixpoint runEffect `{Monad m} `(p : Proxy False unit unit False m r) : m r :=
   match p with
