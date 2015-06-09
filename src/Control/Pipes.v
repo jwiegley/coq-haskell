@@ -3,9 +3,12 @@ Require Import Hask.Control.Lens.
 Require Import Hask.Control.Monad.
 Require Import Hask.Control.Monad.Trans.Free.
 
-(* Set Universe Polymorphism. *)
-
 Generalizable All Variables.
+
+(****************************************************************************
+ *
+ * Proxy
+ *)
 
 Inductive Proxy (a' a b' b : Type) (m : Type -> Type) (r : Type) : Type :=
   | Request of a' & (a  -> Proxy a' a b' b m r)
@@ -17,6 +20,11 @@ Arguments Request {a' a b' b m r} _ _.
 Arguments Respond {a' a b' b m r} _ _.
 Arguments M {a' a b' b m r x} _ _.
 Arguments Pure {a' a b' b m r} _.
+
+(****************************************************************************
+ *
+ * Fundamental code to operate with Proxy's
+ *)
 
 Fixpoint foldProxyM `{Monad m}
   `(ka : a' -> (a  -> s) -> s)
@@ -151,8 +159,22 @@ Notation "x +>> y" := (pullR x y) (at level 60).
 
 Notation "f >+> g" := (fun a => f +>> g a) (at level 60).
 
-Definition each `{Monad m} {a} : seq a -> Producer a m unit :=
-  mapM_ yield.
+Definition reflect `{Monad m} `(p : Proxy a' a b' b m r) :
+  Proxy b b' a a' m r :=
+  let fix go p := match p with
+    | Request a' fa  => Respond a' (go \o fa)
+    | Respond b  fb' => Request b  (go \o fb')
+    | M _     g  h   => M (go \o g) h
+    | Pure    r      => Pure r
+    end in
+  go p.
+
+(****************************************************************************
+ *
+ * General routines
+ *)
+
+Definition each `{Monad m} {a} : seq a -> Producer a m unit := mapM_ yield.
 
 Fixpoint toListM `{Monad m} `(p : Producer a m unit) : m (seq a) :=
   match p with
@@ -162,7 +184,13 @@ Fixpoint toListM `{Monad m} `(p : Producer a m unit) : m (seq a) :=
   | Pure    _    => pure [::]
   end.
 
-(* jww (2015-05-30): Make \o bind tighter than >>= *)
+(****************************************************************************
+ ****************************************************************************
+ **                                                                        **
+ ** Proofs of the pipes categories and laws                                **
+ **                                                                        **
+ ****************************************************************************
+ ****************************************************************************)
 
 Module PipesLaws.
 
@@ -171,17 +199,14 @@ Include MonadLaws.
 Require Import Hask.Control.Category.
 Require Import FunctionalExtensionality.
 
-(****************************************************************************
- ****************************************************************************
- **                                                                        **
- ** Proofs of the pipes categories                                         **
- **                                                                        **
- ****************************************************************************
- ****************************************************************************)
-
 Tactic Notation "reduce_proxy" ident(IHu) tactic(T) :=
   elim=> [? ? IHu|? ? IHu|? ? IHu| ?]; T;
   try (try move => m0; f_equal; extensionality RP_A; exact: IHu).
+
+(****************************************************************************
+ *
+ * Kleisli Category for Proxy a' a b' b m
+ *)
 
 Section Kleisli.
 
@@ -496,7 +521,54 @@ Obligation 2. (* Left identity *)
 Obligation 3. (* Associativity *)
 *)
 
-(* Theorem push_pull_assoc : (f >+> g) >~> h = f >+> (g >~> h) *)
+Tactic Notation "reduce_over" constr(f) ident(g) ident(y) ident(IHx) :=
+  move=> ? ? ? ? ? ? ? ? g ?;
+  rewrite /= /funcomp;
+  congr (f _ _);
+  extensionality y;
+  move: (g y);
+  by reduce_proxy IHx simpl.
+
+Lemma pull_respond `{Monad m} :
+  forall `(f : b' -> Proxy a' a b' b m r)
+         `(g : c' -> Proxy b' b c' c m r) x,
+  f +>> Respond x g = Respond x (f >+> g).
+Proof. reduce_over @Respond g y IHx. Qed.
+
+Lemma pull_m `{Monad m} :
+  forall x `(f : b' -> Proxy a' a b' b m r)
+         `(g : x -> Proxy b' b c' c m r) (h : m x),
+  f +>> M g h = M (f >+> g) h.
+Proof. move=> x; reduce_over @M g y IHx. Qed.
+
+Lemma push_request `{Monad m} :
+  forall `(f : b -> Proxy b' b c' c m r)
+         `(g : a -> Proxy a' a b' b m r) x,
+  Request x g >>~ f = Request x (g >~> f).
+Proof. reduce_over @Request g y IHx. Qed.
+
+Lemma push_m `{Monad m} :
+  forall `(f : b -> Proxy b' b c' c m r)
+         `(g : x -> Proxy a' a b' b m r) (h : m x),
+  M g h >>~ f = M (g >~> f) h.
+Proof. move=> x; reduce_over @M g y IHx. Qed.
+
+Theorem push_pull_assoc `{MonadLaws m} :
+  forall `(f : b' -> Proxy a' a b' b m r)
+         `(g : a  -> Proxy b' b c' c m r)
+          (h : c  -> Proxy c' c b' b m r),
+  (f >+> g) >~> h =1 f >+> (g >~> h).
+Proof.
+  move=> ? ? ? ? ? f ? ? g h a.
+  elim: (g a) => // [y p IHx|? ? IHx|? ? IHx];
+  apply functional_extensionality in IHx.
+  - rewrite push_request.
+    admit.
+  - rewrite pull_respond.
+    admit.
+  - move=> m0.
+    by rewrite pull_m push_m push_m pull_m IHx.
+Admitted.
 
 End Pull.
 
@@ -507,22 +579,39 @@ End Pull.
 
 Section Duals.
 
-(*
-Theorem request_id : reflect \o request = respond
+Variables a' a b' b r : Type.
+Variables m : Type -> Type.
+Context `{MonadLaws m}.
 
-Theorem request_comp : reflect \o (f \>\ g) = (reflect \o g) />/ (reflect \o f)
+Theorem request_id : reflect \o request =1 @respond a' a b' b m.
+Abort.
 
-Theorem respond_id : reflect \o respond = request
+Theorem request_comp :
+  forall (f : a -> Proxy a' a b' b m r)
+         (g : a -> Proxy a  r b' b m r),
+    reflect \o (f \>\ g) =1 (reflect \o g) />/ (reflect \o f).
+Abort.
 
-Theorem respond_comp : reflect \o (f />/ g) = (reflect \o g) \>\ (reflect \o f)
+Theorem respond_id : reflect \o respond =1 @request a' a b' b m.
+Abort.
+
+Theorem respond_comp :
+  forall (f : a -> Proxy a' a b' b m r)
+         (g : b -> Proxy a' a b' b m b'),
+    reflect \o (f />/ g) =1 (reflect \o g) \>\ (reflect \o f).
+Abort.
 
 Theorem distributivity :
-  reflect \o (f >=> g) = (reflect \o f) >=> (reflect \o g)
+  forall (f : a -> Proxy a' a b' b m a)
+         (g : a -> Proxy a' a b' b m r),
+    reflect \o (f >=[Proxy_Monad]=> g) =1 (reflect \o f) >=> (reflect \o g).
+Abort.
 
-Theorem zero_law : reflect \o return = return
+Theorem zero_law : @reflect m _ a' a b' b r \o pure =1 pure.
+Abort.
 
-Theorem involution : reflect \o reflect = id
-*)
+Theorem involution : @reflect m _ a' a b' b r \o reflect =1 id.
+Abort.
 
 End Duals.
 
