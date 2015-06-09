@@ -168,31 +168,51 @@ Module PipesLaws.
 
 Include MonadLaws.
 
+Require Import Hask.Control.Category.
 Require Import FunctionalExtensionality.
+
+(****************************************************************************
+ ****************************************************************************
+ **                                                                        **
+ ** Proofs of the pipes categories                                         **
+ **                                                                        **
+ ****************************************************************************
+ ****************************************************************************)
 
 Tactic Notation "reduce_proxy" ident(IHu) tactic(T) :=
   elim=> [? ? IHu|? ? IHu|? ? IHu| ?]; T;
   try (try move => m0; f_equal; extensionality RP_A; exact: IHu).
 
-Program Instance Proxy_FunctorLaws `{MonadLaws m} {a' a b' b} :
+Section Kleisli.
+
+Global Program Instance Proxy_FunctorLaws `{MonadLaws m} {a' a b' b} :
   FunctorLaws (Proxy a' a b' b m).
 Obligation 1. by reduce_proxy IHx simpl. Qed.
 Obligation 2. by reduce_proxy IHx simpl. Qed.
 
-Program Instance Proxy_ApplicativeLaws `{MonadLaws m} {a' a b' b} :
+Global Program Instance Proxy_ApplicativeLaws `{MonadLaws m} {a' a b' b} :
   ApplicativeLaws (Proxy a' a b' b m).
-Obligation 1. reduce_proxy IHx simpl. Qed.
+Obligation 1. by reduce_proxy IHx simpl. Qed.
 Obligation 2.
   move: u; reduce_proxy IHu (rewrite /funcomp /= /funcomp).
   move: v; reduce_proxy IHv (rewrite /funcomp /= /funcomp).
   by move: w; reduce_proxy IHw simpl.
 Qed.
 
-Program Instance Proxy_MonadLaws `{MonadLaws m} {a' a b' b} :
+Global Program Instance Proxy_MonadLaws `{MonadLaws m} {a' a b' b} :
   MonadLaws (Proxy a' a b' b m).
-Obligation 1. reduce_proxy IHx simpl. Qed.
+Obligation 1. by reduce_proxy IHx simpl. Qed.
 Obligation 2. by reduce_proxy IHx simpl. Qed.
 Obligation 4. by reduce_proxy IHx simpl. Qed.
+
+End Kleisli.
+
+(****************************************************************************
+ *
+ * Respond Category
+ *)
+
+Section Respond.
 
 Theorem respond_distrib `{MonadLaws m} :
   forall (x' x a' a b' b c' c r : Type)
@@ -218,50 +238,6 @@ Proof.
     extensionality y.
     exact: IHx.
 Qed.
-
-Theorem request_distrib `{MonadLaws m} :
-  forall (y' y a' a b' b c' c r : Type)
-         (f : c -> Proxy b' b y' y m c')
-         (g : c'  -> Proxy b' b y' y m r)
-         (h : b' -> Proxy a' a y' y m b),
-  h \>\ (f >=> g) =1 (h \>\ f) >=> (h \>\ g).
-Proof.
-  move=> ? ? ? ? ? ? ? ? ? f ? ? x.
-  rewrite /kleisli_compose.
-  elim: (f x) => // [? ? IHx|? ? IHx|? ? IHx].
-  - apply functional_extensionality in IHx.
-    by rewrite /= /funcomp IHx /bind /funcomp
-               -join_fmap_fmap_x fmap_comp_x
-               -join_fmap_join_x fmap_comp_x.
-  - rewrite /bind /=.
-    f_equal.
-    extensionality a1.
-    exact: IHx.
-  - move=> m0.
-    rewrite /bind /=.
-    f_equal.
-    extensionality y.
-    exact: IHx.
-Qed.
-
-Require Import Hask.Control.Category.
-
-(*
-Program Instance CNat : Category := {
-  ob     := Type -> Type;
-  hom    := fun A B => forall x, A x -> B x;
-  c_id   := fun A _ => id;
-  c_comp := fun _ _ _ f g s => f s \o g s
-}.
-
-Definition Hom (a : Type) := forall b, a -> b.
-
-Definition Proxy_ (a' a b' b : Type) (m : Type -> Type) (r : Type) : Type :=
-     Hom a' ~{CNat}~> Hom a  ->
-     Hom b  ~{CNat}~> Hom b' ->
-  Hom \o m  ~{CNat}~> Hom \o id ->
-   Hom unit ~{CNat}~> Hom r.
-*)
 
 Program Instance Respond_Category {x' x a'} `{MonadLaws m} : Category := {
   ob     := Type;
@@ -295,7 +271,43 @@ Obligation 3. (* Associativity *)
     exact: IHx.
 Qed.
 
-(* Theorem respond_zero *)
+Corollary respond_zero `{MonadLaws m} : forall `(f : c -> Proxy a' a b' b m r),
+  pure />/ f =1 @pure _ Proxy_Applicative r.
+Proof. by []. Qed.
+
+End Respond.
+
+(****************************************************************************
+ *
+ * Request Category
+ *)
+
+Section Request.
+
+Theorem request_distrib `{MonadLaws m} :
+  forall (y' y a' a b' b c' c r : Type)
+         (f : c -> Proxy b' b y' y m c')
+         (g : c'  -> Proxy b' b y' y m r)
+         (h : b' -> Proxy a' a y' y m b),
+  h \>\ (f >=> g) =1 (h \>\ f) >=> (h \>\ g).
+Proof.
+  move=> ? ? ? ? ? ? ? ? ? f ? ? x.
+  rewrite /kleisli_compose.
+  elim: (f x) => // [? ? IHx|? ? IHx|? ? IHx].
+  - apply functional_extensionality in IHx.
+    by rewrite /= /funcomp IHx /bind /funcomp
+               -join_fmap_fmap_x fmap_comp_x
+               -join_fmap_join_x fmap_comp_x.
+  - rewrite /bind /=.
+    f_equal.
+    extensionality a1.
+    exact: IHx.
+  - move=> m0.
+    rewrite /bind /=.
+    f_equal.
+    extensionality y.
+    exact: IHx.
+Qed.
 
 Program Instance Request_Category {x a' a} `{MonadLaws m} : Category := {
   ob     := Type;
@@ -329,7 +341,18 @@ Obligation 3. (* Associativity *)
     exact: IHx.
 Qed.
 
-(* Theorem request_zero *)
+Corollary request_zero `{MonadLaws m} : forall `(f : c -> Proxy a' a b' b m r),
+  f \>\ pure =1 @pure _ Proxy_Applicative r.
+Proof. by []. Qed.
+
+End Request.
+
+(****************************************************************************
+ *
+ * Push Category
+ *)
+
+Section Push.
 
 CoInductive CoProxy (a' a b' b : Type) (m : Type -> Type) (r : Type) : Type :=
   | CoRequest of a' & (a  -> CoProxy a' a b' b m r)
@@ -452,7 +475,14 @@ Obligation 2. (* Left identity *)
 (* Obligation 3. (* Associativity *) *)
 *)
 
-(* Theorem push_zero *)
+End Push.
+
+(****************************************************************************
+ *
+ * Pull Category
+ *)
+
+Section Pull.
 
 (*
 Program Instance Pull_Category {x' x a'} `{MonadLaws m} : Category := {
@@ -466,27 +496,61 @@ Obligation 2. (* Left identity *)
 Obligation 3. (* Associativity *)
 *)
 
-(* Theorem pull_zero *)
+(* Theorem push_pull_assoc : (f >+> g) >~> h = f >+> (g >~> h) *)
 
-(* Theorem push_pull_assoc *)
+End Pull.
 
-(* Duals
+(****************************************************************************
+ *
+ * Reflection (Duals)
+ *)
 
-Theorem request_id
+Section Duals.
 
-Theorem request_comp
+(*
+Theorem request_id : reflect \o request = respond
 
-Theorem respond_id
+Theorem request_comp : reflect \o (f \>\ g) = (reflect \o g) />/ (reflect \o f)
 
-Theorem respond_comp
+Theorem respond_id : reflect \o respond = request
 
-Theorem distributivity
+Theorem respond_comp : reflect \o (f />/ g) = (reflect \o g) \>\ (reflect \o f)
 
-Theorem zero_law
+Theorem distributivity :
+  reflect \o (f >=> g) = (reflect \o f) >=> (reflect \o g)
 
-Theorem involution
+Theorem zero_law : reflect \o return = return
 
+Theorem involution : reflect \o reflect = id
 *)
+
+End Duals.
+
+(****************************************************************************
+ *
+ * General theorems about functions in the pipes library.
+ *)
+
+Section GeneralTheorems.
+
+Theorem toListM_each_id : forall a, toListM \o each =1 pure (a:=seq a).
+Proof.
+  move=> a xs.
+  elim: xs => //= [x xs IHxs].
+  by rewrite IHxs.
+Qed.
+
+End GeneralTheorems.
+
+(****************************************************************************
+ *
+ * Alternate presentation of Proxy, using a Boehm-Berarducci encoding
+ *
+ * In this form, we see that proxies are a kind of relation between three
+ * natural transformations of hom-functors.
+ *)
+
+Section SProxy.
 
 Definition SProxy (a' a b' b : Type) (m : Type -> Type) (r : Type) : Type :=
   forall s : Type,
@@ -588,15 +652,6 @@ Proof.
   - exact: Hpure.
 Qed.
 
-Section GeneralTheorems.
-
-Theorem toListM_each_id : forall a, toListM \o each =1 pure (a:=seq a).
-Proof.
-  move=> a xs.
-  elim: xs => //= [x xs IHxs].
-  by rewrite IHxs.
-Qed.
-
-End GeneralTheorems.
+End SProxy.
 
 End PipesLaws.
