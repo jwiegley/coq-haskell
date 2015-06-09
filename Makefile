@@ -14,6 +14,7 @@ MISSING = find src -name '*.v'						\
 		 \(							\
 		    ! -name Notes.v					\
 		    ! -name CpdtTactics.v				\
+		    ! -name Extract.v					\
 		    -print						\
 		 \) |							\
 		 xargs egrep -i -Hn '(abort|admit|undefined)'     |	\

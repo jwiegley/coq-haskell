@@ -93,10 +93,8 @@ Separate Extraction
   safe_hd
   safe_last
   second
-  stream
   sumlist
   toChurch
-  toProxy
   to_from_Church
   undefined
   vapp

@@ -28,6 +28,15 @@ Proof.
   exact: Church_parametricity.
 Qed.
 
+Definition from_to_Church : forall a (l : seq a),
+  fromChurch (toChurch l) = l.
+Proof.
+  rewrite /Church /toChurch /fromChurch.
+  move=> a.
+  elim=> //= [x xs IHxs].
+  by rewrite IHxs.
+Qed.
+
 Definition Church_ind : forall (A : Type) (P : Church A -> Prop),
    P (fun _ c n => n) ->
    (forall (h : A) (t : Church A), P t -> P (fun _ c n => c h (t _ c n))) ->
