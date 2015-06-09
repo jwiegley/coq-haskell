@@ -161,6 +161,9 @@ Proof.
   exact: fmap_comp.
 Qed.
 
+Axiom coyo_parametricity : forall `{FunctorLaws f} a b (g : a -> b),
+  COYO g = COYO id \o fmap g.
+
 Theorem coyo_lift_naturality `{FunctorLaws f} : forall a b (g : a -> b),
   fmap g \o liftCoyoneda (f:=f) = liftCoyoneda \o fmap g.
 Proof.
@@ -171,7 +174,8 @@ Proof.
   recomp.
   congr (_ x).
   replace (g \o id) with g; last by [].
-Admitted.
+  exact: coyo_parametricity.
+Qed.
 
 Theorem coyo_from `{FunctorLaws f} : forall a (x : Coyoneda f a),
   liftCoyoneda (lowerCoyoneda x) = x.

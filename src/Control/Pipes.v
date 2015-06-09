@@ -376,17 +376,15 @@ with pullR_ev {a' a b' b m r} : CoProxy a' a b' b m r -> Prop :=
   | ev_pullR_mon  : forall x g (h : m x), pullR_ev (CoM g h)
   | ev_pullR_pure : forall x : r, pullR_ev (CoPure x).
 
+(*
 Lemma eventually_pushR_inv {a' a b' b m r} : forall bb fb,
   @pushR_ev a' a b' b m r (CoRespond (bb : b) fb)
     -> forall x : b', pushR_ev (fb x).
-Proof.
-Admitted.
 
 Lemma eventually_pullR_inv {a' a b' b m r} : forall aa' fa,
   @pullR_ev a' a b' b m r (CoRequest (aa' : a') fa)
     -> forall x : a, pullR_ev (fa x).
-Proof.
-Admitted.
+*)
 
 (*
 Require Import Coq.Program.Equality.
@@ -396,12 +394,12 @@ Fixpoint pre_pushR {a' a b' b m r} (x : CoProxy a' a b' b m r)
   (d : pushR_ev x) {struct d} :
   a' * CoProxy a' a b' b m r :=
   match x as z return x = z -> a' * CoProxy a' a b' b m r with
-  | CoRequest a' fa  => fun heq => (a', undefined)
+  | CoRequest a' fa  => fun heq => (a', ?)
   | CoRespond bb fb' => fun heq =>
-      pre_pushR (fb' undefined)
-                (eventually_pushR_inv bb fb' d undefined)
-  | CoM _     f  t   => fun heq => undefined
-  | CoPure       a   => fun heq => undefined
+      pre_pushR (fb' ?)
+                (eventually_pushR_inv bb fb' d ?)
+  | CoM _     f  t   => fun heq => ?
+  | CoPure       a   => fun heq => ?
   end (refl_equal x).
 *)
 
@@ -534,54 +532,59 @@ Proof.
            | congr (Pure _) ]).
 Qed.
 
-Axiom elim : forall `(f : a -> (b -> s) -> s) (x : a) (y : s),
+Axiom f_const : forall `(f : a -> (b -> s) -> s) (x : a) (y : s),
   f x (const y) = y.
 
-Axiom flip_elim : forall `(f : (b -> s) -> a -> s) (x : a) (y : s),
-  f (const y) x = y.
+Definition const_f `(f : (b -> s) -> a -> s) (x : a) (y : s) :
+  f (const y) x = y := f_const (flip f) x y.
+
+(* As 'k' is the only function that can produce an 's', it must be equal to
+   reducing the SProxy. *)
+Axiom SProxy_parametricity : forall `(sp : SProxy a' a b' b m r) (s : Type)
+  (req : a' -> (a  -> s) -> s)
+  (res : b  -> (b' -> s) -> s)
+  (mon : forall x, (x -> s) -> m x -> s)
+  (k : r -> s) (z : r),
+  k z = sp s req res mon k.
 
 Lemma SProxy_from_to : forall `(x : SProxy a' a b' b m r),
   fromProxy (toProxy x) = x.
 Proof.
   move=> ? ? ? ? ? ? x.
-  (* elim E: (toProxy x) => [? ? IHu|? ? IHu|? ? IHu| ?]. *)
-  (* erewrite <- IHu. *)
-  (* f_equal. *)
-  (* rewrite /fromProxy /=. *)
   extensionality s.
   extensionality req.
   extensionality res.
   extensionality mon.
   extensionality k.
-  set z := toProxy x.
-  replace x with (fromProxy (toProxy (fromProxy (toProxy x)))).
-  rewrite /z.
   move: (toProxy x).
   reduce_proxy IHx
     (rewrite /fromProxy /funcomp /=;
      try (move/functional_extensionality in IHx;
           try move=> m0;
-          rewrite IHx ?elim ?flip_elim)).
-Admitted.
+          rewrite IHx ?f_const ?const_f)).
+  exact: SProxy_parametricity.
+Qed.
 
 Theorem sproxy_ind :
   forall (a' a b' b : Type) (m : Type -> Type) (r : Type)
          (P : SProxy a' a b' b m r -> Prop),
-   (forall (x : a') (f : forall s, a -> s),
-      P (fun s req _ _ _ => req x (f s))) ->
-   (forall (x : b) (f : forall s, b' -> s),
-      P (fun s _ res _ _ => res x (f s))) ->
-   (forall t (f : forall s, t -> s) (x : m t),
-      P (fun s _ _ mon _ => mon _ (f s) x)) ->
+   (forall (x : a') (f : a -> SProxy a' a b' b m r),
+      P (fun s req res mon k => req x (fun a => f a s req res mon k))) ->
+   (forall (x : b) (f : b' -> SProxy a' a b' b m r),
+      P (fun s req res mon k => res x (fun b' => f b' s req res mon k))) ->
+   (forall t (f : t -> SProxy a' a b' b m r) (x : m t),
+      P (fun s req res mon k => mon _ (fun x => f x s req res mon k) x)) ->
    (forall (x : r), P (fun s _ _ _ k => k x)) ->
    forall p : SProxy a' a b' b m r, P p.
 Proof.
   move=> ? ? ? ? ? ? ? Hreq Hres Hmon Hpure p.
   rewrite -(SProxy_from_to p).
-  elim: (toProxy p) => [a' fa IHp|? ? IHp|? ? IHp| ?].
-  - rewrite /fromProxy /funcomp /=.
-    specialize (Hreq a').
-Abort.
+  elim: (toProxy p) => [*|*|*|*].
+  - exact: Hreq.
+  - exact: Hres.
+  - exact: Hmon.
+  - exact: Hpure.
+Qed.
 
 Section GeneralTheorems.
 
