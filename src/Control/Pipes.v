@@ -230,6 +230,23 @@ Qed.
 
 Require Import Hask.Control.Category.
 
+(*
+Program Instance CNat : Category := {
+  ob     := Type -> Type;
+  hom    := fun A B => forall x, A x -> B x;
+  c_id   := fun A _ => id;
+  c_comp := fun _ _ _ f g s => f s \o g s
+}.
+
+Definition Hom (a : Type) := forall b, a -> b.
+
+Definition Proxy_ (a' a b' b : Type) (m : Type -> Type) (r : Type) : Type :=
+     Hom a' ~{CNat}~> Hom a  ->
+     Hom b  ~{CNat}~> Hom b' ->
+  Hom \o m  ~{CNat}~> Hom \o id ->
+   Hom unit ~{CNat}~> Hom r.
+*)
+
 Program Instance Respond_Category {x' x a'} `{MonadLaws m} : Category := {
   ob     := Type;
   hom    := fun A B => A -> Proxy x' x a' B m a';
@@ -258,7 +275,6 @@ Obligation 3. (* Associativity *)
     rewrite /=.
     f_equal.
     rewrite /funcomp.
-
     extensionality y.
     exact: IHx.
 Qed.
@@ -333,18 +349,47 @@ Definition stream `(co : Proxy a' a b' b m r) : CoProxy a' a b' b m r :=
   go co.
 
 Inductive pushR_ev {a' a b' b m r} : CoProxy a' a b' b m r -> Prop :=
-  | ev_pushR_req p0  : forall aa' fa, p0 = CoRequest aa' fa -> pushR_ev p0
-  | ev_pushR_res p0  : forall bb  fb fb',
-      p0 = CoRespond bb fb -> pullR_ev (fb' bb) -> pushR_ev p0
-  | ev_pushR_mon p0  : forall x g (h : m x), p0 = CoM g h -> pushR_ev p0
-  | ev_pushR_pure p0 : forall x : r, p0 = CoPure x -> pushR_ev p0
+  | ev_pushR_req  : forall aa' fa, pushR_ev (CoRequest aa' fa)
+  | ev_pushR_res  : forall bb  fb fb',
+      pullR_ev (fb' bb) -> pushR_ev (CoRespond bb fb)
+  | ev_pushR_mon  : forall x g (h : m x), pushR_ev (CoM g h)
+  | ev_pushR_pure : forall x : r, pushR_ev (CoPure x)
 
 with pullR_ev {a' a b' b m r} : CoProxy a' a b' b m r -> Prop :=
-  | ev_pullR_req p0  : forall aa' fa fa',
-      p0 = CoRequest aa' fa -> pushR_ev (fa' aa') -> pullR_ev p0
-  | ev_pullR_res p0  : forall bb  fb, p0 = CoRequest bb fb -> pullR_ev p0
-  | ev_pullR_mon p0  : forall x g (h : m x), p0 = CoM g h -> pullR_ev p0
-  | ev_pullR_pure p0 : forall x : r, p0 = CoPure x -> pullR_ev p0.
+  | ev_pullR_req  : forall aa' fa fa',
+      pushR_ev (fa' aa') -> pullR_ev (CoRequest aa' fa)
+  | ev_pullR_res  : forall bb  fb, pullR_ev (CoRequest bb fb)
+  | ev_pullR_mon  : forall x g (h : m x), pullR_ev (CoM g h)
+  | ev_pullR_pure : forall x : r, pullR_ev (CoPure x).
+
+Lemma eventually_pushR_inv {a' a b' b m r} : forall bb fb,
+  @pushR_ev a' a b' b m r (CoRespond (bb : b) fb)
+    -> forall x : b', pushR_ev (fb x).
+Proof.
+Admitted.
+
+Lemma eventually_pullR_inv {a' a b' b m r} : forall aa' fa,
+  @pullR_ev a' a b' b m r (CoRequest (aa' : a') fa)
+    -> forall x : a, pullR_ev (fa x).
+Proof.
+Admitted.
+
+(*
+Require Import Coq.Program.Equality.
+Import EqNotations.
+
+Fixpoint pre_pushR {a' a b' b m r} (x : CoProxy a' a b' b m r)
+  (d : pushR_ev x) {struct d} :
+  a' * CoProxy a' a b' b m r :=
+  match x as z return x = z -> a' * CoProxy a' a b' b m r with
+  | CoRequest a' fa  => fun heq => (a', undefined)
+  | CoRespond bb fb' => fun heq =>
+      pre_pushR (fb' undefined)
+                (eventually_pushR_inv bb fb' d undefined)
+  | CoM _     f  t   => fun heq => undefined
+  | CoPure       a   => fun heq => undefined
+  end (refl_equal x).
+*)
 
 (*
 CoFixpoint pushR `{Monad m} {a' a b' b c' c r} (p0 : CoProxy a' a b' b m r)
@@ -437,6 +482,19 @@ Definition SProxy (a' a b' b : Type) (m : Type -> Type) (r : Type) : Type :=
     -> (r -> s)                         (* SPure *)
     -> s.
 
+Definition ftrans (a b x : Type) := a -> (b -> x) -> x.
+Notation "a -[ s ]-> b" := (ftrans a b s) (at level 50).
+
+Definition fnat (f g : Type -> Type) (s : Type) := forall x, (f x) -[s]-> (g x).
+Notation "f -[[ s ]]-> g" := (fnat f g s) (at level 50).
+
+Definition Proxy_ (a' a b' b : Type) (m : Type -> Type) (r : Type) : Type :=
+  forall s : Type,
+      a' -[s]->  a  ->
+      b  -[s]->  b' ->
+      m -[[s]]-> id ->
+   unit  -[s]->  r.
+
 Definition toProxy `(s : SProxy a' a b' b m r) : Proxy a' a b' b m r :=
   s _ Request Respond (fun _ => M) Pure.
 
@@ -461,29 +519,27 @@ Proof.
            | congr (Pure _) ]).
 Qed.
 
-(* Definition pushS `{Monad m} {a' a r} : a -> SProxy a' a a' a m r := *)
-(*   fun x _ req res mon k => *)
-(*     res x (fun a' => req a' (fun a => pushS a _ req res mon k)). *)
-
 Axiom elim : forall `(f : a -> (b -> s) -> s) (x : a) (y : s),
   f x (const y) = y.
 
 Axiom flip_elim : forall `(f : (b -> s) -> a -> s) (x : a) (y : s),
   f (const y) x = y.
 
-(*
 Lemma SProxy_from_to : forall `(x : SProxy a' a b' b m r),
   fromProxy (toProxy x) = x.
 Proof.
-  move=> a' a b' b m r x.
+  move=> ? ? ? ? ? ? x.
+  recomp.
+  rewrite /fromProxy /toProxy /funcomp /=.
+  (* elim E: (toProxy x) => [? ? IHu|? ? IHu|? ? IHu| ?]. *)
+  (* erewrite <- IHu. *)
+  (* f_equal. *)
+  (* rewrite /fromProxy /=. *)
   extensionality s.
   extensionality req.
   extensionality res.
   extensionality mon.
   extensionality k.
-  (* elim E: (toProxy x) => [? ? IHu|? ? IHu|? ? IHu| ?]. *)
-  (* admit. admit. admit. *)
-  (* rewrite /fromProxy /=. *)
   move: (toProxy x).
   reduce_proxy IHx
     (rewrite /fromProxy /=;
@@ -491,7 +547,6 @@ Proof.
           try move=> m0;
           rewrite IHx ?elim ?flip_elim)).
 Admitted.
-*)
 
 Section GeneralTheorems.
 
