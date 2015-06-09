@@ -45,6 +45,20 @@ Instance Proxy_Monad `{Monad m} {a' a b' b} :
   join := fun _ x => Proxy_bind id x
 }.
 
+Fixpoint foldProxyM `{Monad m}
+  `(ka : a' -> (a  -> m r) -> m r)
+  `(kb : b  -> (b' -> m r) -> m r)
+  `(km : forall x, (x -> m r) -> m x -> m r)
+  `(kp : r -> m r)
+  (p : Proxy a' a b' b m r) : m r :=
+  let fix go p := match p with
+    | Request a' fa  => ka a' (go \o fa)
+    | Respond b  fb' => kb b  (go \o fb')
+    | M _     g  h   => km _ (go \o g) h
+    | Pure    r      => kp r
+    end in
+  go p.
+
 Fixpoint runEffect `{Monad m} `(p : Proxy False unit unit False m r) : m r :=
   match p with
   | Request v f => False_rect _ v
@@ -498,14 +512,15 @@ Definition Proxy_ (a' a b' b : Type) (m : Type -> Type) (r : Type) : Type :=
 Definition toProxy `(s : SProxy a' a b' b m r) : Proxy a' a b' b m r :=
   s _ Request Respond (fun _ => M) Pure.
 
-Fixpoint fromProxy `(p : Proxy a' a b' b m r) : SProxy a' a b' b m r :=
+Definition fromProxy `(p : Proxy a' a b' b m r) : SProxy a' a b' b m r :=
   fun _ req res mon k =>
-    match p with
-    | Request a' fa  => req a' (fun a  => fromProxy (fa  a)  _ req res mon k)
-    | Respond b  fb' => res b  (fun b' => fromProxy (fb' b') _ req res mon k)
-    | M _     g  h   => mon _  (fun x  => fromProxy (g x) _ req res mon k) h
+    let fix go p := match p with
+    | Request a' fa  => req a' (go \o fa)
+    | Respond b  fb' => res b  (go \o fb')
+    | M _     g  h   => mon _  (go \o g) h
     | Pure    x      => k x
-    end.
+    end in
+    go p.
 
 Lemma SProxy_to_from : forall `(x : Proxy a' a b' b m r),
   toProxy (fromProxy x) = x.
@@ -529,8 +544,6 @@ Lemma SProxy_from_to : forall `(x : SProxy a' a b' b m r),
   fromProxy (toProxy x) = x.
 Proof.
   move=> ? ? ? ? ? ? x.
-  recomp.
-  rewrite /fromProxy /toProxy /funcomp /=.
   (* elim E: (toProxy x) => [? ? IHu|? ? IHu|? ? IHu| ?]. *)
   (* erewrite <- IHu. *)
   (* f_equal. *)
@@ -540,13 +553,35 @@ Proof.
   extensionality res.
   extensionality mon.
   extensionality k.
+  set z := toProxy x.
+  replace x with (fromProxy (toProxy (fromProxy (toProxy x)))).
+  rewrite /z.
   move: (toProxy x).
   reduce_proxy IHx
-    (rewrite /fromProxy /=;
+    (rewrite /fromProxy /funcomp /=;
      try (move/functional_extensionality in IHx;
           try move=> m0;
           rewrite IHx ?elim ?flip_elim)).
 Admitted.
+
+Theorem sproxy_ind :
+  forall (a' a b' b : Type) (m : Type -> Type) (r : Type)
+         (P : SProxy a' a b' b m r -> Prop),
+   (forall (x : a') (f : forall s, a -> s),
+      P (fun s req _ _ _ => req x (f s))) ->
+   (forall (x : b) (f : forall s, b' -> s),
+      P (fun s _ res _ _ => res x (f s))) ->
+   (forall t (f : forall s, t -> s) (x : m t),
+      P (fun s _ _ mon _ => mon _ (f s) x)) ->
+   (forall (x : r), P (fun s _ _ _ k => k x)) ->
+   forall p : SProxy a' a b' b m r, P p.
+Proof.
+  move=> ? ? ? ? ? ? ? Hreq Hres Hmon Hpure p.
+  rewrite -(SProxy_from_to p).
+  elim: (toProxy p) => [a' fa IHp|? ? IHp|? ? IHp| ?].
+  - rewrite /fromProxy /funcomp /=.
+    specialize (Hreq a').
+Abort.
 
 Section GeneralTheorems.
 
