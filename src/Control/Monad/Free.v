@@ -48,12 +48,6 @@ Fixpoint cutoff (n : nat) `(fr : Free f a) : Free f (option a) :=
   | Join _ g h => Join (cutoff n \o g) h
   end.
 
-(* CoFixpoint unfold `(k : b -> a + f b) (z : b) : Free f a := *)
-(*   match k z with *)
-(*   | inl x => Pure x *)
-(*   | inr j => Join (unfold k) j *)
-(*   end. *)
-
 (* jww (2015-06-02): With universe polymorphism this should work fine. *)
 (* Definition wrap {f : Type -> Type} {a : Type} : *)
 (*   f (Free f a) -> Free f a := Join id. *)
@@ -195,3 +189,35 @@ Proof.
 *)
 
 End FreeLaws.
+
+CoInductive CoFree (h : Type -> Type) (a : Type) :=
+  CoF : a -> forall x, (x -> CoFree h a) -> h x -> CoFree h a.
+
+Arguments CoF {h a} _ {x} _ _.
+
+CoFixpoint unfold `(k : b -> a * f b) (z : b) : CoFree f a :=
+  let: (x, j) := k z in CoF x (unfold k) j.
+
+CoFixpoint CoFree_map {h} `(f : a -> b) (c : CoFree h a) :
+  CoFree h b :=
+  let: CoF x s g h := c in CoF (f x) (CoFree_map f \o g) h.
+
+Program Instance CoFree_Functor `{Functor h} : Functor (CoFree h) := {
+  fmap := fun _ _ => CoFree_map
+}.
+
+Module CoFreeLaws.
+
+Include FunctorLaws.
+
+Program Instance CoFree_FunctorLaws `{FunctorLaws h} : FunctorLaws (CoFree h).
+Obligation 1.
+  move=> x.
+  destruct x.
+Admitted.
+Obligation 2.
+  move=> x.
+  destruct x.
+Admitted.
+
+End CoFreeLaws.
