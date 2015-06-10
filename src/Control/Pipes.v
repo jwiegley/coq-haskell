@@ -26,7 +26,7 @@ Arguments Pure {a' a b' b m r} _.
  * Fundamental code to operate with Proxy's
  *)
 
-Fixpoint foldProxyM `{Monad m}
+Definition foldProxy `{Monad m}
   `(ka : a' -> (a  -> s) -> s)
   `(kb : b  -> (b' -> s) -> s)
   `(km : forall x, (x -> s) -> m x -> s)
@@ -35,12 +35,12 @@ Fixpoint foldProxyM `{Monad m}
   let fix go p := match p with
     | Request a' fa  => ka a' (go \o fa)
     | Respond b  fb' => kb b  (go \o fb')
-    | M _     g  h   => km _ (go \o g) h
+    | M _     g  h   => km _  (go \o g) h
     | Pure    r      => kp r
     end in
   go p.
 
-(* This is equivalent to [foldProxyM Request Respond (fun _ => M)], but using
+(* This is equivalent to [foldProxy Request Respond (fun _ => M)], but using
    that definition makes some proofs harder. *)
 Definition Proxy_bind {a' a b' b c d} `{Monad m}
   (f : c -> Proxy a' a b' b m d) (p0 : Proxy a' a b' b m c) :
@@ -116,6 +116,38 @@ Definition rofP `{Monad m} {y' y a' a b' b c} (fb' : b' -> Proxy a' a y' y m b)
 Notation "x >\\ y" := (rofP x y) (at level 60).
 
 Notation "f \>\ g" := (fun a => f >\\ g a) (at level 60).
+
+(*
+Fixpoint pushR `{Monad m} {a' a b' b c' c r} (p0 : Proxy a' a b' b m r)
+  (fb : b -> Proxy b' b c' c m r) {struct p0} : Proxy a' a c' c m r :=
+  foldProxy (s:=Proxy a' a c' c m r)
+    Request (flip pullR \o fb) (fun _ => M) Pure p0
+
+with pullR `{Monad m} {a' a b' b c' c r} (fb' : b' -> Proxy a' a b' b m r)
+  (p0 : Proxy b' b c' c m r) {struct p0} : Proxy a' a c' c m r :=
+  foldProxy (s:=Proxy a' a c' c m r)
+    (pushR \o fb') Respond (fun _ => M) Pure p0.
+
+Fixpoint pushR `{Monad m} {a' a b' b c' c r} (p0 : Proxy a' a b' b m r)
+  (fb : b -> Proxy b' b c' c m r) {struct p0} : Proxy a' a c' c m r :=
+  let fix go p := match p with
+    | Request a' fa  => Request a' (go \o fa)
+    | Respond b  fb' => pullR (fb b) fb'
+    | M _     f  t   => M (go \o f) t
+    | Pure       a   => Pure a
+    end in
+  go p0
+
+with pullR `{Monad m} {a' a b' b c' c r} (p0 : Proxy b' b c' c m r)
+  (fb' : b' -> Proxy a' a b' b m r) {struct p0} : Proxy a' a c' c m r :=
+  let fix go p := match p with
+    | Request b' fb  => pushR (fb' b') fb
+    | Respond c  fc' => Respond c (go \o fc')
+    | M _     f  t   => M (go \o f) t
+    | Pure       a   => Pure a
+    end in
+  go p0.
+*)
 
 Fixpoint pushR `{Monad m} {a' a b' b c' c r} (p0 : Proxy a' a b' b m r)
   (fb : b -> Proxy b' b c' c m r) {struct p0} : Proxy a' a c' c m r :=
@@ -377,7 +409,53 @@ End Request.
  * Push Category
  *)
 
+Tactic Notation "reduce_over" constr(f) ident(g) ident(y) ident(IHx) :=
+  move=> ? ? ? ? ? ? ? ? g ?;
+  rewrite /= /funcomp;
+  congr (f _ _);
+  extensionality y;
+  move: (g y);
+  by reduce_proxy IHx simpl.
+
 Section Push.
+
+Lemma push_request `{Monad m} :
+  forall `(f : b -> Proxy b' b c' c m r)
+         `(g : a -> Proxy a' a b' b m r) x,
+  Request x g >>~ f = Request x (g >~> f).
+Proof. reduce_over @Request g y IHx. Qed.
+
+Lemma push_m `{Monad m} :
+  forall `(f : b -> Proxy b' b c' c m r)
+         `(g : x -> Proxy a' a b' b m r) (h : m x),
+  M g h >>~ f = M (g >~> f) h.
+Proof. move=> x; reduce_over @M g y IHx. Qed.
+
+Program Instance Push_Category
+  (n : nat) (_ : n > 0) {r} (dflt : r) `{MonadLaws m} :
+  Category := {
+  ob     := Type * Type;
+  hom    := fun A B => snd A -> Proxy (fst A) (snd A) (fst B) (snd B) m r;
+  c_id   := fun A => undefined;
+  c_comp := fun _ _ _ f g => g >~> f
+}.
+Obligation 1. (* Right identity *)
+Admitted.
+Obligation 2. (* Left identity *)
+Admitted.
+Obligation 3. (* Associativity *)
+  extensionality z.
+  elim: (h z) => // [? ? IHx|? ? IHx|? ? IHx];
+  move/functional_extensionality in IHx.
+  - rewrite 3!push_request.
+    congr (Request _ _).
+    exact: IHx.
+  - admit.
+  - move=> m0.
+    rewrite 3!push_m.
+    congr (M _ _).
+    exact: IHx.
+Admitted.
 
 CoInductive CoProxy (a' a b' b : Type) (m : Type -> Type) (r : Type) : Type :=
   | CoRequest of a' & (a  -> CoProxy a' a b' b m r)
@@ -509,26 +587,6 @@ End Push.
 
 Section Pull.
 
-(*
-Program Instance Pull_Category {x' x a'} `{MonadLaws m} : Category := {
-  ob     := Type;
-  hom    := fun A B => A -> Proxy x' x a' B m a';
-  c_id   := fun A => @pull x' x a' A m;
-  c_comp := fun _ _ _ f g => f >+> g
-}.
-Obligation 1. (* Right identity *)
-Obligation 2. (* Left identity *)
-Obligation 3. (* Associativity *)
-*)
-
-Tactic Notation "reduce_over" constr(f) ident(g) ident(y) ident(IHx) :=
-  move=> ? ? ? ? ? ? ? ? g ?;
-  rewrite /= /funcomp;
-  congr (f _ _);
-  extensionality y;
-  move: (g y);
-  by reduce_proxy IHx simpl.
-
 Lemma pull_respond `{Monad m} :
   forall `(f : b' -> Proxy a' a b' b m r)
          `(g : c' -> Proxy b' b c' c m r) x,
@@ -541,17 +599,17 @@ Lemma pull_m `{Monad m} :
   f +>> M g h = M (f >+> g) h.
 Proof. move=> x; reduce_over @M g y IHx. Qed.
 
-Lemma push_request `{Monad m} :
-  forall `(f : b -> Proxy b' b c' c m r)
-         `(g : a -> Proxy a' a b' b m r) x,
-  Request x g >>~ f = Request x (g >~> f).
-Proof. reduce_over @Request g y IHx. Qed.
-
-Lemma push_m `{Monad m} :
-  forall `(f : b -> Proxy b' b c' c m r)
-         `(g : x -> Proxy a' a b' b m r) (h : m x),
-  M g h >>~ f = M (g >~> f) h.
-Proof. move=> x; reduce_over @M g y IHx. Qed.
+(*
+Program Instance Pull_Category {x' x a'} `{MonadLaws m} : Category := {
+  ob     := Type;
+  hom    := fun A B => A -> Proxy x' x a' B m a';
+  c_id   := fun A => @pull x' x a' A m;
+  c_comp := fun _ _ _ f g => f >+> g
+}.
+Obligation 1. (* Right identity *)
+Obligation 2. (* Left identity *)
+Obligation 3. (* Associativity *)
+*)
 
 Theorem push_pull_assoc `{MonadLaws m} :
   forall `(f : b' -> Proxy a' a b' b m r)
