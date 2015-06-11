@@ -462,9 +462,9 @@ Proof. move=> x; reduce_over @M g y IHx. Qed.
 Program Instance Push_Category `{MonadLaws m} {r : Type} :
   Category := {
   ob     := Type * Type;
-  hom    := fun A B => snd A -> Proxy (fst A) (snd A) (fst B) (snd B) m r;
+  hom    := fun A B => snd B -> Proxy (fst B) (snd B) (fst A) (snd A) m r;
   c_id   := fun A => undefined;
-  c_comp := fun _ _ _ f g => g >~> f
+  c_comp := fun _ _ _ f g => f >~> g
 }.
 Obligation 1. (* Right identity *)
 Admitted.
@@ -473,18 +473,18 @@ Admitted.
 Obligation 3. (* Associativity *)
   simpl in *.
   extensionality z.
-  move: f g.
-  elim: (h z) => // [? ? IHx|b fb' IHx|? ? IHx] f g.
+  move: g h.
+  elim: (f z) => // [? ? IHx|b fb' IHx|? ? IHx] g h.
   - rewrite 3!push_request.
     congr (Request _ _).
     extensionality w.
     exact: IHx.
   - rewrite /=.
-    move: f.
+    move: h.
     move: (g b).
-    reduce_proxy IHy (rewrite /= /flip /funcomp /=) => f.
+    reduce_proxy IHy (rewrite /= /flip /funcomp /=) => h.
     + exact: IHx.
-    + move: (f _).
+    + move: (h _).
       reduce_proxy IHz (rewrite /= /flip /funcomp /=).
       exact: IHy.
   - move=> m0.
