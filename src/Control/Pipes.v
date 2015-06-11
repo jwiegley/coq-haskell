@@ -119,20 +119,19 @@ Notation "f \>\ g" := (fun a => f >\\ g a) (at level 60).
 
 Fixpoint pushR `{Monad m} {a' a b' b c' c r} (p0 : Proxy a' a b' b m r)
   (fb : b -> Proxy b' b c' c m r) {struct p0} : Proxy a' a c' c m r :=
-  let fix go p := match p with
-    | Request a' fa  => Request a' (go \o fa)
-    | Respond b  fb' =>
-        let fix go' p := match p with
-          | Request b' fb  => go (fb' b')
-          | Respond c  fc' => Respond c (go' \o fc')
-          | M _     f  t   => M (go' \o f) t
-          | Pure       a   => Pure a
-          end in
-        go' (fb b)
-    | M _     f  t   => M (go \o f) t
-    | Pure       a   => Pure a
-    end in
-  go p0.
+  match p0 with
+  | Request a' fa  => Request a' (flip pushR fb \o fa)
+  | Respond b  fb' =>
+      let fix go' p := match p with
+        | Request b' fb  => pushR (fb' b') fb
+        | Respond c  fc' => Respond c (go' \o fc')
+        | M _     f  t   => M (go' \o f) t
+        | Pure       a   => Pure a
+        end in
+      go' (fb b)
+  | M _     f  t   => M (flip pushR fb \o f) t
+  | Pure       a   => Pure a
+  end.
 
 Notation "x >>~ y" := (pushR x y) (at level 60).
 
@@ -140,20 +139,19 @@ Notation "f >~> g" := (fun a => f a >>~ g) (at level 60).
 
 Fixpoint pullR `{Monad m} {a' a b' b c' c r} (fb' : b' -> Proxy a' a b' b m r)
   (p0 : Proxy b' b c' c m r) {struct p0} : Proxy a' a c' c m r :=
-  let fix go p := match p with
-    | Request b' fb  =>
-        let fix go' p := match p with
-          | Request a' fa  => Request a' (go' \o fa)
-          | Respond b  fb' => go (fb b)
-          | M _     f  t   => M (go' \o f) t
-          | Pure       a   => Pure a
-          end in
-        go' (fb' b')
-    | Respond c  fc' => Respond c (go \o fc')
-    | M _     f  t   => M (go \o f) t
-    | Pure       a   => Pure a
-    end in
-  go p0.
+  match p0 with
+  | Request b' fb  =>
+      let fix go' p := match p with
+        | Request a' fa  => Request a' (go' \o fa)
+        | Respond b  fb' => pullR fb' (fb b)
+        | M _     f  t   => M (go' \o f) t
+        | Pure       a   => Pure a
+        end in
+      go' (fb' b')
+  | Respond c  fc' => Respond c (pullR fb' \o fc')
+  | M _     f  t   => M (pullR fb' \o f) t
+  | Pure       a   => Pure a
+  end.
 
 Notation "x +>> y" := (pullR x y) (at level 60).
 
@@ -387,6 +385,68 @@ Tactic Notation "reduce_over" constr(f) ident(g) ident(y) ident(IHx) :=
 
 Section Push.
 
+(*
+Inductive push_eventually {m r} :
+  forall a' a b' b, Proxy a' a b' b m r -> Prop :=
+  | ev_pushR_req  : forall a' a b' b (aa' : a') (fa : a -> Proxy a' a b' b m r),
+                      push_eventually a' a b' b (Request aa' fa)
+  (* | ev_pushR_res  : forall a' a b' b c' c (bb : b) *)
+  (*                     (fb' : b' -> Proxy a' a b' b m r) *)
+  (*                     (fb : b -> Proxy b' b c' c m r), *)
+  (*                     pull_eventually b' b c' c (fb bb) -> *)
+  (*                     push_eventually a' a b' b (Respond bb fb') *)
+  | ev_pushR_mon  : forall a' a b' b x (g : x -> Proxy a' a b' b m r) (h : m x),
+                      push_eventually a' a b' b (M g h)
+  | ev_pushR_pure : forall a' a b' b (x : r), push_eventually a' a b' b (Pure x)
+
+with pull_eventually {m r} : forall a' a b' b, Proxy a' a b' b m r -> Prop :=
+  (* | ev_pullR_req  : forall a' a b' b c' c (aa' : a') *)
+  (*                     (fa : a -> Proxy a' a b' b m r) *)
+  (*                     (fa' : a' -> Proxy c' c a' a m r), *)
+  (*                     push_eventually c' c a' a (fa' aa') -> *)
+  (*                     pull_eventually a' a b' b (Request aa' fa) *)
+  | ev_pullR_res  : forall a' a b' b (bb : b) (fb' : b' -> Proxy a' a b' b m r),
+                      pull_eventually a' a b' b (Respond bb fb')
+  | ev_pullR_mon  : forall a' a b' b x (g : x -> Proxy a' a b' b m r) (h : m x),
+                      pull_eventually a' a b' b (M g h)
+  | ev_pullR_pure : forall a' a b' b (x : r),
+                      pull_eventually a' a b' b (Pure x).
+
+Arguments ev_pushR_req {m r a' a b' b} aa' fa.
+(* Arguments ev_pushR_res {m r a' a b' b c' c} bb fb' fb _. *)
+Arguments ev_pushR_mon {m r a' a b' b} x g h.
+Arguments ev_pushR_pure {m r a' a b' b} x.
+
+(* Arguments ev_pullR_req {m r a' a b' b c' c} aa' fa fa' _. *)
+Arguments ev_pullR_res {m r a' a b' b} bb fb'.
+Arguments ev_pullR_mon {m r a' a b' b} x g h.
+Arguments ev_pullR_pure {m r a' a b' b} x.
+
+Definition push_render `{Monad m}
+  `(p : Proxy a' a b' b m r)
+  `(fb : b -> Proxy b' b c' c m r) : push_eventually a' a b' b p :=
+  let fix go p := match p with
+    | Request aa' fa  => ev_pushR_req aa' fa
+    | Respond bb  fb' =>
+        match fb bb with
+        | Request bb' fb  => go (fb' bb')
+        | Respond cc  fc' => ev_pullR_res cc fc'
+        | M x     g   h   => ev_pullR_mon x g h
+        | Pure    r       => ev_pullR_pure r
+        end
+    | M x     g   h   => ev_pushR_mon x g h
+    | Pure    r       => ev_pushR_pure r
+    end in
+  go p.
+
+with pull_render  {a' a b' b c' c r} `{Monad m}
+  (fb' : b' -> Proxy a' a b' b m r)
+  (p : Proxy b' b c' c m r) {struct p} : pull_eventually b' b c' c p :=
+
+Compute @push_eventually unit unit unit unit id unit
+  (Respond tt (fun _ : unit => Respond tt (fun _ : unit => Pure tt))).
+*)
+
 Lemma push_request `{Monad m} :
   forall `(f : b -> Proxy b' b c' c m r)
          `(g : a -> Proxy a' a b' b m r) x,
@@ -411,18 +471,28 @@ Admitted.
 Obligation 2. (* Left identity *)
 Admitted.
 Obligation 3. (* Associativity *)
+  simpl in *.
   extensionality z.
-  elim: (h z) => // [? ? IHx|? ? IHx|? ? IHx];
-  move/functional_extensionality in IHx.
+  move: f g.
+  elim: (h z) => // [? ? IHx|b fb' IHx|? ? IHx] f g.
   - rewrite 3!push_request.
     congr (Request _ _).
+    extensionality w.
     exact: IHx.
-  - admit.
+  - rewrite /=.
+    move: f.
+    move: (g b).
+    reduce_proxy IHy (rewrite /= /flip /funcomp /=) => f.
+    + exact: IHx.
+    + move: (f _).
+      reduce_proxy IHz (rewrite /= /flip /funcomp /=).
+      exact: IHy.
   - move=> m0.
     rewrite 3!push_m.
     congr (M _ _).
+    extensionality w.
     exact: IHx.
-Admitted.
+Qed.
 
 End Push.
 
@@ -456,18 +526,28 @@ Admitted.
 Obligation 2. (* Left identity *)
 Admitted.
 Obligation 3. (* Associativity *)
+  simpl in *.
   extensionality z.
-  elim: (h z) => // [? ? IHx|? ? IHx|? ? IHx];
-  move/functional_extensionality in IHx.
-  - admit.
+  move: f g.
+  elim: (h z) => // [a' fa IHx|? ? IHx|? ? IHx] f g.
+  - rewrite /=.
+    move: f.
+    move: (g a').
+    reduce_proxy IHy (rewrite /= /flip /funcomp /=) => f.
+    + move: (f _).
+      reduce_proxy IHz (rewrite /= /flip /funcomp /=).
+      exact: IHy.
+    + exact: IHx.
   - rewrite 3!pull_respond.
     congr (Respond _ _).
+    extensionality w.
     exact: IHx.
   - move=> m0.
     rewrite 3!pull_m.
     congr (M _ _).
+    extensionality w.
     exact: IHx.
-Admitted.
+Qed.
 
 Theorem push_pull_assoc `{MonadLaws m} :
   forall `(f : b' -> Proxy a' a b' b m r)
@@ -476,15 +556,26 @@ Theorem push_pull_assoc `{MonadLaws m} :
   (f >+> g) >~> h =1 f >+> (g >~> h).
 Proof.
   move=> ? ? ? ? ? f ? ? g h a.
-  elim: (g a) => // [y p IHx|? ? IHx|? ? IHx];
-  apply functional_extensionality in IHx.
+  move: f h.
+  elim: (g a) => // [a' fa IHx|b fb' IHx|? ? IHx] => f h.
   - rewrite push_request.
-    admit.
+    rewrite /=.
+    move: h.
+    move: (f a').
+    reduce_proxy IHy (rewrite /= /flip /funcomp /=) => h.
+    exact: IHx.
   - rewrite pull_respond.
-    admit.
+    rewrite /=.
+    move: f.
+    move: (h b).
+    reduce_proxy IHy (rewrite /= /flip /funcomp /=) => f.
+    exact: IHx.
   - move=> m0.
-    by rewrite pull_m push_m push_m pull_m IHx.
-Admitted.
+    rewrite pull_m push_m push_m pull_m.
+    congr (M _ f).
+    extensionality w.
+    exact: IHx.
+Qed.
 
 End Pull.
 
@@ -685,6 +776,40 @@ Proof.
   - exact: Hmon.
   - exact: Hpure.
 Qed.
+
+(* Juggling the arguments *)
+
+Definition SProxy2 (a' a b' b : Type) (m : Type -> Type) (r : Type) : Type :=
+  forall s : Type,
+       ((a  -> s) -> (a' -> s))           (* SRequest *)
+    -> ((b' -> s) -> (b  -> s))           (* SRespond *)
+    -> (forall x, (x -> s) -> (m x -> s)) (* SM *)
+    -> ((r -> s) -> (unit -> s)).         (* SPure *)
+
+(* Applying a special case of the Yoneda lemma, which says:
+
+    Nat(h^a, h^b) =~ Hom(b, a)
+*)
+
+Definition SProxy3 (a' a b' b : Type) (m : Type -> Type) (r : Type) : Type :=
+     (a' -> a)            (* await *)
+  -> (b  -> b')           (* yield *)
+  -> (forall x, m x -> x) (* pure *)
+  -> r.                   (* pure *)
+
+(* We need to plumb through the monadic effects, and remove trivialities *)
+
+Definition SProxy4 (a' a b' b : Type) (m : Type -> Type) (r : Type) : Type :=
+     (a' -> m a)            (* await *)
+  -> (b  -> m b')           (* yield *)
+  -> m r.                   (* pure *)
+
+(* And add the ability to terminate early *)
+
+Definition SProxy4 (a' a b' b : Type) (m : Type -> Type) (r : Type) : Type :=
+     (a' -> EitherT r m a)            (* await *)
+  -> (b  -> EitherT r m b')           (* yield *)
+  -> EitherT r m r.                   (* pure *)
 
 End SProxy.
 
