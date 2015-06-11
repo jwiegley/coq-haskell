@@ -82,6 +82,32 @@ Inductive CFree {S : Type} (P : S -> Type) (a : Type) : Type :=
   | CPure : a -> CFree P a
   | CJoin : forall s : S, (P s -> CFree P a) -> CFree P a.
 
+Arguments CPure {S P a} _.
+Arguments CJoin {S P a} _ _.
+
+Definition CFree_bind {S : Type} {P : S -> Type} `(k : a -> CFree P b) :
+  CFree P a -> CFree P b :=
+  fun x0 => let fix go x := match x with
+    | CPure a => k a
+    | CJoin s g => CJoin s (go \o g)
+    end in
+  go x0.
+
+Program Instance CFree_Functor {S : Type} (P : S -> Type) :
+  Functor (CFree P) := {
+  fmap := fun _ _ k => CFree_bind (CPure \o k)
+}.
+
+Program Instance CFree_Applicative {S : Type} (P : S -> Type) :
+  Applicative (CFree P) := {
+  pure := fun _ => CPure;
+  ap   := fun _ _ mf mx => CFree_bind (flip fmap mx) mf
+}.
+
+Program Instance CFree_Monad {S : Type} (P : S -> Type) : Monad (CFree P) := {
+  join := fun _ => CFree_bind id
+}.
+
 Fixpoint fold `(r : x -> y) {S : Type} `(c : forall s : S, (P s -> y) -> y)
   (fr : CFree P x) : y :=
   match fr with
@@ -89,15 +115,49 @@ Fixpoint fold `(r : x -> y) {S : Type} `(c : forall s : S, (P s -> y) -> y)
     | CJoin s k => c s $ fun t => fold r c (k t)
   end.
 
-Definition retract {S : Type} `(fr : CFree P a)
-  `(c : forall s : S, (P s -> a) -> a) : a := fold id c fr.
+Fixpoint retract {S : Type} `(fr : CFree P a)
+  `(c : forall s : S, (P s -> a) -> a) : a :=
+  match fr with
+    | CPure x   => x
+    | CJoin s k => c s $ fun t => retract (k t) c
+  end.
 
 Module ContainerLaws.
 
 Include MonadLaws.
 
-Program Instance Container_FunctorLaws {S : Type} (P : S -> Type) :
-  FunctorLaws (Container P).
+Require Import FunctionalExtensionality.
+
+Variable S : Type.
+Variable P : S -> Type.
+
+Program Instance Container_FunctorLaws : FunctorLaws (Container P).
 Obligation 1. by case. Qed.
+
+Ltac reduce_cfree H :=
+  try elim=> //= [? ? H];
+  congr (CJoin _ _);
+  extensionality YY;
+  exact: H.
+
+Program Instance CFree_FunctorLaws : FunctorLaws (CFree P).
+Obligation 1. by reduce_cfree IHx. Qed.
+Obligation 2. by reduce_cfree IHx. Qed.
+
+Program Instance CFree_ApplicativeLaws : ApplicativeLaws (CFree P).
+Obligation 1. by reduce_cfree IHx. Qed.
+Obligation 2.
+  elim: u => /= [?|? ? IHu].
+    elim: v => /= [?|? ? IHv].
+      move: w.
+      by reduce_cfree IHw.
+    by reduce_cfree IHv.
+  by reduce_cfree IHu.
+Qed.
+
+Program Instance CFree_MonadLaws : MonadLaws (CFree P).
+Obligation 1. by reduce_cfree IHx. Qed.
+Obligation 2. by reduce_cfree IHx. Qed.
+Obligation 4. by reduce_cfree IHx. Qed.
 
 End ContainerLaws.
