@@ -806,10 +806,10 @@ Definition SProxy4 (a' a b' b : Type) (m : Type -> Type) (r : Type) : Type :=
 
 (* And add the ability to terminate early *)
 
-Definition SProxy4 (a' a b' b : Type) (m : Type -> Type) (r : Type) : Type :=
-     (a' -> EitherT r m a)            (* await *)
-  -> (b  -> EitherT r m b')           (* yield *)
-  -> EitherT r m r.                   (* pure *)
+(* Definition SProxy4 (a' a b' b : Type) (m : Type -> Type) (r : Type) : Type := *)
+(*      (a' -> EitherT r m a)            (* await *) *)
+(*   -> (b  -> EitherT r m b')           (* yield *) *)
+(*   -> EitherT r m r.                   (* pure *) *)
 
 End SProxy.
 
