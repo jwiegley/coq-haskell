@@ -115,9 +115,9 @@ Fixpoint fold `(r : x -> y) {S : Type} `(c : forall s : S, (P s -> y) -> y)
     | CJoin s k => c s $ fun t => fold r c (k t)
   end.
 
-Fixpoint retract {S : Type} `(fr : CFree P a)
-  `(c : forall s : S, (P s -> a) -> a) : a :=
-  match fr with
+Fixpoint retract {S : Type} `(fr : CFree P a) :
+  (forall s : S, (P s -> a) -> a) -> a :=
+  fun c => match fr with
     | CPure x   => x
     | CJoin s k => c s $ fun t => retract (k t) c
   end.
