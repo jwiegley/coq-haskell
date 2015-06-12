@@ -219,3 +219,71 @@ Obligation 2. (* Left identity *)
 (* Obligation 3. (* Associativity *) *)
 *)
 
+
+(*
+Inductive push_eventually {m r} :
+  forall a' a b' b, Proxy a' a b' b m r -> Prop :=
+  | ev_pushR_req  : forall a' a b' b (aa' : a') (fa : a -> Proxy a' a b' b m r),
+                      push_eventually a' a b' b (Request aa' fa)
+  (* | ev_pushR_res  : forall a' a b' b c' c (bb : b) *)
+  (*                     (fb' : b' -> Proxy a' a b' b m r) *)
+  (*                     (fb : b -> Proxy b' b c' c m r), *)
+  (*                     pull_eventually b' b c' c (fb bb) -> *)
+  (*                     push_eventually a' a b' b (Respond bb fb') *)
+  | ev_pushR_mon  : forall a' a b' b x (g : x -> Proxy a' a b' b m r) (h : m x),
+                      push_eventually a' a b' b (M g h)
+  | ev_pushR_pure : forall a' a b' b (x : r), push_eventually a' a b' b (Pure x)
+
+with pull_eventually {m r} : forall a' a b' b, Proxy a' a b' b m r -> Prop :=
+  (* | ev_pullR_req  : forall a' a b' b c' c (aa' : a') *)
+  (*                     (fa : a -> Proxy a' a b' b m r) *)
+  (*                     (fa' : a' -> Proxy c' c a' a m r), *)
+  (*                     push_eventually c' c a' a (fa' aa') -> *)
+  (*                     pull_eventually a' a b' b (Request aa' fa) *)
+  | ev_pullR_res  : forall a' a b' b (bb : b) (fb' : b' -> Proxy a' a b' b m r),
+                      pull_eventually a' a b' b (Respond bb fb')
+  | ev_pullR_mon  : forall a' a b' b x (g : x -> Proxy a' a b' b m r) (h : m x),
+                      pull_eventually a' a b' b (M g h)
+  | ev_pullR_pure : forall a' a b' b (x : r),
+                      pull_eventually a' a b' b (Pure x).
+
+Arguments ev_pushR_req {m r a' a b' b} aa' fa.
+(* Arguments ev_pushR_res {m r a' a b' b c' c} bb fb' fb _. *)
+Arguments ev_pushR_mon {m r a' a b' b} x g h.
+Arguments ev_pushR_pure {m r a' a b' b} x.
+
+(* Arguments ev_pullR_req {m r a' a b' b c' c} aa' fa fa' _. *)
+Arguments ev_pullR_res {m r a' a b' b} bb fb'.
+Arguments ev_pullR_mon {m r a' a b' b} x g h.
+Arguments ev_pullR_pure {m r a' a b' b} x.
+
+Definition push_render `{Monad m}
+  `(p : Proxy a' a b' b m r)
+  `(fb : b -> Proxy b' b c' c m r) : push_eventually a' a b' b p :=
+  let fix go p := match p with
+    | Request aa' fa  => ev_pushR_req aa' fa
+    | Respond bb  fb' =>
+        match fb bb with
+        | Request bb' fb  => go (fb' bb')
+        | Respond cc  fc' => ev_pullR_res cc fc'
+        | M x     g   h   => ev_pullR_mon x g h
+        | Pure    r       => ev_pullR_pure r
+        end
+    | M x     g   h   => ev_pushR_mon x g h
+    | Pure    r       => ev_pushR_pure r
+    end in
+  go p.
+
+with pull_render  {a' a b' b c' c r} `{Monad m}
+  (fb' : b' -> Proxy a' a b' b m r)
+  (p : Proxy b' b c' c m r) {struct p} : pull_eventually b' b c' c p :=
+
+Compute @push_eventually unit unit unit unit id unit
+  (Respond tt (fun _ : unit => Respond tt (fun _ : unit => Pure tt))).
+*)
+
+(* Fixpoint push `{Monad m} {a' a r} {n : nat} {default : r} : *)
+(*   a -> Proxy a' a a' a m r := *)
+(*   if n isn't S n' then (fun _ => Pure default) else *)
+(*   (Respond ^~ (Request ^~ @push _ _ _ _ _ n' default)). *)
+
