@@ -127,23 +127,26 @@ Notation "x >\\ y" := (rofP x y) (at level 60).
 
 Notation "f \>\ g" := (fun a => f >\\ g a) (at level 60).
 
-Fixpoint pushR `{Monad m} {a' a b' b c' c r} (p0 : Proxy a' a b' b m r)
-  (fb : b -> Proxy b' b c' c m r) {struct p0} : Proxy a' a c' c m r :=
+(* Very strangly, if the order of [fb] and [p0] is reversed, then the right
+   identity law for the push category will fail to complete with a universe
+   inconsistency. *)
+Fixpoint pushR `{Monad m} {a' a b' b c' c r} (fb : b -> Proxy b' b c' c m r)
+  (p0 : Proxy a' a b' b m r) {struct p0} : Proxy a' a c' c m r :=
   match p0 with
-  | Request a' fa  => Request a' (flip pushR fb \o fa)
+  | Request a' fa  => Request a' (pushR fb \o fa)
   | Respond b  fb' =>
       let fix go' p := match p with
-        | Request b' fb  => pushR (fb' b') fb
+        | Request b' fb  => pushR fb (fb' b')
         | Respond c  fc' => Respond c (go' \o fc')
         | M _     f  t   => M (go' \o f) t
         | Pure       a   => Pure a
         end in
       go' (fb b)
-  | M _     f  t   => M (flip pushR fb \o f) t
+  | M _     f  t   => M (pushR fb \o f) t
   | Pure       a   => Pure a
   end.
 
-Notation "x >>~ y" := (pushR x y) (at level 60).
+Notation "x >>~ y" := (pushR y x) (at level 60).
 
 Notation "f >~> g" := (fun a => f a >>~ g) (at level 60).
 
@@ -447,7 +450,7 @@ Obligation 1. (* Right identity *)
   rewrite E in IHx.
   move/functional_extensionality in IHx.
   exact: IHx.
-Admitted.
+Qed.
 Obligation 2. (* Left identity *)
   extensionality z.
   rewrite /push.
