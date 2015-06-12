@@ -83,8 +83,18 @@ Definition respond {x' x a' a m} (z : a) : Proxy x' x a' a m a' :=
 Definition request {x' x a' a m} (z : x') : Proxy x' x a' a m x :=
   Request z Pure.
 
-Definition Producer := Proxy False unit unit.
-Definition Producer' b m r := forall x' x, Proxy x' x unit b m r.
+Definition Effect               := Proxy False unit unit False.
+Definition Producer             := Proxy False unit unit.
+Definition Pipe (a b : Type)    := Proxy unit a unit b.
+Definition Consumer (a : Type)  := Proxy unit a unit False.
+Definition Client (a' a : Type) := Proxy a' a unit False.
+Definition Server               := Proxy False unit.
+
+Definition Effect' m r      := forall x' x y' y, Proxy x' x y' y m r.
+Definition Producer' b m r  := forall x' x, Proxy x' x unit b m r.
+Definition Consumer' a m r  := forall y' y, Proxy unit a y' y m r.
+Definition Client' a' a m r := forall y' y, Proxy a' a y' y m r.
+Definition Server' b' b m r := forall x' x, Proxy x' x b' b m r.
 
 Definition yield {a x' x m} (z : a) : Proxy x' x unit a m unit :=
   let go : Producer' a m unit := fun _ _ => respond z in @go x' x.
@@ -156,6 +166,12 @@ Fixpoint pullR `{Monad m} {a' a b' b c' c r} (fb' : b' -> Proxy a' a b' b m r)
 Notation "x +>> y" := (pullR x y) (at level 60).
 
 Notation "f >+> g" := (fun a => f +>> g a) (at level 60).
+
+Definition connect `{Monad m} `(p1 : Proxy a' a unit b m r)
+  `(p2 : Proxy unit b c' c m r) : Proxy a' a c' c m r :=
+  (fun _ : unit => p1) +>> p2.
+
+Notation "x >-> y" := (connect x y) (at level 60).
 
 Definition reflect `{Monad m} `(p : Proxy a' a b' b m r) :
   Proxy b b' a a' m r :=
@@ -262,10 +278,10 @@ Proof.
     exact: IHx.
 Qed.
 
-Program Instance Respond_Category {x' x a'} `{MonadLaws m} : Category := {
-  ob     := Type;
-  hom    := fun A B => A -> Proxy x' x a' B m a';
-  c_id   := fun A => @respond x' x a' A m;
+Program Instance Respond_Category {x' x} `{MonadLaws m} : Category := {
+  ob     := Type * Type;
+  hom    := fun A B => snd A -> Proxy x' x (fst B) (snd B) m (fst A);
+  c_id   := fun A => @respond x' x (fst A) (snd A) m;
   c_comp := fun _ _ _ f g => g />/ f
 }.
 Obligation 1. (* Right identity *)
@@ -332,11 +348,11 @@ Proof.
     exact: IHx.
 Qed.
 
-Program Instance Request_Category {x a' a} `{MonadLaws m} : Category := {
-  ob     := Type;
-  hom    := fun A B => B -> Proxy A x a' a m x;
-  c_id   := fun A => @request A x a' a m;
-  c_comp := fun _ _ _ f g => g \>\ f
+Program Instance Request_Category {x' x} `{MonadLaws m} : Category := {
+  ob     := Type * Type;
+  hom    := fun A B => fst A -> Proxy (fst B) (snd B) x' x m (snd A);
+  c_id   := fun A => @request (fst A) (snd A) x' x m;
+  c_comp := fun _ _ _ f g => f \>\ g
 }.
 Obligation 1. (* Right identity *)
   extensionality z.
@@ -345,13 +361,14 @@ Obligation 1. (* Right identity *)
 Qed.
 Obligation 2. (* Left identity *)
   extensionality z.
-  exact: join_fmap_pure_x.
+  move: (f z).
+  by reduce_proxy IHx (rewrite /= /bind /funcomp /=).
 Qed.
 Obligation 3. (* Associativity *)
   extensionality z.
-  elim: (f z) => // [y p IHx|? ? IHx|? ? IHx].
+  elim: (h z) => // [y p IHx|? ? IHx|? ? IHx].
   - apply functional_extensionality in IHx.
-    by rewrite /= /funcomp IHx request_distrib.
+    by rewrite /= /funcomp -IHx request_distrib.
   - rewrite /=.
     f_equal.
     extensionality a1.
@@ -447,6 +464,18 @@ Compute @push_eventually unit unit unit unit id unit
   (Respond tt (fun _ : unit => Respond tt (fun _ : unit => Pure tt))).
 *)
 
+(* Fixpoint push `{Monad m} {a' a r} {n : nat} {default : r} : *)
+(*   a -> Proxy a' a a' a m r := *)
+(*   if n isn't S n' then (fun _ => Pure default) else *)
+(*   (Respond ^~ (Request ^~ @push _ _ _ _ _ n' default)). *)
+
+Definition push `{Monad m} {a' a r} {n : nat} {default : r} :
+  a -> Proxy a' a a' a m r :=
+  let fix go n x :=
+    if n isn't S n' then Pure default else
+    (Respond ^~ (Request ^~ @go n')) x
+  in go n.
+
 Lemma push_request `{Monad m} :
   forall `(f : b -> Proxy b' b c' c m r)
          `(g : a -> Proxy a' a b' b m r) x,
@@ -459,17 +488,46 @@ Lemma push_m `{Monad m} :
   M g h >>~ f = M (g >~> f) h.
 Proof. move=> x; reduce_over @M g y IHx. Qed.
 
-Program Instance Push_Category `{MonadLaws m} {r : Type} :
-  Category := {
+Variable n : nat.
+Variable r : Type.
+Variable default : r.
+
+Hypothesis Hn : n > 0.
+Hypothesis Hpush :
+  forall `{Monad m} a' a n', @push m _ a' a r n' default =
+                             @push m _ a' a r n'.+1 default.
+
+Program Instance Push_Category `{MonadLaws m} : Category := {
   ob     := Type * Type;
   hom    := fun A B => snd B -> Proxy (fst B) (snd B) (fst A) (snd A) m r;
-  c_id   := fun A => undefined;
+  c_id   := fun A => @push m _ (fst A) (snd A) r n default;
   c_comp := fun _ _ _ f g => f >~> g
 }.
 Obligation 1. (* Right identity *)
+  extensionality z.
+  move: (f z).
+  reduce_proxy IHx simpl.
+  move: Hn.
+  case E: n => // [n'] _.
+  congr (Respond _ _).
+  rewrite /funcomp -/push Hpush.
+  rewrite E in IHx.
+  move/functional_extensionality in IHx.
+  exact: IHx.
 Admitted.
 Obligation 2. (* Left identity *)
-Admitted.
+  extensionality z.
+  rewrite /push.
+  move: Hn.
+  case E: n => //= [n'] _.
+  rewrite -/push.
+  move: (f z).
+  reduce_proxy IHx simpl.
+  congr (Request _ _).
+  rewrite /flip /funcomp Hpush.
+  extensionality w.
+  by rewrite -IHx.
+Qed.
 Obligation 3. (* Associativity *)
   simpl in *.
   extensionality z.
@@ -503,6 +561,13 @@ End Push.
 
 Section Pull.
 
+Definition pull `{Monad m} {a' a r} {n : nat} {default : r} :
+  a' -> Proxy a' a a' a m r :=
+  let fix go n x :=
+    if n isn't S n' then Pure default else
+    (Request ^~ (Respond ^~ @go n')) x
+  in go n.
+
 Lemma pull_respond `{Monad m} :
   forall `(f : b' -> Proxy a' a b' b m r)
          `(g : c' -> Proxy b' b c' c m r) x,
@@ -515,16 +580,51 @@ Lemma pull_m `{Monad m} :
   f +>> M g h = M (f >+> g) h.
 Proof. move=> x; reduce_over @M g y IHx. Qed.
 
-Program Instance Pull_Category `{MonadLaws m} {r : Type} : Category := {
+Variable n : nat.
+Variable r : Type.
+Variable default : r.
+
+Definition cat `{Monad m} {a} : Pipe a a m r :=
+  pull (n:=n) (default:=default) tt.
+
+Definition map `{Monad m} `(f : a -> b) : Pipe a b m r := forP cat (yield \o f).
+
+Hypothesis Hn : n > 0.
+Hypothesis Hpull :
+  forall `{Monad m} a' a n', @pull m _ a' a r n' default =
+                             @pull m _ a' a r n'.+1 default.
+
+Program Instance Pull_Category `{MonadLaws m} : Category := {
   ob     := Type * Type;
   hom    := fun A B => fst A -> Proxy (fst B) (snd B) (fst A) (snd A) m r;
-  c_id   := fun A => undefined;
+  c_id   := fun A => @pull m _ (fst A) (snd A) r n default;
   c_comp := fun _ _ _ f g => f >+> g
 }.
 Obligation 1. (* Right identity *)
-Admitted.
+  extensionality z.
+  rewrite /push.
+  move: Hn.
+  case E: n => //= [n'] _.
+  rewrite -/push.
+  move: (f z).
+  reduce_proxy IHx simpl.
+  congr (Respond _ _).
+  rewrite /flip /funcomp Hpull.
+  extensionality w.
+  by rewrite -IHx.
+Qed.
 Obligation 2. (* Left identity *)
-Admitted.
+  extensionality z.
+  move: (f z).
+  reduce_proxy IHx simpl.
+  move: Hn.
+  case E: n => // [n'] _.
+  congr (Request _ _).
+  rewrite /funcomp -/pull Hpull.
+  rewrite E in IHx.
+  move/functional_extensionality in IHx.
+  exact: IHx.
+Qed.
 Obligation 3. (* Associativity *)
   simpl in *.
   extensionality z.
@@ -555,7 +655,7 @@ Theorem push_pull_assoc `{MonadLaws m} :
           (h : c  -> Proxy c' c b' b m r),
   (f >+> g) >~> h =1 f >+> (g >~> h).
 Proof.
-  move=> ? ? ? ? ? f ? ? g h a.
+  move=> ? ? ? ? f ? ? g h a.
   move: f h.
   elim: (g a) => // [a' fa IHx|b fb' IHx|? ? IHx] => f h.
   - rewrite push_request.
@@ -576,6 +676,20 @@ Proof.
     extensionality w.
     exact: IHx.
 Qed.
+
+Theorem map_id : forall a, map (@id a) = cat.
+Proof.
+  move=> a.
+  rewrite /map /cat /yield.
+Admitted.
+
+Theorem map_compose :
+  forall `(f : a -> b) `(g : b -> c),
+    map (g \o f) = map f >-> map g.
+Proof.
+  move=> a b f c g.
+  rewrite /map /cat.
+Admitted.
 
 End Pull.
 
@@ -657,6 +771,53 @@ End Duals.
  *)
 
 Section GeneralTheorems.
+
+(* Looping over a single yield simplifies to function application *)
+Theorem for_yield_f `{MonadLaws m} :
+  forall `(f : b -> Proxy x' x c' c m unit) x,
+    forP (yield x) f = f x.
+Proof.
+  move=> ? ? ? ? ? f x.
+  by rewrite /yield /respond /= /bind /funcomp join_fmap_pure_x.
+Qed.
+
+(* Re-yielding every element of a stream returns the original stream *)
+Theorem for_yield `{MonadLaws m} : forall `(s : Proxy x' x unit b m unit),
+  forP s yield = s.
+Proof.
+  move=> ? ? ?.
+  by reduce_proxy IHx (rewrite /yield /respond /= /bind /= /funcomp).
+Qed.
+
+(* Nested for loops can become a sequential for loops if the inner loop
+   body ignores the outer loop variable *)
+Theorem nested_for_a `{MonadLaws m} :
+  forall `(s : Proxy x' x b' b m a')
+         `(f : b -> Proxy x' x c' c m b')
+         `(g : c -> Proxy x' x d' d m c'),
+    forP s (fun a => forP (f a) g) = forP (forP s f) g.
+Proof.
+  move=> x' x b' b a' s c' c f d' d g.
+  move: s.
+  reduce_proxy IHx simpl.
+  rewrite respond_distrib.
+  move/functional_extensionality in IHx.
+  by rewrite -IHx.
+Qed.
+
+Theorem nested_for_b `{MonadLaws m} :
+  forall `(s : Proxy x' x b' b m a')
+         `(f : b -> Proxy x' x c' c m b')
+         `(g : c -> Proxy x' x d' d m c'),
+    forP (forP s f) g = forP s (f />/ g).
+Proof.
+  move=> x' x b' b a' s c' c f d' d g.
+  move: s.
+  reduce_proxy IHx simpl.
+  rewrite respond_distrib.
+  move/functional_extensionality in IHx.
+  by rewrite IHx.
+Qed.
 
 Theorem toListM_each_id : forall a, toListM \o each =1 pure (a:=seq a).
 Proof.
