@@ -524,7 +524,7 @@ Definition map `{Monad m} `(f : a -> b) : Pipe a b m r := forP cat (yield \o f).
 
 Hypothesis Hn : n > 0.
 Hypothesis Hpull :
-  forall `{Monad m} a' a n', @pull m _ a' a r n' default =
+  forall n' `{Monad m} a' a, @pull m _ a' a r n' default =
                              @pull m _ a' a r n'.+1 default.
 
 Program Instance Pull_Category `{MonadLaws m} : Category := {
@@ -613,16 +613,38 @@ Qed.
 Theorem map_id : forall a, map (@id a) = cat.
 Proof.
   move=> a.
-  rewrite /map /cat /yield.
-Admitted.
+  rewrite /map /cat /yield /respond /forP.
+  move: (pull tt).
+  by reduce_proxy IHx (rewrite /bind /funcomp /=).
+Qed.
 
-Theorem map_compose :
-  forall `(f : a -> b) `(g : b -> c),
+Theorem map_compose `{MonadLaws m} : forall `(f : a -> b) `(g : b -> c),
     map (g \o f) = map f >-> map g.
 Proof.
   move=> a b f c g.
-  rewrite /map /cat.
-Admitted.
+  rewrite /map /cat /yield /funcomp.
+  move: (pull tt).
+  reduce_proxy IHx (rewrite /= /funcomp);
+  try move/functional_extensionality in IHx;
+  move: Hn;
+  case E: n => //= [n'] _.
+  - rewrite E in IHx.
+    rewrite IHx.
+    congr (Request _ _).
+    rewrite IHx /bind /funcomp /= /funcomp /connect /=.
+    congr (Respond _ _).
+    rewrite /funcomp /=.
+    extensionality t.
+    f_equal.
+    extensionality u.
+    by destruct t, u.
+  - destruct t.
+    by rewrite E -Hpull.
+  - move=> m0.
+    rewrite E in IHx.
+    rewrite IHx.
+    by congr (M _ _).
+Qed.
 
 End Pull.
 
