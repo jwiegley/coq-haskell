@@ -15,6 +15,8 @@ Arguments join {m _ _} _.
 Definition bind `{Monad m} {X Y : Type} (f : (X -> m Y)) : m X -> m Y :=
   join \o fmap f.
 
+Definition return_ `{Monad m} {a} : a -> m a := pure.
+
 Notation "m >>= f" := (bind f m) (at level 25, left associativity).
 Notation "a >> b" := (a >>= fun _ => b) (at level 25, left associativity).
 

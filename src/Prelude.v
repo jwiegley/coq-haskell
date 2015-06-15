@@ -9,6 +9,10 @@ Unset Printing Implicit Defensive.
 
 Definition undefined {a : Type} : a. Admitted.
 
+Definition Either := sum.
+Definition Left {a b} : a -> Either a b := inl.
+Definition Right {a b} : b -> Either a b := inr.
+
 Notation "f $ x" := (f x) (at level 60, right associativity, only parsing).
 
 Definition flip `(f : a -> b -> c) : b -> a -> c := fun y x => f x y.
