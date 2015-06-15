@@ -85,5 +85,7 @@ clean: Makefile.coq
 	ls -1 extract/Hask/* | egrep -v '(Utils).hs' | \
 	    while read file; do rm -f $$file; done
 	rm -f Makefile.coq Setup
-	rm -fr dist .coq-native
-	rm -fr .hdevtools.sock *.glob *.d *.vo .*.aux
+	rm -fr dist
+	for i in $$(find src -type d -depth); do \
+	    (cd $$i; rm -fr .hdevtools.sock *.glob *.d *.vo .*.aux .coq-native); \
+	done
