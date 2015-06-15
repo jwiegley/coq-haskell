@@ -19,88 +19,6 @@ Require Import Hask.Data.Functor.Identity.
 
 Generalizable All Variables.
 
-Inductive ProxyF a' a b' b r :=
-  | Request of a' & (a  -> r)
-  | Respond of b  & (b' -> r).
-Arguments Request {a' a b' b r} _ _.
-Arguments Respond {a' a b' b r} _ _.
-
-Definition Proxy a' a b' b m r := FreeT (ProxyF a' a b' b) m r.
-
-Definition runEffect `{Monad m} `(p : Proxy False unit unit False m r) : m r :=
-  p _ pure $ fun _ k x => match x with
-    | Request _ f => k (f tt)
-    | Respond _ f => k (f tt)
-    end.
-
-Definition respond `{Monad m} `(z : a) {x' x a'} : Proxy x' x a' a m a' :=
-  fun _ k g => g _ id $ Respond z k.
-
-Definition Producer  b m r := Proxy False unit unit b m r.
-Definition Producer' b m r := forall x' x, Proxy x' x unit b m r.
-
-Definition yieldxx `{Monad m} {a} (z : a) : Producer' a m unit :=
-  fun _ _ => respond z.
-Definition yield `{Monad m} {a x' x} (z : a) : Proxy x' x unit a m unit :=
-  @yieldxx m _ a z x' x.
-
-Definition forP `{Monad m} `(p0 : Proxy x' x b' b m a')
-  `(fb : b -> Proxy x' x c' c m b') : Proxy x' x c' c m a' :=
-  fun _ k g => p0 _ k $ fun _ h x => match x with
-    | Request x' fx  => g _ h $ Request x' fx
-    | Respond b  fb' => fb b _ (h \o fb') g
-    end.
-
-Notation "x //> y" := (forP x y) (at level 60).
-
-Definition each `{Monad m} {a} : seq a -> Producer a m unit :=
-  mapM_ yield.
-  (* @mapM_ (FreeT (ProxyF False unit unit a) m) *)
-  (*        (@FreeT_Monad (ProxyF False unit unit a) m) _ _ yield. *)
-
-Definition toListM `{Monad m} `(p : Producer a m unit) : m (seq a) :=
-  p _ (fun _ => pure [::]) $ fun X h p => match p with
-    | Request v f  => h (f tt)
-    | Respond x f => @fmap m _ _ _ (cons x) (h (f tt))
-    end.
-
-Module PipesLaws.
-
-Include MonadLaws.
-
-Section Examples.
-
-Context `{H : Monad m}.
-Context `{HL : MonadLaws m}.
-
-Theorem single_step `(f : FreeT f m a) :
-  f _ k h = (exists a m, k a ;; 
-
-Axiom fmap_cps : forall `{Functor f} a b c (k : forall r, (a -> r) -> f r)
-  (g : b -> c) (h : a -> b), fmap g (k _ h) = k _ (g \o h).
-
-(* Lemma toListM_cons : forall a (x : a) xs, *)
-(*   toListM (each (x :: xs)) = fmap (cons x) (toListM (each xs)). *)
-(* Proof. *)
-(*   move=> a x xs. *)
-(*   elim: xs => //= [|y ys IHys] in x *. *)
-(*     rewrite /each /=. *)
-(*     admit. *)
-(*   rewrite /each /=. *)
-
-Example toListM_each : forall a (xs : seq a), toListM (each xs) = pure xs.
-Proof.
-  move=> a xs.
-  elim: xs => //= [x xs IHxs].
-  rewrite -ap_homo -IHxs ap_fmap_ext.
-  rewrite /each /mapM_ /= -/mapM_ -/each.
-  rewrite /toListM.
-
-(* main :: IO () *)
-(* main = do *)
-(*     runEffect $ for (each [1..4 :: Int]) (lift . print) *)
-(*     runEffect $ for stdinLn (lift . putStrLn) *)
-
 Require Import Endo.
 Require Import Iso.
 
@@ -112,6 +30,9 @@ Definition NatF (a : Type) := unit + a.
 
 (* This does not work in Coq, because of the strict positivity requirement. *)
 (* Inductive Fix (F : Type -> Type) := outF : F (Fix F) -> Fix F. *)
+
+(* This definition works fine, however, and is equivalent. *)
+Definition μ (F : Type -> Type) := ∀ a, (F a → a) → a.
 
 Definition μNat := μ NatF.
 
