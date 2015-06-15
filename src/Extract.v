@@ -6,7 +6,6 @@ Require Export Hask.Control.Monad.State.
 Require Export Hask.Control.Monad.Trans.Free.
 Require Export Hask.Control.Monad.Trans.State.
 Require Export Hask.Control.Monad.
-Require Export Hask.Control.Pipes.
 Require Export Hask.Data.Functor.Container.
 Require Export Hask.Data.Functor.Identity.
 Require Export Hask.Data.Functor.Yoneda.
@@ -33,7 +32,6 @@ Separate Extraction
   const
   curry
   distance
-  each
   emptyIntMap
   emptyIntSet
   eqIntMap
@@ -56,7 +54,6 @@ Separate Extraction
   forFoldrM
   forM
   forM_
-  forP
   fromChurch
   get
   getBy
@@ -85,10 +82,6 @@ Separate Extraction
   partition
   put
   putT
-  request
-  respond
-  retract
-  rofP
   runIdentityF
   safe_hd
   safe_last
@@ -112,5 +105,4 @@ Separate Extraction
   vnth_vshiftin
   vreplace
   vshiftin
-  vsing
-  yield.
+  vsing.

@@ -9,7 +9,6 @@ src/Control/Monad/State.v
 src/Control/Monad/Free.v
 src/Control/Monad/Trans/Free.v
 src/Control/Monad/Trans/State.v
-src/Control/Pipes.v
 src/Crush.v
 src/Data/Functor.v
 src/Data/Functor/Container.v

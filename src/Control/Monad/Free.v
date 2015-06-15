@@ -210,14 +210,14 @@ Module CoFreeLaws.
 
 Include FunctorLaws.
 
+(*
 Program Instance CoFree_FunctorLaws `{FunctorLaws h} : FunctorLaws (CoFree h).
 Obligation 1.
   move=> x.
   destruct x.
-Admitted.
 Obligation 2.
   move=> x.
   destruct x.
-Admitted.
+*)
 
 End CoFreeLaws.
