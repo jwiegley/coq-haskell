@@ -1,12 +1,13 @@
-Require Export Monad.
+Require Export Hask.Prelude.
+Require Export Hask.Control.Monad.
 
 Class MonadTrans (T : (Type -> Type) -> Type -> Type)
   {M : Type -> Type} `{Monad M} `{Monad (T M)} :=
 { lift : forall {A}, M A -> T M A
 
-; trans_law_1 : forall {A}, lift ∘ pure/M = (@pure (T M) _ A)
+; trans_law_1 : forall {A}, lift \o pure/M = (@pure (T M) _ A)
 ; trans_law_2 : forall {A} (f : A -> M A) (m : M A),
-    lift (m >>= f) = (@lift A m) >>= (lift ∘ f)
+    lift (m >>= f) = (@lift A m) >>= (lift \o f)
 }.
 
 Notation "lift/ M" := (@lift M _ _ _) (at level 28).
@@ -19,7 +20,7 @@ Theorem trans_law_1_x
   lift ((pure/M) x) = (@pure (T M) _ A) x.
 Proof.
   intros.
-  assert ((lift/T) _ _ ((pure/M) x) = ((lift/T) _ _ ∘ (pure/M)) x).
+  assert ((lift/T) _ _ ((pure/M) x) = ((lift/T) _ _ \o (pure/M)) x).
     unfold compose. reflexivity.
   rewrite H0.
   rewrite trans_law_1.

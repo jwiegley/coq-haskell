@@ -321,8 +321,10 @@ between value terms [a = b].
 
 *)
 
-Notation "X ≅ Y" := (Isomorphism X Y) (at level 70, right associativity) : category_scope.
-Notation "x ≡ y" := (to x = y ∧ from y = x) (at level 70, right associativity).
+Notation "X {≅} Y" :=
+  (Isomorphism X Y) (at level 70, right associativity) : category_scope.
+Notation "x {≡} y" :=
+  (to x = y ∧ from y = x) (at level 70, right associativity).
 
 (**
 
@@ -333,12 +335,12 @@ equalities.
 
 *)
 
-Program Instance iso_identity `{C : Category} (X : C) : X ≅ X := {
+Program Instance iso_identity `{C : Category} (X : C) : X {≅} X := {
     to   := id/X;
     from := id/X
 }.
 
-Program Instance iso_symmetry `{C : Category} `(iso : X ≅ Y) : Y ≅ X := {
+Program Instance iso_symmetry `{C : Category} `(iso : X {≅} Y) : Y {≅} X := {
     to   := @from C X Y iso;
     from := @to C X Y iso
 }.
@@ -348,7 +350,7 @@ Obligation 2. apply iso_to. Qed.
 (* end hide *)
 
 Program Instance iso_compose `{C : Category} {X Y Z : C}
-    (iso_a : Y ≅ Z) (iso_b : X ≅ Y) : X ≅ Z := {
+    (iso_a : Y {≅} Z) (iso_b : X {≅} Y) : X {≅} Z := {
     to   := (@to C Y Z iso_a) ∘ (@to C X Y iso_b);
     from := (@from C X Y iso_b) ∘ (@from C Y Z iso_a)
 }.
@@ -461,10 +463,10 @@ an isomorphism with its respective witness.
 
 *)
 
-Program Instance Monic_Retraction_Iso
-    `{C : Category} `(f : X ~{C}~> Y) (r : Retraction f) (m : Monic f) : X ≅ Y := {
-    to   := f;
-    from := projT1 r
+Program Instance Monic_Retraction_Iso `{C : Category}
+  `(f : X ~{C}~> Y) (r : Retraction f) (m : Monic f) : X {≅} Y := {
+  to   := f;
+  from := projT1 r
 }.
 (* begin hide *)
 Obligation 1.
@@ -488,7 +490,7 @@ Qed.
 (* end hide *)
 
 Program Instance Epic_Section_Iso
-    `{C : Category} {X Y} `(s : Section' f) `(e : Epic f) : X ≅ Y := {
+    `{C : Category} {X Y} `(s : Section' f) `(e : Epic f) : X {≅} Y := {
     to   := f;
     from := projT1 s
 }.

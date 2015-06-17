@@ -8,10 +8,14 @@ Class Functor (f : Type -> Type) := {
 
 Arguments fmap {f _ a b} _ x.
 
-Notation "f <$> x" :=
-  (fmap f x) (at level 28, left associativity, only parsing).
+Infix "<$>" := fmap (at level 28, left associativity, only parsing).
 Notation "x <&> f" :=
   (fmap f x) (at level 28, left associativity, only parsing).
+
+Notation "fmap[ M ]  f" := (@fmap M _ _ _ f) (at level 28).
+Notation "fmap[ M N ]  f" := (@fmap (fun X => M (N X)) _ _ _ f) (at level 26).
+Notation "fmap[ M N O ]  f" :=
+  (@fmap (fun X => M (N (O X))) _ _ _ f) (at level 24).
 
 Program Instance Functor_Compose `{Functor F} `{Functor G} : Functor (F \o G) :=
 { fmap := fun A B => @fmap F _ (G A) (G B) \o @fmap G _ A B

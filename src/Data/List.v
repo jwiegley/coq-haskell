@@ -1,4 +1,4 @@
-Require Export Hask.Prelude.
+Require Export Hask.Ssr.
 Require Import Hask.Ltac.
 Require Export Hask.Data.Functor.
 
@@ -454,10 +454,10 @@ Example ex_foldr_with_index_1 :
 Proof. reflexivity. Qed.
 
 Definition catMaybes {a} (l : seq (option a)) : seq a :=
-  forFoldr [::] l $ fun mx rest =>
+  (fun f => foldr f [::] l) (fun mx rest =>
     if mx is Some x
     then x :: rest
-    else rest.
+    else rest).
 
 Fixpoint mapAccumL {A X Y : Type} (f : A -> X -> (A * Y))
   (s : A) (v : seq X) : A * seq Y :=
@@ -474,14 +474,14 @@ Example ex_mapAccumL_1 :
 Proof. reflexivity. Qed.
 
 Definition getBy {a} (p : a -> bool) (xs : seq a) : option a :=
-  forFold None xs $ fun acc x =>
+  (fun f => foldl f None xs) (fun acc x =>
     match acc with
     | Some y => Some y
     | None =>
       if p x
       then Some x
       else None
-    end.
+    end).
 
 Definition sumlist : seq nat -> nat := foldl addn 0.
 

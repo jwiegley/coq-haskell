@@ -1,5 +1,5 @@
-Require Export Monad.
-Require Export Trans.
+Require Export Hask.Control.Monad.
+Require Export Hask.Control.Monad.Trans.Class.
 
 (* These classes are laws are documented by Gabriel Gonzalez at:
 
@@ -15,7 +15,7 @@ Class MFunctor (T : (Type -> Type) -> Type -> Type) :=
 ; hoist_law_2 : forall {M N O : Type -> Type}
     `{Monad M} `{Monad (T M)} `{Monad N} `{Monad (T N)} {A : Type}
     (f : forall X, N X -> O X) (g : forall X, M X -> N X),
-    hoist (fun X => f X ∘ g X) = hoist f ∘ (@hoist M N _ _ A g)
+    hoist (fun X => f X \o g X) = hoist f \o (@hoist M N _ _ A g)
 }.
 
 Notation "hoist/ M N" := (@hoist M N _ _ _) (at level 28).
@@ -41,8 +41,8 @@ Class MMonad (T : (Type -> Type) -> Type -> Type)
     `{Monad N} `{Monad (T N)}
     `{Monad O} `{Monad (T O)} {A : Type}
     (f : forall X, N X -> T O X) (g : forall X, M X -> T N X) (t : T M A),
-    (@embed N O _ _ A f) ∘ (@embed M N _ _ A g) =
-    (@embed M O _ _ A (fun B => (@embed N O _ _ B f) ∘ g B))
+    (@embed N O _ _ A f) \o (@embed M N _ _ A g) =
+    (@embed M O _ _ A (fun B => (@embed N O _ _ B f) \o g B))
 }.
 
 Notation "embed/ M N" := (@embed M N _ _ _) (at level 28).
