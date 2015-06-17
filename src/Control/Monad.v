@@ -36,6 +36,9 @@ Notation "X <-- A ;; B" := (A >>= (fun X => B))
 Notation "A ;; B" := (_ <-- A ;; B) (at level 92, right associativity,
                                      only parsing).
 
+Definition when `{Monad m} `(b : bool) (x : m unit) : m unit :=
+  if b then x else return_ tt.
+
 Fixpoint mapM `{Applicative m} {A B} (f : A -> m B) (l : seq A) :
   m (seq B) :=
   match l with
@@ -82,6 +85,10 @@ Definition forFoldrM `{Monad m} {A : Type} {B : Type}
 Definition concatMapM `{Applicative m} {A B}
   (f : A -> m (seq B)) (l : seq A) : m (seq B) :=
   fmap (concat) (mapM f l).
+
+Fixpoint replicateM_ `{Monad m} (n : nat) (x : m unit) : m unit :=
+  if n isn't S n' then pure tt else
+  x >> replicateM_ n' x.
 
 Fixpoint insertM `{Monad m} {a} (P : a -> a -> m bool)
   (z : a) (l : list a) : m (list a) :=
