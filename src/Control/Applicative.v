@@ -25,9 +25,9 @@ Notation "ap[ M N O ]  f" := (@ap (fun X => M (N (O X))) _ _ _ f) (at level 24).
 
 Infix "<*>" := ap (at level 28, left associativity).
 
-Notation "[| f x y .. z |]" := (.. (f <$> x <*> y) .. <*> z)
-    (at level 9, left associativity, f at level 9,
-     x at level 9, y at level 9, z at level 9).
+(* Notation "[| f x y .. z |]" := (.. (f <$> x <*> y) .. <*> z) *)
+(*     (at level 9, left associativity, f at level 9, *)
+(*      x at level 9, y at level 9, z at level 9). *)
 
 Definition liftA2 `{Applicative m} {A B C : Type}
   (f : A -> B -> C) (x : m A) (y : m B) : m C := ap (fmap f x) y.
