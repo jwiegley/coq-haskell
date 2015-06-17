@@ -174,11 +174,10 @@ Proof.
 Defined.
 *)
 
-(* jww (2015-06-17): NYI
-Instance EitherT_MonadTrans {E} {M : Type -> Type} `{Monad M}
-  : MonadTrans (EitherT E) :=
-{ lift := fun A => fmap pure
+Instance EitherT_MonadTrans {E} : MonadTrans (EitherT E) :=
+{ lift := fun m _ _ A x => fmap Right x
 }.
+(* jww (2015-06-17): NYI
 Proof.
   - (* trans_law_1 *) intros. extensionality x.
     repeat (rewrite <- comp_assoc).
