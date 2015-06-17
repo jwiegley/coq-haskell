@@ -1,19 +1,20 @@
-Require Export Either.
-Require Export MCompose.
-Require Export Trans.
-Require Export MMorph.
+Require Export Hask.Prelude.
+Require Export Hask.Control.Monad.
+Require Export Hask.Control.Monad.Trans.Class.
+Require Export Hask.Control.Monad.MMorph.
 
-Inductive EitherT (X : Type) (M : Type -> Type) (Y : Type) : Type :=
-  EitherT_ : M (Either X Y) -> EitherT X M Y.
+Definition EitherT (X : Type) (M : Type -> Type) (Y : Type) : Type :=
+  M (Either X Y).
 
 Definition EitherT_map {E M} `{Functor M} {X Y}
   (f : X -> Y) (x : EitherT E M X) : EitherT E M Y :=
-  match x with EitherT_ m => EitherT_ E M Y (fmap (fmap f) m) end.
+  (fmap[M] (fmap[Either E] f)) x.
 
-Global Instance EitherT_Functor {E M} `{Functor M}
+Instance EitherT_Functor {E M} `{Functor M}
   : Functor (EitherT E M) :=
 { fmap := fun _ _ => EitherT_map
 }.
+(* jww (2015-06-17): NYI
 Proof.
   - (* fun_identity *)
     intros.
@@ -33,26 +34,22 @@ Proof.
     unfold compose.
     reflexivity.
 Defined.
+*)
 
 Definition EitherT_pure {E M} `{Applicative M} {X}
-  : X -> EitherT E M X := EitherT_ E M X ∘ pure ∘ pure.
+  : X -> EitherT E M X := pure/M \o pure/(Either E).
 
 Definition EitherT_apply {E M} `{Applicative M} {X Y}
-  (f : EitherT E M (X -> Y)) (x : EitherT E M X) : EitherT E M Y :=
-  match f with
-    EitherT_ mf => match x with
-      EitherT_ mx => EitherT_ E M Y (ap (fmap ap mf) mx)
-    end
-  end.
+  (mf : EitherT E M (X -> Y)) (mx : EitherT E M X) : EitherT E M Y :=
+  (ap[M] ((fmap[M] ap) mf)) mx.
 
-Global Instance EitherT_Applicative {E M} `{Applicative M}
+Instance EitherT_Applicative {E M} `{Applicative M}
   : Applicative (EitherT E M) :=
 { is_functor := EitherT_Functor
 ; pure   := fun _ => EitherT_pure
 ; ap := fun _ _ => EitherT_apply
 }.
-Admitted.
-(*
+(* jww (2015-06-17): NYI
 Proof.
   - (* app_identity *) intros. extensionality x.
     unfold EitherT_apply, EitherT_pure.
@@ -96,21 +93,18 @@ Defined.
 
 Definition EitherT_join {E M} `{Monad M} {X}
   (x : EitherT E M (EitherT E M X)) : EitherT E M X :=
-  match x with EitherT_ m =>
-    EitherT_ E M X (join (fmap
-      (fun y => match y with
-       | Left e => pure (Left E X e)
-       | Right (EitherT_ mx') => mx'
-      end) m))
-  end.
+  join (fmap
+    (fun y => match y with
+     | Left e => pure (Left e)
+     | Right mx' => mx'
+    end) x).
 
-Global Instance EitherT_Monad {E M} `{Monad M}
+Instance EitherT_Monad {E M} `{Monad M}
   : Monad (EitherT E M) :=
 { is_applicative := EitherT_Applicative
 ; join := fun _ => EitherT_join
 }.
-Admitted.
-(*
+(* jww (2015-06-17): NYI
 Proof.
   - (* monad_law_1 *) intros. extensionality x. simpl.
     unfold compose, EitherT_join.
@@ -180,12 +174,11 @@ Proof.
 Defined.
 *)
 
-Global Instance EitherT_MonadTrans {E} {M : Type -> Type} `{Monad M}
+(* jww (2015-06-17): NYI
+Instance EitherT_MonadTrans {E} {M : Type -> Type} `{Monad M}
   : MonadTrans (EitherT E) :=
-{ lift := fun A => EitherT_ E M A ∘ fmap pure
+{ lift := fun A => fmap pure
 }.
-Admitted.
-(*
 Proof.
   - (* trans_law_1 *) intros. extensionality x.
     repeat (rewrite <- comp_assoc).
@@ -201,12 +194,9 @@ Proof.
 Defined.
 *)
 
-Global Instance EitherT_MFunctor {E}
-  : MFunctor (EitherT E) :=
-{ hoist := fun M N _ _ A nat m =>
-    match m with
-      EitherT_ m' => EitherT_ E N A (nat (Either E A) m')
-    end
+(* jww (2015-06-17):  NYI
+Instance EitherT_MFunctor {E} : MFunctor (EitherT E) :=
+{ hoist := fun M N _ _ A nat m => nat (Either E A) m
 }.
 Proof.
   - (* hoist_law_1 *) intros. extensionality x.
@@ -217,9 +207,10 @@ Proof.
     unfold compose.
     reflexivity.
 Defined.
+*)
 
 (*
-Global Instance EitherT_MMonad {E}
+Instance EitherT_MMonad {E}
   `{Monad (Either E)}
   : MMonad (EitherT E) EitherT_MFunctor EitherT_MonadTrans :=
 { embed := fun M N nd tnd A f m =>

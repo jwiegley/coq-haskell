@@ -95,7 +95,9 @@ Extract Inlined Constant ssr_have => "(Prelude.flip (Prelude.$))".
 Extract Inductive Datatypes.nat => "Prelude.Int" ["0" "(Prelude.succ)"]
   "(\fO fS n -> if n Prelude.<= 0 then fO () else fS (n Prelude.- 1))".
 
-Extract Inductive String.string => "Prelude.String" ["[]" "(:)"].
+Require Import Coq.Strings.String.
+
+Extract Inductive string => "Prelude.String" ["[]" "(:)"].
 
 Extract Inductive comparison =>
   "Prelude.Ordering" ["Prelude.LT" "Prelude.EQ" "Prelude.GT"].

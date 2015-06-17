@@ -1,22 +1,26 @@
 Require Export Iso.
 
-Close Scope nat_scope.
+Generalizable All Variables.
 
-Program Instance LTuple_Isomorphism {A} : (unit * A) ≅ A :=
-{ to   := @snd unit A
-; from := pair tt
+Instance LTuple_Isomorphism {A} : (unit * A) ≅ A :=
+{ iso_to   := @snd unit A
+; iso_from := pair tt
 }.
+(* jww (2015-06-17): NYI
 Obligation 1. (* iso_to *)
   intros. extensionality x. destruct x. compute. destruct u. reflexivity.
 Defined.
+*)
 
-Program Instance RTuple_Isomorphism {A} : (A * unit) ≅ A :=
-{ to   := @fst A unit
-; from := fun x => (x, tt)
+Instance RTuple_Isomorphism {A} : (A * unit) ≅ A :=
+{ iso_to   := @fst A unit
+; iso_from := fun x => (x, tt)
 }.
+(* jww (2015-06-17): NYI
 Obligation 1. (* iso_to *)
   intros. extensionality x. destruct x. compute. destruct u. reflexivity.
 Defined.
+*)
 
 Definition tuple_swap_a_bc_to_ab_c {A B C} (x : A * (B * C)) : A * B * C :=
   match x with (a, (b, c)) => ((a, b), c) end.
@@ -30,10 +34,11 @@ Definition left_triple {A B C} (x : A) (y : B) (z : C) : A * B * C :=
 Definition right_triple {A B C} (x : A) (y : B) (z : C) : A * (B * C) :=
   (x, (y, z)).
 
-Program Instance Tuple_Assoc {A B C} : (A * B * C) ≅ (A * (B * C)) :=
-{ to   := tuple_swap_ab_c_to_a_bc
-; from := tuple_swap_a_bc_to_ab_c
+Instance Tuple_Assoc {A B C} : (A * B * C) ≅ (A * (B * C)) :=
+{ iso_to   := tuple_swap_ab_c_to_a_bc
+; iso_from := tuple_swap_a_bc_to_ab_c
 }.
+(* jww (2015-06-17): NYI
 Obligation 1. (* iso_to *)
   intros.
   extensionality x.
@@ -54,6 +59,16 @@ Obligation 2. (* iso_from *)
   unfold tuple_swap_a_bc_to_ab_c, tuple_swap_ab_c_to_a_bc.
   reflexivity.
 Defined.
+*)
+
+Definition first `(f : a -> b) `(x : a * z) : b * z :=
+  match x with (a, z) => (f a, z) end.
+
+Definition second `(f : a -> b) `(x : z * a) : z * b :=
+  match x with (z, b) => (z, f b) end.
+
+Definition curry `(f : a -> b -> c) (x : (a * b)) : c :=
+  match x with (a, b) => f a b end.
 
 Definition uncurry {X Y Z} (f : X -> Y -> Z) (xy : X * Y) : Z :=
   match xy with (x, y) => f x y end.

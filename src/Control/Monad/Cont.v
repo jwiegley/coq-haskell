@@ -1,40 +1,34 @@
-Require Export Monad.
+Require Import Hask.Prelude.
+Require Import Hask.Control.Monad.
 
-Inductive Cont (R A : Type) : Type :=
-  Cont_ : ((A -> R) -> R) -> Cont R A.
+Definition Cont (R A : Type) : Type := (A -> R) -> R.
 
-Definition runCont {R A} (x : Cont R A) : (A -> R) -> R :=
-  match x with Cont_ k => k end.
+Definition Cont_map {R X Y} (f : X -> Y) (k : Cont R X) : Cont R Y :=
+  k \o (flip compose f).
 
-Definition Cont_map {R X Y} (f : X -> Y) (x : Cont R X) : Cont R Y :=
-  match x with
-    Cont_ k => Cont_ R Y (k ∘ (flip compose f))
-  end.
-
-Global Instance Cont_Functor {R} : Functor (Cont R) :=
+Instance Cont_Functor {R} : Functor (Cont R) :=
 { fmap := @Cont_map R
 }.
+(* jww (2015-06-17): NYI
 Proof.
   - (* fun_identity *)
     intros. extensionality x. compute. destruct x; reflexivity.
   - (* fun_composition *)
     intros. extensionality x. compute. destruct x; reflexivity.
 Defined.
+*)
 
-Definition Cont_apply {R X Y} (f : Cont R (X -> Y)) (x : Cont R X)
+Definition Cont_apply {R X Y} (kf : Cont R (X -> Y)) (kx : Cont R X)
   : Cont R Y :=
-  match f with
-    Cont_ kf => Cont_ R Y (fun h => kf (fun f' =>
-      match x with
-        Cont_ kx => kx (fun x' => h (f' x'))
-      end))
-  end.
+  fun h => kf (fun f' =>
+    kx (fun x' => h (f' x'))).
 
-Global Instance Cont_Applicative {R} : Applicative (Cont R) :=
+Instance Cont_Applicative {R} : Applicative (Cont R) :=
 { is_functor := Cont_Functor
-; pure := fun A x => Cont_ R A (fun k => k x)
+; pure := fun A x => fun k => k x
 ; ap := @Cont_apply R
 }.
+(* jww (2015-06-17): NYI
 Proof.
   - (* app_identity *)
     intros. extensionality x. compute. destruct x; reflexivity.
@@ -49,19 +43,16 @@ Proof.
   - (* app_fmap_unit *)
     intros. extensionality x. compute. destruct x; reflexivity.
 Defined.
+*)
 
-Definition Cont_join {R X} (x : Cont R (Cont R X)) : Cont R X :=
-  match x with
-    Cont_ k => Cont_ R X (fun h => k (fun m =>
-      match m with
-        Cont_ km => km (fun x' => h x')
-      end))
-  end.
+Definition Cont_join {R X} (k : Cont R (Cont R X)) : Cont R X :=
+  fun h => k (fun km => km (fun x' => h x')).
 
-Global Instance Cont_Monad {R} : Monad (Cont R) :=
+Instance Cont_Monad {R} : Monad (Cont R) :=
 { is_applicative := Cont_Applicative
 ; join := @Cont_join R
 }.
+(* jww (2015-06-17): NYI
 Proof.
   - (* monad_law_1 *)
     intros. extensionality x. compute.
@@ -84,3 +75,4 @@ Proof.
     destruct q.
     f_equal.
 Defined.
+*)

@@ -286,4 +286,3 @@ Compute @push_eventually unit unit unit unit id unit
 (*   a -> Proxy a' a a' a m r := *)
 (*   if n isn't S n' then (fun _ => Pure default) else *)
 (*   (Respond ^~ (Request ^~ @push _ _ _ _ _ n' default)). *)
-

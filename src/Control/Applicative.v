@@ -1,4 +1,4 @@
-Require Import Hask.Prelude.
+Require Import Hask.Ssr.
 Require Export Hask.Data.Functor.
 
 Generalizable All Variables.
@@ -16,7 +16,18 @@ Class Applicative (f : Type -> Type) := {
 Arguments pure {f _ _} _.
 Arguments ap   {f _ _ _} _ x.
 
-Notation "f <*> g" := (ap f g) (at level 28, left associativity).
+Notation "pure/ M" := (@pure M _ _) (at level 28).
+Notation "pure/ M N" := (@pure (fun X => M (N X)) _ _) (at level 26).
+
+Notation "ap[ M ]  f" := (@ap M _ _ _ f) (at level 28).
+Notation "ap[ M N ]  f" := (@ap (fun X => M (N X)) _ _ _ f) (at level 26).
+Notation "ap[ M N O ]  f" := (@ap (fun X => M (N (O X))) _ _ _ f) (at level 24).
+
+Infix "<*>" := ap (at level 28, left associativity).
+
+Notation "[| f x y .. z |]" := (.. (f <$> x <*> y) .. <*> z)
+    (at level 9, left associativity, f at level 9,
+     x at level 9, y at level 9, z at level 9).
 
 Definition liftA2 `{Applicative m} {A B C : Type}
   (f : A -> B -> C) (x : m A) (y : m B) : m C := ap (fmap f x) y.
@@ -39,7 +50,7 @@ Class ApplicativeLaws (f : Type -> Type) `{Applicative f} := {
 
   ap_id : forall a : Type, ap (pure (@id a)) =1 id;
   ap_comp : forall (a b c : Type) (v : f (a -> b)) (u : f (b -> c)) (w : f a),
-    pure compose <*> u <*> v <*> w = u <*> (v <*> w);
+    pure (fun f g x => f (g x)) <*> u <*> v <*> w = u <*> (v <*> w);
   ap_homo : forall (a b : Type) (x : a) (f : a -> b),
     pure f <*> pure x = pure (f x);
   ap_interchange : forall (a b : Type) (y : a) (u : f (a -> b)),
@@ -96,7 +107,6 @@ Obligation 2. (* ap_composition *)
   f_equal.
   (* Discharge compose *)
   extensionality u'.
-  rewrite [_ ap _]/compose [compose _ ap]/compose.
   extensionality v'.
   rewrite -ap_fmap_ext.
   extensionality w'.
