@@ -118,8 +118,12 @@ End YonedaLaws.
 
 (**************************************************************************)
 
+(* The contravariant Yoneda lemma, made applicable to covariant functors by
+   changing it from a universally quantified function to an existentially
+   quantified construction of two arguments. *)
+
 Inductive Coyoneda (f : Type -> Type) (a : Type) :=
-  COYO : forall x : Type, (x -> a) -> f x -> Coyoneda f a.
+  COYO : forall x, (x -> a) -> f x -> Coyoneda f a.
 
 Arguments COYO {f a x} _ _.
 
