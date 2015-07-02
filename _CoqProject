@@ -19,6 +19,7 @@ src/Crush.v
 src/Data/Either.v
 src/Data/Functor.v
 src/Data/Functor/Container.v
+src/Data/Functor/Contravariant.v
 src/Data/Functor/Identity.v
 src/Data/Functor/Yoneda.v
 src/Data/IntMap.v
