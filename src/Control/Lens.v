@@ -7,12 +7,6 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 Generalizable All Variables.
 
-Definition Const (c a : Type) := c.
-
-Program Instance Const_Functor (c : Type) : Functor (Const c) := {
-  fmap := fun _ _ _ => id
-}.
-
 Definition Lens s t a b := forall `{Functor f}, (a -> f b) -> s -> f t.
 Definition Lens' s a := Lens s s a a.
 

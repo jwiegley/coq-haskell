@@ -1,5 +1,6 @@
 Require Import Hask.Ssr.
 Require Export Hask.Data.Functor.
+Require Export Hask.Data.Functor.Const.
 
 Generalizable All Variables.
 
