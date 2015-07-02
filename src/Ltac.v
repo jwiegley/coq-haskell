@@ -19,6 +19,14 @@ Proof.
   exact: (leq_trans H1).
 Qed.
 
+Ltac recomp :=
+  repeat match goal with
+    | [ |- ?F (?G ?X) = _ ] =>
+        replace (F (G X)) with ((F \o G) X); last by rewrite /funcomp
+    | [ |- _ = ?F (?G ?X) ] =>
+        replace (F (G X)) with ((F \o G) X); last by rewrite /funcomp
+    end.
+
 Ltac breakup :=
   repeat match goal with
     | [ H: is_true (_ && _) |- _ ] => move/andP: H => [? ?]

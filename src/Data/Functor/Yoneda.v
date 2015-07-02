@@ -1,4 +1,5 @@
 Require Import Hask.Prelude.
+Require Import Hask.Ltac.
 Require Import Hask.Control.Monad.
 Require Import Hask.Control.Iso.
 

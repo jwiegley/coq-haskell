@@ -1,4 +1,5 @@
 Require Import Hask.Ssr.
+Require Import Hask.Ltac.
 
 Generalizable All Variables.
 
@@ -54,14 +55,6 @@ Proof.
   extensionality x.
   exact: fmap_comp.
 Qed.
-
-Ltac recomp :=
-  repeat match goal with
-    | [ |- ?F (?G ?X) = _ ] =>
-        replace (F (G X)) with ((F \o G) X); last by rewrite /funcomp
-    | [ |- _ = ?F (?G ?X) ] =>
-        replace (F (G X)) with ((F \o G) X); last by rewrite /funcomp
-    end.
 
 Corollary fmap_compose  `{Functor F} `{Functor G} : forall {X Y} (f : X -> Y),
   @fmap F _ (G X) (G Y) (@fmap G _ X Y f) = @fmap (F \o G) _ X Y f.
