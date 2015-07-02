@@ -10,8 +10,7 @@ Definition EitherT_map {E M} `{Functor M} {X Y}
   (f : X -> Y) (x : EitherT E M X) : EitherT E M Y :=
   (fmap[M] (fmap[Either E] f)) x.
 
-Instance EitherT_Functor {E M} `{Functor M}
-  : Functor (EitherT E M) :=
+Instance EitherT_Functor {E M} `{Functor M} : Functor (EitherT E M) :=
 { fmap := fun _ _ => EitherT_map
 }.
 (* jww (2015-06-17): NYI
@@ -99,8 +98,7 @@ Definition EitherT_join {E M} `{Monad M} {X}
      | Right mx' => mx'
     end) x).
 
-Instance EitherT_Monad {E M} `{Monad M}
-  : Monad (EitherT E M) :=
+Instance EitherT_Monad {E M} `{Monad M} : Monad (EitherT E M) :=
 { is_applicative := EitherT_Applicative
 ; join := fun _ => EitherT_join
 }.
@@ -175,7 +173,7 @@ Defined.
 *)
 
 Instance EitherT_MonadTrans {E} : MonadTrans (EitherT E) :=
-{ lift := fun m _ _ A x => fmap Right x
+{ lift := fun m _ _ A => fmap Right
 }.
 (* jww (2015-06-17): NYI
 Proof.
@@ -193,10 +191,10 @@ Proof.
 Defined.
 *)
 
-(* jww (2015-06-17):  NYI
-Instance EitherT_MFunctor {E} : MFunctor (EitherT E) :=
-{ hoist := fun M N _ _ A nat m => nat (Either E A) m
+Program Instance EitherT_MFunctor {E} : MFunctor (EitherT E) :=
+{ hoist := fun M N _ _ A nat => nat (Either E A)
 }.
+(* jww (2015-06-17):  NYI
 Proof.
   - (* hoist_law_1 *) intros. extensionality x.
     destruct x. subst.
