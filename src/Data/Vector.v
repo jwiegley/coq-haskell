@@ -1,11 +1,13 @@
 Require Import Hask.Prelude.
 
+Generalizable All Variables.
+
 Section Vector.
 
-Variable A : Set.
+Variable A : Type.
 
-Definition Vec : nat -> Set :=
-  fix vec n := match n return Set with
+Definition Vec : nat -> Type :=
+  fix vec n := match n return Type with
                | O   => unit
                | S n => prod A (vec n)
                end.
@@ -209,14 +211,58 @@ Proof.
   exact: eq_irrelevance.
 Qed.
 
+Definition vec_to_seq `(v : Vec n) : seq A.
+Proof.
+  case: n => [|n] in v *.
+    exact: [::].
+  elim/vecn_rect: v => [x|sz x ? IHxs].
+    exact: [:: x].
+  exact: (x :: IHxs).
+Defined.
+
+Lemma vec_seq_cons (x : A) `(xs : Vec n) :
+  vec_to_seq (vcons x xs) = x :: vec_to_seq xs.
+Proof.
+  case: n => [|n] in xs *.
+    by case: xs.
+  by elim/vecn_rect: xs.
+Qed.
+
+Lemma vec_to_seq_size `(v : Vec n) : size (vec_to_seq v) == n.
+Proof.
+  case: n => // [n] in v *.
+  by elim/vecn_rect: v.
+Defined.
+
+Definition seq_to_vec (l : seq A) : Vec (size l).
+Proof. by elim: l. Defined.
+
+Theorem vec_seq (xs : seq A) : vec_to_seq (seq_to_vec xs) = xs.
+Proof.
+  elim: xs => // [x xs IHxs].
+  by rewrite [seq_to_vec _]/= vec_seq_cons IHxs.
+Qed.
+
+(* Import EqNotations. *)
+(* Require Import ProofIrrelevance. *)
+
+(* Theorem seq_vec `(v : Vec n) : *)
+(*   rew (eqP (vec_to_seq_size _)) in seq_to_vec (vec_to_seq v) = v. *)
+(* Proof. *)
+(*   case: n => [|n] in v *. *)
+(*     case: v. *)
+(*     by rewrite -eq_rect_eq. *)
+(*   elim/vecn_rect: v => [x|sz x xs IHxs]. *)
+(*     by rewrite -eq_rect_eq. *)
+
 End Vector.
 
-Definition vmap {A B : Set} {n} (f : A -> B) (v : Vec A n) : Vec B n.
+Definition vmap {A B : Type} {n} (f : A -> B) (v : Vec A n) : Vec B n.
 Proof.
   elim: n => // [n IHn] in v *.
-  elim/vecn_rect: v => [x|sz x xs IHxs] in IHn *.
+  elim/vecn_rect: v => [x|sz x ? IHxs].
     exact: (vsing _ (f x)).
-  exact: (vcons _ (f x) (IHxs IHn)).
+  exact: (vcons _ (f x) IHxs).
 Defined.
 
 Module VectorSpec.
@@ -231,6 +277,8 @@ Arguments vnth [A n] !v !p.
 Arguments vapp [A n m] !v !u.
 Arguments vshiftin [A n] !v !i.
 Arguments vmap [A B n] f !v.
+Arguments vec_to_seq [A n] !v.
+Arguments seq_to_vec [A] !l.
 
 Example flwi_check :
   map (fun x => (@nat_of_ord 5 (fst x), (snd x)))
