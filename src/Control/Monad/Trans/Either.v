@@ -1,7 +1,7 @@
 Require Export Hask.Prelude.
 Require Export Hask.Control.Monad.
 Require Export Hask.Control.Monad.Trans.Class.
-Require Export Hask.Control.Monad.MMorph.
+Require Export Hask.Control.Monad.Morph.
 
 Definition EitherT (X : Type) (M : Type -> Type) (Y : Type) : Type :=
   M (Either X Y).
