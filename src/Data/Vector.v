@@ -265,6 +265,15 @@ Proof.
   exact: (vcons _ (f x) IHxs).
 Defined.
 
+Definition vmap_with_index {A B : Type} {n} (f : 'I_n -> A -> B) (v : Vec A n) :
+  Vec B n.
+Proof.
+  elim: n => // [n IHn] in v f *.
+  elim/vecn_rect: v => [x|sz x ? IHxs].
+    exact: (vsing _ (f (inord n) x)).
+  exact: (vcons _ (f (inord (n - sz.+1)) x) IHxs).
+Defined.
+
 Module VectorSpec.
 
 Arguments vsing [A] _ /.
@@ -277,6 +286,7 @@ Arguments vnth [A n] !v !p.
 Arguments vapp [A n m] !v !u.
 Arguments vshiftin [A n] !v !i.
 Arguments vmap [A B n] f !v.
+Arguments vmap_with_index [A B n] f !v.
 Arguments vec_to_seq [A n] !v.
 Arguments seq_to_vec [A] !l.
 
