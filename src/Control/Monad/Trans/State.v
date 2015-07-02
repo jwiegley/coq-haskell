@@ -2,6 +2,7 @@ Require Import Hask.Prelude.
 Require Import Hask.Ltac.
 Require Import Hask.Control.Monad.
 Require Import Hask.Control.Monad.State.
+Require Import Hask.Control.Monad.Trans.Class.
 
 Generalizable All Variables.
 Set Implicit Arguments.
@@ -49,8 +50,9 @@ Program Instance StateT_Monad `{Monad m} {s : Type} : Monad (StateT s m) := {
   join := @StateT_join m _ s
 }.
 
-Definition lift `{Monad m} {s} `(x : m a) : StateT s m a :=
-  fun st => (fun z => (z, st)) <$> x.
+Instance StateT_MonadTrans {s} : MonadTrans (StateT s) :=
+{ lift := fun m _ _ A x s => fmap (fun k => (k, s)) x
+}.
 
 Definition liftStateT `{Monad m} `(x : State s a) : StateT s m a :=
   st <-- getT ;;
