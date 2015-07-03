@@ -110,7 +110,7 @@ Extract Inlined Constant Arith.Plus.tail_plus => "(Prelude.+)".
 (*   ["Data.IntMap.fromList"] "(\fS m -> fS m)". *)
 
 Extract Inlined Constant IntMap_mergeWithKey' =>
-  "LinearScan.Utils.intMap_mergeWithKey'".
+  "Hask.Utils.intMap_mergeWithKey'".
 
 (* Extract Inlined Constant IntMap_lookup       => "Data.IntMap.lookup". *)
 (* Extract Inlined Constant IntMap_insert       => "Data.IntMap.insert". *)
@@ -140,7 +140,7 @@ Extract Inlined Constant sumlist => "Data.List.sum".
 (* Extract Inlined Constant lebf    => "Data.Ord.comparing". *)
 (* Extract Inlined Constant insert  => "Data.List.insertBy". *)
 
-Extract Inlined Constant List.destruct_list => "LinearScan.Utils.uncons".
+Extract Inlined Constant List.destruct_list => "Hask.Utils.uncons".
 Extract Inlined Constant list_membership    => "Prelude.const".
 
 (* Data.NonEmpty *)
@@ -163,16 +163,18 @@ Extraction Inline Vec.
 Extract Inlined Constant vnil     => "[]".
 Extract Inlined Constant vsing    => "[]".
 Extract Inlined Constant vcons    => "(:)".
-Extract Inlined Constant vshiftin => "LinearScan.Utils.snoc".
-Extract Inlined Constant vreplace => "LinearScan.Utils.set_nth".
-Extract Inlined Constant vec_rect => "LinearScan.Utils.list_rect".
+Extract Inlined Constant vshiftin => "Hask.Utils.snoc".
+Extract Inlined Constant vreplace => "Hask.Utils.set_nth".
+Extract Inlined Constant vec_rect => "Hask.Utils.list_rect".
 Extract Inlined Constant vconst   => "Data.List.replicate".
-Extract Inlined Constant vfoldl   => "LinearScan.Utils.vfoldl'".
+Extract Inlined Constant vfoldl   => "Hask.Utils.vfoldl'".
 Extract Inlined Constant vapp     => "Prelude.(++)".
-Extract Inlined Constant vmap     => "LinearScan.Utils.vmap".
-Extract Inlined Constant vnth     => "LinearScan.Utils.nth".
+Extract Inlined Constant vmap     => "Hask.Utils.vmap".
+Extract Inlined Constant vnth     => "Hask.Utils.nth".
 
 Extract Inlined Constant vfoldl_with_index
-  => "(LinearScan.Utils.vfoldl'_with_index)".
+  => "(Hask.Utils.vfoldl'_with_index)".
+Extract Inlined Constant vmap_with_index
+  => "(Hask.Utils.vmap_with_index)".
 
 Extraction Blacklist String List Vector Prelude.
