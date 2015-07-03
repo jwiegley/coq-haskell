@@ -40,7 +40,7 @@ Definition EitherT_pure {E M} `{Applicative M} {X}
 
 Definition EitherT_apply {E M} `{Applicative M} {X Y}
   (mf : EitherT E M (X -> Y)) (mx : EitherT E M X) : EitherT E M Y :=
-  (ap[M] ((fmap[M] ap) mf)) mx.
+  liftA2 (@ap _ Either_Applicative X Y) mf mx.
 
 Instance EitherT_Applicative {E M} `{Applicative M}
   : Applicative (EitherT E M) :=
