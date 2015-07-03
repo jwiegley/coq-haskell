@@ -106,4 +106,6 @@ Separate Extraction
   vnth_vshiftin
   vreplace
   vshiftin
-  vsing.
+  vsing
+  vec_to_seq
+  seq_to_vec.

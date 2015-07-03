@@ -160,17 +160,19 @@ Extract Inlined Constant NE_foldl   => "Data.List.foldl'".
 Extract Constant Vec "a" => "[]".
 Extraction Inline Vec.
 
-Extract Inlined Constant vnil     => "[]".
-Extract Inlined Constant vsing    => "[]".
-Extract Inlined Constant vcons    => "(:)".
-Extract Inlined Constant vshiftin => "Hask.Utils.snoc".
-Extract Inlined Constant vreplace => "Hask.Utils.set_nth".
-Extract Inlined Constant vec_rect => "Hask.Utils.list_rect".
-Extract Inlined Constant vconst   => "Data.List.replicate".
-Extract Inlined Constant vfoldl   => "Hask.Utils.vfoldl'".
-Extract Inlined Constant vapp     => "Prelude.(++)".
-Extract Inlined Constant vmap     => "Hask.Utils.vmap".
-Extract Inlined Constant vnth     => "Hask.Utils.nth".
+Extract Inlined Constant vnil       => "[]".
+Extract Inlined Constant vsing      => "[]".
+Extract Inlined Constant vcons      => "(:)".
+Extract Inlined Constant vshiftin   => "Hask.Utils.vshiftin".
+Extract Inlined Constant vreplace   => "Hask.Utils.vreplace".
+Extract Inlined Constant vec_rect   => "Hask.Utils.vec_rect".
+Extract Inlined Constant vconst     => "Data.List.replicate".
+Extract Inlined Constant vfoldl     => "Hask.Utils.vfoldl'".
+Extract Inlined Constant vapp       => "Prelude.(++)".
+Extract Inlined Constant vmap       => "Hask.Utils.vmap".
+Extract Inlined Constant vnth       => "Hask.Utils.vnth".
+Extract Inlined Constant vec_to_seq => "Hask.Utils.vec_id".
+Extract Inlined Constant seq_to_vec => "Hask.Utils.vec_id".
 
 Extract Inlined Constant vfoldl_with_index
   => "(Hask.Utils.vfoldl'_with_index)".
