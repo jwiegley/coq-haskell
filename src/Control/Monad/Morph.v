@@ -1,5 +1,6 @@
-Require Export Hask.Control.Monad.
-Require Export Hask.Control.Monad.Trans.Class.
+Require Import Hask.Prelude.
+Require Import Hask.Control.Monad.
+Require Import Hask.Control.Monad.Trans.Class.
 
 (* These classes are laws are documented by Gabriel Gonzalez at:
 

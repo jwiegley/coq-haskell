@@ -1,6 +1,6 @@
-Require Export Hask.Ssr.
+Require Import Hask.Ssr.
 Require Import Hask.Ltac.
-Require Export Hask.Data.Functor.
+Require Import Hask.Data.Functor.
 
 Require Import Coq.Program.Wf.
 Require Import Coq.Sorting.Sorted.

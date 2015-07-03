@@ -1,5 +1,5 @@
-Require Export Hask.Prelude.
-Require Export Hask.Control.Monad.
+Require Import Hask.Prelude.
+Require Import Hask.Control.Monad.
 
 Generalizable All Variables.
 

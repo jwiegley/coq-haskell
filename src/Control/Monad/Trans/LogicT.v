@@ -1,6 +1,6 @@
-Require Export Hask.Prelude.
-Require Export Hask.Control.Iso.
-Require Export Hask.Control.Monad.
+Require Import Hask.Prelude.
+Require Import Hask.Control.Iso.
+Require Import Hask.Control.Monad.
 
 Inductive LogicT (M : Type -> Type) `{Monad M} (A : Type) :=
   LogicT_ : forall {R : Type}, ((A -> M R -> M R) -> M R -> M R) -> LogicT M A.

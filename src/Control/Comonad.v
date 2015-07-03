@@ -1,6 +1,6 @@
 Require Import Hask.Prelude.
 Require Import Hask.Data.List.
-Require Export Hask.Control.Applicative.
+Require Import Hask.Control.Applicative.
 
 Generalizable All Variables.
 

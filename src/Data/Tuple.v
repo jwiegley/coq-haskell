@@ -1,4 +1,4 @@
-Require Export Iso.
+Require Import Hask.Control.Iso.
 
 Generalizable All Variables.
 

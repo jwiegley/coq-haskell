@@ -1,23 +1,23 @@
-Require Export Hask.Prelude.
-Require Export Hask.Data.Functor.
-Require Export Hask.Data.Functor.Container.
-Require Export Hask.Data.Functor.Contravariant.
-Require Export Hask.Data.Functor.Identity.
-Require Export Hask.Data.Functor.Yoneda.
-Require Export Hask.Control.Monad.
-Require Export Hask.Control.Applicative.
-Require Export Hask.Control.Comonad.
-Require Export Hask.Control.Monad.Free.
-Require Export Hask.Control.Monad.State.
-Require Export Hask.Control.Monad.Trans.Free.
-Require Export Hask.Control.Monad.Trans.State.
-Require Export Hask.Data.IntMap.
-Require Export Hask.Data.IntSet.
-Require Export Hask.Data.List.Church.
-Require Export Hask.Data.List.
-Require Export Hask.Data.NonEmpty.
-Require Export Hask.Data.Vector.
-Require Export Hask.Haskell.
+Require Import Hask.Prelude.
+Require Import Hask.Data.Functor.
+Require Import Hask.Data.Functor.Container.
+Require Import Hask.Data.Functor.Contravariant.
+Require Import Hask.Data.Functor.Identity.
+Require Import Hask.Data.Functor.Yoneda.
+Require Import Hask.Control.Monad.
+Require Import Hask.Control.Applicative.
+Require Import Hask.Control.Comonad.
+Require Import Hask.Control.Monad.Free.
+Require Import Hask.Control.Monad.State.
+Require Import Hask.Control.Monad.Trans.Free.
+Require Import Hask.Control.Monad.Trans.State.
+Require Import Hask.Data.IntMap.
+Require Import Hask.Data.IntSet.
+Require Import Hask.Data.List.Church.
+Require Import Hask.Data.List.
+Require Import Hask.Data.NonEmpty.
+Require Import Hask.Data.Vector.
+Require Import Hask.Haskell.
 
 Separate Extraction
   Applicative
