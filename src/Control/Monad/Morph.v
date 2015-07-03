@@ -9,14 +9,6 @@ Require Import Hask.Control.Monad.Trans.Class.
 Class MFunctor (T : (Type -> Type) -> Type -> Type) :=
 { hoist : forall {M N : Type -> Type} `{Monad M} `{Monad (T M)} {A},
     (forall {X}, M X -> N X) -> T M A -> T N A
-
-; hoist_law_1 : forall {M : Type -> Type} `{Monad M} `{Monad (T M)} {A},
-    (@hoist M M _ _ A (fun X => id)) = id
-
-; hoist_law_2 : forall {M N O : Type -> Type}
-    `{Monad M} `{Monad (T M)} `{Monad N} `{Monad (T N)} {A : Type}
-    (f : forall X, N X -> O X) (g : forall X, M X -> N X),
-    hoist (fun X => f X \o g X) = hoist f \o (@hoist M N _ _ A g)
 }.
 
 Notation "hoist/ M N" := (@hoist M N _ _ _) (at level 28).
@@ -48,3 +40,21 @@ Class MMonad (T : (Type -> Type) -> Type -> Type)
 
 Notation "embed/ M N" := (@embed M N _ _ _) (at level 28).
 *)
+
+Module MorphLaws.
+
+Include MonadLaws.
+
+Class MFunctorLaws (T : (Type -> Type) -> Type -> Type) `{MFunctor T} :=
+{ hoist_law_1 : forall {M : Type -> Type}
+    `{MonadLaws M} `{MonadLaws (T M)} {A},
+    (@hoist T _ M M _ _ A (fun X => id)) = id
+
+; hoist_law_2 : forall {M N O : Type -> Type}
+    `{MonadLaws M} `{MonadLaws (T M)}
+    `{MonadLaws N} `{MonadLaws (T N)} {A : Type}
+    (f : forall X, N X -> O X) (g : forall X, M X -> N X),
+    hoist (fun X => f X \o g X) = hoist f \o (@hoist T _ M N _ _ A g)
+}.
+
+End MorphLaws.
