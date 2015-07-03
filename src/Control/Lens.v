@@ -28,8 +28,11 @@ Notation "l %~ f" := (over l f) (at level 70).
 Definition view `(f : Getting a s a) : s -> a := f id.
 Notation "x ^_ l" := (view l x) (at level 70).
 
-Definition stepdown `(l : Lens' s a) : Getting a s a := l _ _.
-Coercion stepdown : Lens' >-> Getting.
+Definition stepdownl' `(l : Lens' s a) : Getting a s a := l _ _.
+Coercion stepdownl' : Lens' >-> Getting.
+
+Definition stepdowng `(l : Getter s a) : Getting a s a := l _ _ _.
+Coercion stepdowng : Getter >-> Getting.
 
 Notation "f \o+ g" := (fun x y => f x y \o g x y) (at level 71, only parsing).
 
@@ -38,13 +41,8 @@ Definition _1 {a b : Type} : Lens' (a * b) a :=
 Definition _2 {a b : Type} : Lens' (a * b) b :=
   fun _ _ f s => let: (x, y) := s in fmap (fun z => (x, z)) (f y).
 
-Arguments _1 {a b} [_ _] f s.
-Arguments _2 {a b} [_ _] f s.
-
 Definition _ex1 {a : Type} {P : a -> Prop} : Getter { x : a | P x } a :=
   fun _ _ _ f s => fmap (const s) (f (proj1_sig s)).
-
-Arguments _ex1 {a P _ _ _} f s.
 
 Definition use `(l : Getting a s a) `{Monad m} : StateT s m a :=
   view l <$> getT.
@@ -74,7 +72,7 @@ Proof. reflexivity. Qed.
 Example lens_ex3 : (10, 20) ^_ _2 == 20.
 Proof. reflexivity. Qed.
 
-Example lens_ex4 : (1, (2, (3, 4))) ^_ stepdown (_2 \o+ _2 \o+ _2) == 4.
+Example lens_ex4 : (1, (2, (3, 4))) ^_ stepdownl' (_2 \o+ _2 \o+ _2) == 4.
 Proof. reflexivity. Qed.
 
 Example lens_ex5 : ((10, 20) &+ _1 .~ 500) == (500, 20).
