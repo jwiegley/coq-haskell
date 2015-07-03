@@ -8,16 +8,16 @@ Generalizable All Variables.
 Definition Yoneda (f : Type -> Type) (a : Type) :=
   forall r : Type, (a -> r) -> f r.
 
-Program Instance Yoneda_lemma `{Functor f} : forall a, Yoneda f a ≅ f a := {
+Instance Yoneda_lemma `{Functor f} : forall a, Yoneda f a ≅ f a := {
   iso_to   := fun x => x _ id;
-  iso_from := fun x => fun _ k => fmap k x
+  iso_from := fun x _ k => fmap k x
 }.
 
-Program Instance Yoneda_Functor {f : Type -> Type} : Functor (Yoneda f) := {
-  fmap := fun _ _ g k => fun _ h => k _ (h \o g)
+Instance Yoneda_Functor {f : Type -> Type} : Functor (Yoneda f) := {
+  fmap := fun _ _ g k _ h => k _ (h \o g)
 }.
 
-Program Instance Yoneda_Applicative `{Applicative f} :
+Instance Yoneda_Applicative `{Applicative f} :
   Applicative (Yoneda f) := {
   pure := fun _ x => fun _ k => pure (k x);
   ap   := fun a b g x => fun _ k => g _ (comp k) <*> iso_to x
@@ -26,7 +26,7 @@ Program Instance Yoneda_Applicative `{Applicative f} :
 Definition Yoneda_join `{Monad m} `(k : Yoneda m (Yoneda m a)) : Yoneda m a :=
   fun _ h => join (k _ (fun y => y _ h)).
 
-Program Instance Yoneda_Monad `{Monad m} : Monad (Yoneda m) := {
+Instance Yoneda_Monad `{Monad m} : Monad (Yoneda m) := {
   join := @Yoneda_join m _
 }.
 
@@ -134,7 +134,7 @@ Definition liftCoyoneda {f : Type -> Type} {a : Type} : f a -> Coyoneda f a :=
 Definition lowerCoyoneda `{Functor f} {a : Type} (c : Coyoneda f a) : f a :=
   let: COYO _ g h := c in fmap g h.
 
-Program Instance Coyoneda_Functor (f : Type -> Type) : Functor (Coyoneda f) := {
+Instance Coyoneda_Functor (f : Type -> Type) : Functor (Coyoneda f) := {
   fmap := fun _ _ f x => let: COYO _ g h := x in COYO (f \o g) h
 }.
 

@@ -44,9 +44,8 @@ Definition EitherT_apply {E M} `{Applicative M} {X Y}
 
 Instance EitherT_Applicative {E M} `{Applicative M}
   : Applicative (EitherT E M) :=
-{ is_functor := EitherT_Functor
-; pure   := fun _ => EitherT_pure
-; ap := fun _ _ => EitherT_apply
+{ pure := fun _   => EitherT_pure
+; ap   := fun _ _ => EitherT_apply
 }.
 (* jww (2015-06-17): NYI
 Proof.
@@ -90,17 +89,15 @@ Proof.
 Defined.
 *)
 
-Definition EitherT_join {E M} `{Monad M} {X}
-  (x : EitherT E M (EitherT E M X)) : EitherT E M X :=
-  join (fmap
-    (fun y => match y with
-     | Left e => pure (Left e)
-     | Right mx' => mx'
-    end) x).
+Definition EitherT_join {E M} `{Monad M} {X} (x : EitherT E M (EitherT E M X)) :
+  EitherT E M X :=
+  join (fmap (fun y => match y with
+                | Left e => pure (Left e)
+                | Right mx' => mx'
+                end) x).
 
 Instance EitherT_Monad {E M} `{Monad M} : Monad (EitherT E M) :=
-{ is_applicative := EitherT_Applicative
-; join := fun _ => EitherT_join
+{ join := fun _ => EitherT_join
 }.
 (* jww (2015-06-17): NYI
 Proof.
