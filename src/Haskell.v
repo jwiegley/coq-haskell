@@ -1,9 +1,10 @@
-Require Export Hask.Prelude.
-Require Export Hask.Data.IntMap.
-Require Export Hask.Data.IntSet.
-Require Export Hask.Data.List.
-Require Export Hask.Data.NonEmpty.
-Require Export Hask.Data.Vector.
+Require Import Hask.Prelude.
+Require Import Hask.Data.IntMap.
+Require Import Hask.Data.IntSet.
+Require Import Hask.Data.List.
+Require Import Hask.Data.NonEmpty.
+Require Import Hask.Data.Vector.
+Require Import Coq.Strings.String.
 
 Generalizable All Variables.
 Set Implicit Arguments.
@@ -94,8 +95,6 @@ Extract Inlined Constant ssr_have => "(Prelude.flip (Prelude.$))".
     its bounds. *)
 Extract Inductive Datatypes.nat => "Prelude.Int" ["0" "(Prelude.succ)"]
   "(\fO fS n -> if n Prelude.<= 0 then fO () else fS (n Prelude.- 1))".
-
-Require Import Coq.Strings.String.
 
 Extract Inductive string => "Prelude.String" ["[]" "(:)"].
 
