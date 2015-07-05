@@ -52,6 +52,16 @@ Definition plusStateT `(l : Lens' s nat) (n : nat) `{Monad m} :
 
 Notation "l += n" := (plusStateT l n) (at level 71).
 
+Definition modifyStateT `(l : Lens' s a) (x : a) `{Monad m} :
+  StateT s m unit := modifyT (l .~ x).
+
+Notation "l .= x" := (modifyStateT l x) (at level 71).
+
+Definition applyStateT `(l : Lens' s a) (f : a -> a) `{Monad m} :
+  StateT s m unit := modifyT (l %~ f).
+
+Notation "l %= f" := (applyStateT l f) (at level 71).
+
 Module LensLaws.
 
 Class LensLaws `(l : Lens' s a) := {
