@@ -156,26 +156,26 @@ Extract Inlined Constant NE_foldl   => "Data.List.foldl'".
 
 (* Data.Vector *)
 
-Extract Constant Vec "a" => "[]".
-Extraction Inline Vec.
+(* Extract Constant Vec "a" => "[]". *)
+(* Extraction Inline Vec. *)
 
-Extract Inlined Constant vnil       => "[]".
-Extract Inlined Constant vsing      => "[]".
-Extract Inlined Constant vcons      => "(:)".
-Extract Inlined Constant vshiftin   => "Hask.Utils.vshiftin".
-Extract Inlined Constant vreplace   => "Hask.Utils.vreplace".
-Extract Inlined Constant vec_rect   => "Hask.Utils.vec_rect".
-Extract Inlined Constant vconst     => "Data.List.replicate".
-Extract Inlined Constant vfoldl     => "Hask.Utils.vfoldl'".
-Extract Inlined Constant vapp       => "Prelude.(++)".
-Extract Inlined Constant vmap       => "Hask.Utils.vmap".
-Extract Inlined Constant vnth       => "Hask.Utils.vnth".
-Extract Inlined Constant vec_to_seq => "Hask.Utils.vec_id".
-Extract Inlined Constant seq_to_vec => "Hask.Utils.vec_id".
+(* Extract Inlined Constant vnil       => "[]". *)
+(* Extract Inlined Constant vsing      => "[]". *)
+(* Extract Inlined Constant vcons      => "(:)". *)
+(* Extract Inlined Constant vshiftin   => "Hask.Utils.vshiftin". *)
+(* Extract Inlined Constant vreplace   => "Hask.Utils.vreplace". *)
+(* Extract Inlined Constant vec_rect   => "Hask.Utils.vec_rect". *)
+(* Extract Inlined Constant vconst     => "Data.List.replicate". *)
+(* Extract Inlined Constant vfoldl     => "Hask.Utils.vfoldl'". *)
+(* Extract Inlined Constant vapp       => "Prelude.(++)". *)
+(* Extract Inlined Constant vmap       => "Hask.Utils.vmap". *)
+(* Extract Inlined Constant vnth       => "Hask.Utils.vnth". *)
+(* Extract Inlined Constant vec_to_seq => "Hask.Utils.vec_id". *)
+(* Extract Inlined Constant seq_to_vec => "Hask.Utils.vec_id". *)
 
-Extract Inlined Constant vfoldl_with_index
-  => "(Hask.Utils.vfoldl'_with_index)".
-Extract Inlined Constant vmap_with_index
-  => "(Hask.Utils.vmap_with_index)".
+(* Extract Inlined Constant vfoldl_with_index *)
+(*   => "(Hask.Utils.vfoldl'_with_index)". *)
+(* Extract Inlined Constant vmap_with_index *)
+(*   => "(Hask.Utils.vmap_with_index)". *)
 
 Extraction Blacklist String List Vector Prelude.
