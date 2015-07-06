@@ -485,6 +485,20 @@ Definition getBy {a} (p : a -> bool) (xs : seq a) : option a :=
 
 Definition sumlist : seq nat -> nat := foldl addn 0.
 
+Definition safe_nth {a} (xs : seq a) (n : nat) (H : n < size xs) : a.
+Proof.
+  elim: xs => [|x xs IHxs] in n H *.
+    by [].
+  elim: n => [|n IHn] in IHxs H *.
+    exact: x.
+  simpl in H.
+  apply: IHn.
+    move=> n0 H0.
+    apply: IHxs.
+    exact: H0.
+  by ordered.
+Defined.
+
 Definition safe_hd {a} (xs : seq a) : 0 < size xs -> a.
 Proof. case: xs => //. Defined.
 
