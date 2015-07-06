@@ -1,4 +1,5 @@
 Require Import Hask.Prelude.
+Require Import Hask.Ltac.
 
 Generalizable All Variables.
 
@@ -143,8 +144,18 @@ Proof.
     first exact: fin_contra.
   elim/vecn_rect: v => [x|? x _ IHxs] in p *; first exact: x.
   elim/@fin_rect: p => [_|p ? _]; first exact: x.
-  exact: (IHxs (@Ordinal _ p _)).
+  exact: IHxs (@Ordinal _ p _).
 Defined.
+
+Lemma vnth_vconst (x : A) {n} (i : 'I_n) : vnth (vconst x) i = x.
+Proof.
+  case: n => [|n] in i *;
+    first exact: fin_contra.
+  pose v := vconst (n:=n.+1) x.
+  elim/vecn_rect E: v => // [? y ? IHys] in i *.
+  elim/@fin_rect: i => // [i ? IHi].
+  exact: IHys (@Ordinal _ i _).
+Qed.
 
 Definition vshiftin {n} (v : Vec n) (i : A) : Vec n.+1.
 Proof.
