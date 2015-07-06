@@ -295,10 +295,10 @@ Proof.
   exact: Hneg.
 Qed.
 
-Definition vnth_vshiftin {n} : forall k (z : A) (v : Vec n),
+Definition vnth_vshiftin {n} : forall (z : A) (v : Vec n) k,
   vnth (vshiftin v z) (widen_id k) = vnth v k.
 Proof.
-  move=> k z v.
+  move=> z v k.
   case: n => [|n] in k v *;
     first exact: fin_contra.
   elim/vecn_ind: v => [x|sz x xs IHxs] in k *.
