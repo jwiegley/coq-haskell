@@ -169,6 +169,41 @@ Defined.
 
 Definition widen_id {n} := widen_ord (leqnSn n).
 
+Lemma widen_ord_spec : forall n x (H : n <= n), widen_ord H x = x.
+Proof.
+  move=> ? [? ?] ?.
+  rewrite /widen_ord.
+  congr (Ordinal _).
+  exact: eq_irrelevance.
+Qed.
+
+Lemma widen_ord_inj : forall m n (H : m <= n), injective (widen_ord H).
+Proof.
+  move=> m n H.
+  rewrite /injective => x1 x2.
+  by invert; apply ord_inj.
+Qed.
+
+Lemma widen_ord_refl : forall n (H : n <= n) x, widen_ord (m := n) H x = x.
+Proof.
+  move=> n H.
+  case=> m Hm.
+  rewrite /widen_ord /=.
+  congr (Ordinal _).
+  exact: eq_irrelevance.
+Qed.
+
+Lemma map_widen_ord_refl : forall b n (H : n <= n) (xs : seq ('I_n * b)),
+  [seq (let: (xid, reg) := i in (widen_ord (m:=n) H xid, reg)) | i <- xs] = xs.
+Proof.
+  move=> b n H.
+  elim=> //= [x xs IHxs].
+  rewrite IHxs.
+  case: x => [xid reg].
+  congr ((_, reg) :: xs).
+  exact: widen_ord_refl.
+Qed.
+
 (* The following properties are all to support the [beginnings] Theorem at
    the end of Spec.v. *)
 
