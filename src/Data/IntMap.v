@@ -1,6 +1,8 @@
 Require Import Hask.Prelude.
+Require Import Hask.Ltac.
 Require Import Hask.Data.List.
 Require Import Hask.Data.NonEmpty.
+Require Import Hask.Data.Tuple.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -9,11 +11,11 @@ Generalizable All Variables.
 
 Inductive IntMap (a : Type) := getIntMap of seq (nat * a).
 
-Arguments getIntMap [a] _.
+Arguments getIntMap {a} _.
 
 Definition emptyIntMap {a} := @getIntMap a [::].
 
-Definition IntMap_fromList := getIntMap.
+Definition IntMap_fromList {a} := @getIntMap a.
 
 Definition IntMap_size : forall a, IntMap a -> nat :=
   fun _ m => let: getIntMap x := m in size x.
@@ -52,11 +54,51 @@ Definition IntMap_map {a b} (f : a -> b) (m : IntMap a) : IntMap b :=
   let: getIntMap xs := m in
   getIntMap (map (fun x => (fst x, f (snd x))) xs).
 
+Lemma IntMap_map_id : forall a (m : IntMap a), IntMap_map id m = m.
+Proof.
+  move=> a [m].
+  case: m => //= [m ?].
+  rewrite unsplit.
+  by case: m.
+Qed.
+
+Lemma IntMap_map_comp : forall a b c (m : IntMap a) (f : b -> c) (g : a -> b),
+  IntMap_map f \o IntMap_map g =1 IntMap_map (f \o g).
+Proof.
+  move=> a b c [m] f g [xs] /=.
+  elim: xs => //= [? ? IHxs].
+  rewrite -map_comp /funcomp in IHxs *.
+  by congr (getIntMap _).
+Qed.
+
 Definition IntMap_mapWithKey {a b} (f : nat -> a -> b) (m : IntMap a) :
   IntMap b :=
   let: getIntMap xs := m in
-  let f k x rest := (fst x, f k (snd x)) :: rest in
-  getIntMap (foldr_with_index f [::] xs).
+  let f z := let: (k, x) := z in (k, f k x) in
+  getIntMap (map f xs).
+
+Lemma getIntMap_inj {a} : injective (@getIntMap a).
+Proof. by move=> ? ?; invert. Qed.
+
+Lemma IntMap_mapWithKey_id : forall a (m : IntMap a),
+  IntMap_mapWithKey (const id) m = m.
+Proof.
+  move=> a [m].
+  elim: m => //= [[x y] ? ?].
+  congr (getIntMap ((x, y) :: _)).
+  exact: getIntMap_inj.
+Qed.
+
+Lemma IntMap_mapWithKey_comp :
+  forall a b c (m : IntMap a) (f : b -> c) (g : a -> b),
+    IntMap_mapWithKey (const f) \o IntMap_mapWithKey (const g)
+      =1 IntMap_mapWithKey (const (f \o g)).
+Proof.
+  move=> a b c [m] f g [xs] /=.
+  elim: xs => //= [[x y] xs IHxs].
+  congr (getIntMap (_ :: _)).
+  exact: getIntMap_inj.
+Qed.
 
 (* The implementation of this function is in LinearScan.Utils.hs *)
 Definition IntMap_mergeWithKey' {a b c}
