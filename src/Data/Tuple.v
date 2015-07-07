@@ -1,3 +1,4 @@
+Require Import Hask.Ssr.
 Require Import Hask.Control.Iso.
 
 Generalizable All Variables.
@@ -76,3 +77,16 @@ Definition uncurry {X Y Z} (f : X -> Y -> Z) (xy : X * Y) : Z :=
 Theorem uncurry_works : forall {X Y Z} (x : X) (y : Y) (f : X -> Y -> Z),
   uncurry f (x, y) = f x y.
 Proof. reflexivity. Qed.
+
+Lemma fst_snd : forall a b (z : a * b),
+  (let '(x, y) := z in (x, y)) = (fst z, snd z).
+Proof. by move=> ? ? [*]. Qed.
+
+Lemma unsplit : forall a b (xs : seq (a * b)),
+  [seq (fst x, snd x) | x <- xs] = xs.
+Proof.
+  move=> a b.
+  elim=> //= [x xs IHxs].
+  rewrite IHxs.
+  by case: x => [*].
+Qed.
