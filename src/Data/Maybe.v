@@ -75,3 +75,16 @@ Definition option_choose {a} (x y : option a) : option a :=
   | None => y
   | Some _ => x
   end.
+
+Instance option_Alternative : Alternative option := {
+  empty := fun _ => None;
+  choose := fun _ => option_choose
+  (* some := fun _ x => match x with *)
+  (*   | None => None *)
+  (*   | Some x => Some [x] *)
+  (*   end; *)
+  (* many := fun _ x => match x with *)
+  (*   | None => Some [] *)
+  (*   | Some x => [x] *)
+  (*   end *)
+}.

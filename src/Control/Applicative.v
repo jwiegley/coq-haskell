@@ -33,9 +33,9 @@ Infix "<*>" := ap (at level 28, left associativity).
 Definition liftA2 `{Applicative m} {A B C : Type}
   (f : A -> B -> C) (x : m A) (y : m B) : m C := ap (fmap f x) y.
 
-Instance Applicative_Compose (F : Type -> Type) (G : Type -> Type)
+Instance Compose_Applicative (F : Type -> Type) (G : Type -> Type)
   `{Applicative F} `{Applicative G} : Applicative (F \o G)  :=
-{ is_functor := Functor_Compose (F:=F) (G:=G)
+{ is_functor := Compose_Functor (F:=F) (G:=G)
 ; pure := fun A   => @pure F _ (G A) \o @pure G _ A
 ; ap   := fun A B => ap \o fmap (@ap G _ A B)
 }.
@@ -128,3 +128,24 @@ Obligation 5. (* ap_fmap *)
 Qed.
 
 End ApplicativeLaws.
+
+Reserved Notation "f <|> g" (at level 28, left associativity).
+
+Class Alternative (F : Type -> Type) :=
+{ alt_is_applicative :> Applicative F
+
+; empty : forall {X}, F X
+; choose : forall {X}, F X -> F X -> F X
+    where "f <|> g" := (choose f g)
+(* ; some : forall {X}, F X -> list (F X) *)
+(* ; many : forall {X}, F X -> list (F X) *)
+}.
+
+Notation "f <|> g" := (choose f g) (at level 28, left associativity).
+
+(* Module Import LN := ListNotations. *)
+
+(* Program Instance list_Alternative : Alternative list := { *)
+(*     empty := fun _ => []; *)
+(*     choose := app *)
+(* }. *)
