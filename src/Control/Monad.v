@@ -107,9 +107,9 @@ Class Monad_Distributes `{Monad M} `{Applicative N} :=
 
 Arguments prod M {_} N {_ Monad_Distributes} A _.
 
-Instance Monad_Compose `{Monad M} `{Applicative N} `{Monad_Distributes M N}
+Instance Compose_Monad `{Monad M} `{Applicative N} `{Monad_Distributes M N}
   : Monad (M \o N) :=
-{ is_applicative := Applicative_Compose M N
+{ is_applicative := Compose_Applicative M N
 ; join := fun A => join/M \o fmap[M] (prod M N A)
 }.
 
