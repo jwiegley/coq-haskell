@@ -39,6 +39,9 @@ Notation "A ;; B" := (_ <-- A ;; B) (at level 92, right associativity,
 Definition when `{Monad m} `(b : bool) (x : m unit) : m unit :=
   if b then x else return_ tt.
 
+Definition unless `{Monad m} `(b : bool) (x : m unit) : m unit :=
+  if ~~ b then x else return_ tt.
+
 Fixpoint mapM `{Applicative m} {A B} (f : A -> m B) (l : seq A) :
   m (seq B) :=
   match l with
