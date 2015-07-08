@@ -31,6 +31,22 @@ Fixpoint maybeLookup {a : eqType} {b} (v : seq (a * b)) (x : a) : option b :=
        else maybeLookup xs x
   else None.
 
+Fixpoint valueLookup {a} {b : eqType} (dflt : a)
+  (v : seq (a * b)) (x : b) : a :=
+  if v is (k, v) :: xs
+  then if v == x
+       then k
+       else valueLookup dflt xs x
+  else dflt.
+
+Fixpoint maybeValueLookup {a} {b : eqType} (v : seq (a * b)) (x : b) :
+  option a :=
+  if v is (k, v) :: xs
+  then if v == x
+       then Some k
+       else maybeValueLookup xs x
+  else None.
+
 Lemma rcons_nil : forall a us (u : a), rcons us u = [::] -> False.
 Proof. by move=> a us u; case: us => // [|? ?] in u *. Qed.
 
