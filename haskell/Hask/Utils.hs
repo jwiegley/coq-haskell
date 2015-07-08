@@ -12,7 +12,8 @@ intMap_mergeWithKey'
     :: (Int -> a -> b -> Maybe c)
     -> ([(Int, a)] -> [(Int, c)])
     -> ([(Int, b)] -> [(Int, c)])
-    -> ([(Int, a)]) -> ([(Int, b)])
+    -> [(Int, a)]
+    -> [(Int, b)]
     -> [(Int, c)]
 intMap_mergeWithKey' combine only1 only2 m1 m2 =
     M.toList $ M.mergeWithKey combine
