@@ -22,3 +22,6 @@ Definition decide {T : Type} (H : bool)
   (erefl H).
 
 Arguments decide {T} H kt kf.
+
+Definition prop (b : bool) : option (is_true b) :=
+  if b then Some is_true_true else None.
