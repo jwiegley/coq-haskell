@@ -147,6 +147,9 @@ Proof.
   exact: IHxs (@Ordinal _ p _).
 Defined.
 
+Definition vmodify {n} (v : Vec n) (p : 'I_n) (f : A -> A) : Vec n :=
+  vreplace v p (f (vnth v p)).
+
 Lemma vnth_vconst (x : A) {n} (i : 'I_n) : vnth (vconst x) i = x.
 Proof.
   case: n => [|n] in i *;
@@ -343,6 +346,7 @@ Arguments vfoldl_with_index [A B n] f !b !v.
 Arguments vfoldl [A B n] f !b !v.
 Arguments vreplace [A n] !v !p !i.
 Arguments vnth [A n] !v !p.
+Arguments vmodify [A n] !v !p !f.
 Arguments vapp [A n m] !v !u.
 Arguments vshiftin [A n] !v !i.
 Arguments vmap [A B n] f !v.
