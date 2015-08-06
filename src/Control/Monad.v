@@ -23,11 +23,16 @@ Notation "join/ M N" := (@join (M \o N) _ _) (at level 26).
 Notation "m >>= f" := (bind f m) (at level 25, left associativity).
 Notation "a >> b" := (a >>= fun _ => b) (at level 25, left associativity).
 
-Definition kleisli_compose `{Monad m} `(f : b -> m c) `(g : a -> m b) :
-  a -> m c := fun x => g x >>= f.
+Definition kleisli_compose `{Monad m} `(f : a -> m b) `(g : b -> m c) :
+  a -> m c := fun x => f x >>= g.
 
-Notation "f >=> g" := (kleisli_compose g f) (at level 25, left associativity).
+Infix ">=>" := kleisli_compose (at level 25, left associativity).
+Notation "f <=< g" :=
+  (kleisli_compose g f) (at level 25, left associativity).
+
 Notation "f >=[ m ]=> g" :=
+  (@kleisli_compose _ m _ _ f _ g) (at level 25, left associativity).
+Notation "f <=[ m ]=< g" :=
   (@kleisli_compose _ m _ _ g _ f) (at level 25, left associativity).
 
 Notation "X <-- A ;; B" := (A >>= (fun X => B))
