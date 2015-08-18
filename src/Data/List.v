@@ -149,6 +149,30 @@ Proof.
   by rewrite last_rcons.
 Qed.
 
+Lemma last_leq : forall (z y : nat) (xs : seq nat) (n : nat),
+  last z xs <= n -> y <= z -> last y xs <= n.
+Proof.
+  move=> z y.
+  elim=> //= [x xs IHxs].
+  exact: leq_trans IHxs _.
+Qed.
+
+Lemma last_leq_ltn : forall (z y : nat) (xs : seq nat) (n : nat),
+  last z xs < n -> y <= z -> last y xs < n.
+Proof.
+  move=> z y.
+  elim=> //= [x xs IHxs].
+  exact: leq_ltn_trans IHxs _.
+Qed.
+
+Lemma last_ltn : forall (z y : nat) (xs : seq nat) (n : nat),
+  last z xs < n -> y <= z -> last y xs < n.
+Proof.
+  move=> z y.
+  elim=> //= [x xs IHxs].
+  exact: leq_ltn_trans IHxs _.
+Qed.
+
 Lemma list_cons_nonzero : forall {a x} {xs l : seq a},
   l = x :: xs -> size l > 0.
 Proof. by move=> a x xs l ->. Qed.
@@ -610,6 +634,76 @@ Proof.
   by ordered.
 Qed.
 
+Lemma perm_eq_nil : forall (a : eqType) (xs : seq a),
+  perm_eq [::] xs -> xs = [::].
+Proof.
+  move=> a.
+  elim=> //= [x xs IHxs].
+  rewrite /perm_eq /=.
+  move/andP => [H1 H2].
+  rewrite eq_refl /= in H1.
+  discriminate H1.
+Qed.
+
+Lemma all_perm : forall (a : eqType) (xs ys : seq a),
+  perm_eq xs ys -> all^~ xs =1 all^~ ys.
+Proof.
+  move=> a xs ys H P.
+  move/perm_eq_mem in H.
+  by rewrite (eq_all_r H).
+Qed.
+
+Lemma all_catC {a} (P : pred a) (xs ys : seq a) :
+  all P (xs ++ ys) = all P (ys ++ xs).
+Proof.
+  case: xs => /= [|x xs] in ys *.
+    by rewrite cats0.
+  case: ys => // [|y ys].
+    by rewrite cats0.
+  by rewrite !all_cat /= andbA andbC.
+Qed.
+
+Lemma all_flip : forall A (P : rel A) (_ : symmetric P) x (xs : seq A),
+  all (P x) xs = all (P ^~ x) xs.
+Proof.
+  move=> A P H x.
+  elim=> //= [y ys IHys].
+  by rewrite -IHys H.
+Qed.
+
+Lemma all_all_cons : forall a (xs ys : seq a) (x : a) (R : rel a),
+  all (fun y : a => all (R y) (x :: xs)) ys =
+  all (R ^~ x) ys && all (fun y : a => all (R y) xs) ys.
+Proof.
+  move=> a xs ys x R.
+  elim: ys => // [y ys IHys].
+  rewrite [all]lock -{1}lock /= -lock IHys /= -!andbA.
+  congr (_ && _).
+  by rewrite and_swap.
+Qed.
+
+Lemma all_all_cat : forall A (P : rel A) (xs ys zs : seq A),
+  all (fun x => all (P x) (xs ++ ys)) zs
+    = all (fun x => all (P x) xs) zs && all (fun x => all (P x) ys) zs.
+Proof.
+  move=> A P xs ys.
+  elim=> //= [z zs IHzs].
+  rewrite IHzs all_cat.
+  rewrite !andbA.
+  congr (_ && _).
+  rewrite -!andbA.
+  congr (_ && _).
+  by rewrite andbC.
+Qed.
+
+Lemma all_all_flip : forall A (P : rel A) (_ : symmetric P) (xs ys : seq A),
+  all (fun x => all (P x) ys) xs = all (fun x => all (P ^~ x) ys) xs.
+Proof.
+  move=> A P H.
+  elim=> //= [z zs IHzs] ys.
+  by rewrite -IHzs all_flip.
+Qed.
+
 Lemma perm_cat_cons (T : eqType) (x : T) : forall (s1 s2 : seq_predType T),
   perm_eql (x :: s1 ++ s2) (s1 ++ x :: s2).
 Proof.
@@ -894,4 +988,53 @@ Proof.
   case E: (y == x); first exact.
   move/IHys => Hsub {IHys}.
   exact: subseq_cons_add.
+Qed.
+
+Lemma all_xpredT_true : forall a (xs : seq a), all xpredT xs.
+Proof. by move=> ?; elim. Qed.
+
+Fixpoint between_all `(R : rel a) (xs : seq a) : bool :=
+  if xs is y :: ys
+  then all (R y) ys && between_all R ys
+  else true.
+
+Lemma between_all_cat : forall a (xs ys : seq a) (R : rel a),
+  between_all R (xs ++ ys) =
+  [&& between_all R xs
+  ,   between_all R ys
+  ,   all (fun x => all (R x) ys) xs
+  &   all (fun y => all (R ^~ y) xs) ys
+  ].
+Proof.
+  move=> a xs ys R.
+  elim: xs => [|x xs IHxs] in ys *.
+    by rewrite /= all_xpredT_true Bool.andb_true_r.
+  rewrite cat_cons all_all_cons.
+  rewrite /= all_cat {}IHxs /=.
+  rewrite !andbA; f_equal.
+  rewrite [X in _ = X]andbC.
+  rewrite !andbA; f_equal.
+  rewrite [X in _ = X]andbC.
+  rewrite !andbA; f_equal.
+  rewrite Bool.andb_diag.
+  by rewrite -!andbA and_swap.
+Qed.
+
+Lemma between_all_catC {a} (xs ys : seq a) (R : rel a) (_ : symmetric R) :
+  between_all R (xs ++ ys) = between_all R (ys ++ xs).
+Proof.
+  elim: xs => /= [|x xs IHxs] in ys *.
+    by rewrite cats0.
+  rewrite IHxs.
+  elim: ys => /= [|y ys IHys].
+    by rewrite cats0.
+  rewrite -IHys !andbA.
+  congr (_ && _).
+  rewrite !all_cat -!andbA 2!andbA and_swap.
+  congr (_ && _).
+  rewrite andbC -!andbA [RHS]and_swap.
+  congr (_ && _).
+  rewrite [RHS]and_swap.
+  congr (_ && _).
+  by rewrite H.
 Qed.
