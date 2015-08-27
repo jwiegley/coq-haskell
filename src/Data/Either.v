@@ -1,8 +1,16 @@
 Require Import Hask.Control.Monad.
 
+Generalizable All Variables.
+
 Notation Either := sum.
 Notation Left := inl.
 Notation Right := inr.
+
+Definition mapLeft `(f : a -> c) `(x : a + b) : c + b :=
+  match x with
+  | inl l => inl (f l)
+  | inr r => inr r
+  end.
 
 Definition Either_map {E X Y} (f : X -> Y) (x : Either E X) : Either E Y :=
   match x with

@@ -7,6 +7,18 @@ Notation Maybe := option.
 Notation Nothing := None.
 Notation Just := Some.
 
+Definition fromMaybe `(x : a) (my : Maybe a) : a :=
+  match my with
+ | Some z => z
+ | None   => x
+  end.
+
+Definition maybe `(x : b) `(f : a -> b) (my : Maybe a) : b :=
+  match my with
+ | Some z => f z
+ | None   => x
+  end.
+
 Definition Maybe_map {X Y} (f : X -> Y) (x : Maybe X) : Maybe Y :=
   match x with
   | Nothing => Nothing
@@ -75,6 +87,10 @@ Definition option_choose {a} (x y : option a) : option a :=
   | None => y
   | Some _ => x
   end.
+
+Lemma option_choose_spec : forall a (x y : Maybe a),
+  isJust (x <|> y) = isJust x || isJust y.
+Proof. by move=> a [x|] [y|] //=. Qed.
 
 Instance option_Alternative : Alternative option := {
   empty := fun _ => None;

@@ -121,12 +121,43 @@ Definition IntMap_mergeWithKey {a b c} (combine : nat -> a -> b -> option c)
 Definition IntMap_foldl {a b} (f : a -> b -> a) (z : a) (m : IntMap b) : a :=
   let: getIntMap xs := m in foldl (fun acc x => f acc (snd x)) z xs.
 
+Definition IntMap_foldr {a b} (f : b -> a -> a) (z : a) (m : IntMap b) : a :=
+  let: getIntMap xs := m in foldr (fun x => f (snd x)) z xs.
+
 Definition IntMap_foldlWithKey
   {a b} (f : a -> nat -> b -> a) (z : a) (m : IntMap b) : a :=
   let: getIntMap xs := m in foldl (fun acc x => f acc (fst x) (snd x)) z xs.
 
+Definition IntMap_foldrWithKey
+  {a b} (f : b -> nat -> a -> a) (z : a) (m : IntMap b) : a :=
+  let: getIntMap xs := m in foldr (fun x => f (snd x) (fst x)) z xs.
+
 Definition IntMap_toList {a} (m : IntMap a) : seq (nat * a) :=
   let: getIntMap xs := m in xs.
+
+Definition IntMap_addToList (k : nat) `(x : a) (m : IntMap (seq a)) :
+  IntMap (seq a) :=
+  IntMap_alter (fun mxs => Some (if mxs is Some xs
+                                 then x :: xs
+                                 else [:: x])) k m.
+
+Definition IntMap_combine {a b c}
+  (f : nat -> option a -> option b -> option c) :
+  IntMap a -> IntMap b -> IntMap c :=
+  IntMap_mergeWithKey
+    (fun idx x y => f idx (Some x) (Some y))
+    (IntMap_foldrWithKey
+       (fun x idx rest =>
+          let mres := f idx (Some x) None in
+          if mres is Some res
+          then IntMap_insert idx res rest
+          else rest) emptyIntMap)
+    (IntMap_foldrWithKey
+       (fun y idx rest =>
+          let mres := f idx None (Some y) in
+          if mres is Some res
+          then IntMap_insert idx res rest
+          else rest) emptyIntMap).
 
 Section EqIntMap.
 

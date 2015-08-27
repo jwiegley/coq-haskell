@@ -118,3 +118,17 @@ Proof.
   move/eqP=> H1 H2.
   by ordered.
 Qed.
+
+Lemma leq_double_r : forall n m, n <= m -> n <= m.*2.
+Proof.
+  move=> n m H.
+  rewrite -muln2.
+  have ->: n = n * 1 by ordered.
+  exact: leq_mul.
+Qed.
+
+Lemma ltn0ltn : forall n m, n < m -> 0 < m.
+Proof. by ordered. Qed.
+
+Lemma ltn_subn : forall n m, n < m -> m > 0 -> n <= m.-1.
+Proof. by ordered. Qed.

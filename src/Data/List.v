@@ -47,6 +47,17 @@ Fixpoint maybeValueLookup {a} {b : eqType} (v : seq (a * b)) (x : b) :
        else maybeValueLookup xs x
   else None.
 
+Definition listToMaybe `(xs : seq a) : option (seq a) :=
+  if xs is [::]
+  then None
+  else Some xs.
+
+Definition maybeToList `(mx : option a) : seq a :=
+  match mx with
+  | Some x => [:: x]
+  | None   => [::]
+  end.
+
 Lemma rcons_nil : forall a us (u : a), rcons us u = [::] -> False.
 Proof. by move=> a us u; case: us => // [|? ?] in u *. Qed.
 
@@ -756,6 +767,11 @@ Example sortBy_ex2 :
   sortBy gtn [:: 1; 3; 5; 7; 9; 2; 4; 6; 8] = [:: 9; 8; 7; 6; 5; 4; 3; 2; 1].
 Proof. reflexivity. Qed.
 
+Example sortBy_ex3 :
+  sortBy (fun x y => false) [:: 1; 3; 5; 7; 9; 2; 4; 6; 8] =
+                            [:: 1; 3; 5; 7; 9; 2; 4; 6; 8].
+Proof. reflexivity. Qed.
+
 Lemma Forall_insert : forall a (R : a -> a -> bool) `{Transitive _ R} x xs y,
   R x y -> List.Forall (R x) xs -> List.Forall (R x) (insert R y xs).
 Proof.
@@ -1037,4 +1053,15 @@ Proof.
   rewrite [RHS]and_swap.
   congr (_ && _).
   by rewrite H.
+Qed.
+
+Lemma allpairs_map :
+  forall a b c (f : a -> b -> c) (xs : seq a) (ys : seq b),
+  [seq f x y | x <- xs, y <- ys] =
+  flatten [seq [seq f x y | y <- ys] | x <- xs].
+Proof.
+  move=> a b c f.
+  elim=> //= [x xs IHxs] y.
+  congr (_ ++ _).
+  exact: IHxs.
 Qed.

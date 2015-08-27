@@ -100,6 +100,7 @@ Separate Extraction
   vecn_rect
   vfoldl
   vfoldl_with_index
+  vfoldr_with_index
   vmap
   vnil
   vnth
