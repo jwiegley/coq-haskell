@@ -88,10 +88,6 @@ Definition option_choose {a} (x y : option a) : option a :=
   | Some _ => x
   end.
 
-Lemma option_choose_spec : forall a (x y : Maybe a),
-  isJust (x <|> y) = isJust x || isJust y.
-Proof. by move=> a [x|] [y|] //=. Qed.
-
 Instance option_Alternative : Alternative option := {
   empty := fun _ => None;
   choose := fun _ => option_choose
@@ -104,3 +100,7 @@ Instance option_Alternative : Alternative option := {
   (*   | Some x => [x] *)
   (*   end *)
 }.
+
+Lemma option_choose_spec : forall a (x y : Maybe a),
+  isJust (x <|> y) = isJust x || isJust y.
+Proof. by move=> a [x|] [y|] //=. Qed.
