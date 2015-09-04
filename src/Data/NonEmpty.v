@@ -122,6 +122,10 @@ Definition NE_foldl {a b : Type} (f : a -> b -> a) (z : a)
   (ne : NonEmpty b) : a := foldl f z ne.
 Arguments NE_foldl {a b} f z ne /.
 
+Definition NE_foldr {a b : Type} (f : b -> a -> a) (z : a)
+  (ne : NonEmpty b) : a := foldr f z ne.
+Arguments NE_foldr {a b} f z ne /.
+
 Fixpoint NE_mapAccumL {A X Y : Type} (f : A -> X -> (A * Y))
   (s : A) (v : NonEmpty X) : A * NonEmpty Y :=
   match v with

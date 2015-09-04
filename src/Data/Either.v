@@ -1,3 +1,4 @@
+Require Import Hask.Ssr.
 Require Import Hask.Control.Monad.
 
 Generalizable All Variables.
@@ -5,6 +6,15 @@ Generalizable All Variables.
 Notation Either := sum.
 Notation Left := inl.
 Notation Right := inr.
+
+Definition isLeft  `(x : a + b) : bool := if x is inl _ then true else false.
+Definition isRight `(x : a + b) : bool := if x is inr _ then true else false.
+
+Definition either `(f : a -> c) `(g : b -> c) (x : a + b) : c :=
+  match x with
+  | inl a => f a
+  | inr b => g b
+  end.
 
 Definition mapLeft `(f : a -> c) `(x : a + b) : c + b :=
   match x with
