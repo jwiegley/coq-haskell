@@ -84,8 +84,8 @@ Extract Inlined Constant ord_max => "".
 Extraction Implicit nat_of_ord [ n ].
 Extraction Implicit widen_ord [ n m ].
 
-Extract Inlined Constant nat_of_ord => "".
-Extract Inlined Constant widen_ord  => "".
+Extract Inlined Constant nat_of_ord => "Prelude.id".
+Extract Inlined Constant widen_ord  => "Prelude.id".
 
 Extract Inlined Constant ssr_have => "(Prelude.flip (Prelude.$))".
 
