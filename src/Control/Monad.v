@@ -1,5 +1,4 @@
 Require Import Hask.Ssr.
-Require Import Hask.Data.List.
 Require Export Hask.Control.Applicative.
 
 Generalizable All Variables.
@@ -92,7 +91,7 @@ Definition forFoldrM `{Monad m} {A : Type} {B : Type}
 
 Definition concatMapM `{Applicative m} {A B}
   (f : A -> m (seq B)) (l : seq A) : m (seq B) :=
-  fmap (concat) (mapM f l).
+  fmap flatten (mapM f l).
 
 Fixpoint replicateM_ `{Monad m} (n : nat) (x : m unit) : m unit :=
   if n isn't S n' then pure tt else

@@ -1,6 +1,6 @@
 Require Import Hask.Ssr.
 Require Import Hask.Ltac.
-Require Import Hask.Data.Functor.
+Require Import Hask.Control.Monad.
 
 Require Import Coq.Program.Wf.
 Require Import Coq.Sorting.Sorted.
@@ -11,11 +11,7 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
-Fixpoint concat {A} (l : seq (seq A)) : seq A :=
-  match l with
-  | nil => nil
-  | cons x xs => x ++ concat xs
-  end.
+Definition concat {A} : seq (seq A) -> seq A := flatten.
 
 Fixpoint lookup {a : eqType} {b} (dflt : b) (v : seq (a * b)) (x : a) : b :=
   if v is (k, v) :: xs
@@ -1065,3 +1061,54 @@ Proof.
   congr (_ ++ _).
   exact: IHxs.
 Qed.
+
+Instance List_Functor : Functor seq := {
+  fmap := fun _ _ => map
+}.
+
+Instance List_Applicative : Applicative seq := {
+  pure := fun _ x => [:: x];
+  ap   := fun _ _ fs xs => [seq f x | f <- fs, x <- xs]
+}.
+
+Module ListLaws.
+
+Include MonadLaws.
+
+Program Instance List_FunctorLaws : FunctorLaws seq.
+Obligation 1.
+  move=> xs.
+  by rewrite map_id.
+Qed.
+Obligation 2.
+  move=> xs.
+  by rewrite /funcomp /= -!map_comp /funcomp.
+Qed.
+
+Program Instance List_ApplicativeLaws : ApplicativeLaws seq.
+Obligation 1.
+  move=> xs.
+  elim: xs => [|x xs IHxs] //=.
+  by rewrite IHxs.
+Qed.
+Obligation 2.
+  rewrite cats0.
+  elim: u => [|u us IHus] //=.
+  rewrite allpairs_cat {}IHus.
+  f_equal.
+  elim: v => [|v vs IHvs] //=.
+  rewrite map_cat {}IHvs.
+  elim: w => [|w ws IHws] //=.
+  f_equal.
+  by rewrite -!map_comp /funcomp.
+Qed.
+Obligation 4.
+  rewrite cats0.
+  by elim: u.
+Qed.
+Obligation 5.
+  move=> xs.
+  by rewrite cats0.
+Qed.
+
+End ListLaws.
