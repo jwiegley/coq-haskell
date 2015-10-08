@@ -148,7 +148,7 @@ Extract Inductive NonEmpty => "[]" ["(:[])" "(:)"]
   "(\ns nc l -> case l of [x] -> ns x; (x:xs) -> nc x xs)".
 
 Extract Inlined Constant NE_length  => "Prelude.length".
-Extract Inlined Constant NE_to_list => "".
+Extract Inlined Constant NE_to_list => "Prelude.id".
 Extract Inlined Constant NE_head    => "Prelude.head".
 Extract Inlined Constant NE_last    => "Prelude.last".
 Extract Inlined Constant NE_map     => "Prelude.map".
