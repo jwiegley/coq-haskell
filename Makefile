@@ -15,7 +15,7 @@ VFILES = $(wildcard src/*.v)				\
 
 VOFILES = $(patsubst %.v,%.vo,$(VFILES))
 
-COQFLAGS = "-no-native-compiler"
+COQFLAGS = ""
 
 MISSING = find src -name '*.v'						\
 		 \(							\
