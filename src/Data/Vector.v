@@ -418,7 +418,8 @@ Proof.
     move=> Y.
       by case: IHm.
     by case: X.
-  exact: vmap snd X0.
+  move: X0.
+  by move/(vmap (@snd _ _)).
 Defined.
 
 End VectorSpec.

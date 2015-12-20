@@ -2,7 +2,6 @@ Require Import Hask.Prelude.
 Require Import Hask.Control.Monad.
 Require Import Hask.Data.Functor.Contravariant.
 Require Import Hask.Data.Functor.Identity.
-Require Import Hask.Control.Monad.Trans.State.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -19,10 +18,12 @@ Definition Getting r s a := (a -> Const r a) -> s -> Const r s.
 
 Notation "x &+ f" := (f x) (at level 71, only parsing).
 
-Definition set `(l : Lens s t a b) (x : b) : s -> t := l _ _ (const x).
+Definition set `(l : Lens s t a b) (x : b) : s -> t :=
+  runIdentityF \o l _ _ (fun _ => Id _ x).
 Notation "l .~ x" := (set l x) (at level 70).
 
-Definition over `(l : Lens s t a b) (x : a -> b) : s -> t := l _ _ x.
+Definition over `(l : Lens s t a b) (f : a -> b) : s -> t :=
+  runIdentityF \o l _ _ (fun x => Id _ (f x)).
 Notation "l %~ f" := (over l f) (at level 70).
 
 Definition view `(f : Getting a s a) : s -> a := f id.
@@ -43,6 +44,8 @@ Definition _2 {a b : Type} : Lens' (a * b) b :=
 
 Definition _ex1 {a : Type} {P : a -> Prop} : Getter { x : a | P x } a :=
   fun _ _ _ f s => fmap (const s) (f (proj1_sig s)).
+
+Require Import Hask.Control.Monad.Trans.State.
 
 Definition use `(l : Getting a s a) `{Monad m} : StateT s m a :=
   view l <$> getT.

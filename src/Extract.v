@@ -20,11 +20,11 @@ Require Import Hask.Data.Vector.
 Require Import Hask.Haskell.
 
 Separate Extraction
-  Applicative
-  Free
+  Hask.Control.Applicative.Applicative
+  Hask.Control.Monad.Trans.Free.Free
   FreeT
-  Functor
-  Monad
+  Hask.Data.Functor.Functor
+  Hask.Control.Monad.Monad
   apply
   bind
   catMaybes
@@ -78,8 +78,8 @@ Separate Extraction
   oddnum
   oends
   olast
-  option_choose
-  option_map
+  Maybe_choose
+  Maybe_map
   partition
   put
   putT

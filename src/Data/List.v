@@ -1107,7 +1107,7 @@ Obligation 4.
   by elim: u.
 Qed.
 Obligation 5.
-  move=> xs.
+  move=> xs /=.
   by rewrite cats0.
 Qed.
 

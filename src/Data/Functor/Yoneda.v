@@ -105,7 +105,7 @@ Obligation 2.
   rewrite /Yoneda_join.
   extensionality r.
   extensionality h.
-  by rewrite -fmap_cps join_fmap_pure_x.
+  by rewrite /funcomp -fmap_cps join_fmap_pure_x.
 Qed.
 Obligation 3.
   move=> k /=.

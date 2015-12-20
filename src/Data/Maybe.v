@@ -3,26 +3,32 @@ Require Import Hask.Control.Monad.
 
 Generalizable All Variables.
 
-Notation Maybe := option.
-Notation Nothing := None.
-Notation Just := Some.
+Inductive Maybe (a : Type) : Type :=
+  | Just : a -> Maybe a
+  | Nothing : Maybe a.
+
+(* Notation Maybe := option. *)
+(* Notation Nothing := None. *)
+(* Notation Just := Some. *)
 
 Definition fromMaybe `(x : a) (my : Maybe a) : a :=
   match my with
- | Some z => z
- | None   => x
+ | Just z  => z
+ | Nothing => x
   end.
 
 Definition maybe `(x : b) `(f : a -> b) (my : Maybe a) : b :=
   match my with
- | Some z => f z
- | None   => x
+ | Just z  => f z
+ | Nothing => x
   end.
 
-Definition Maybe_map {X Y} (f : X -> Y) (x : Maybe X) : Maybe Y :=
+Set Printing Universes.
+
+Definition Maybe_map `(f : X -> Y) (x : Maybe X) : Maybe Y :=
   match x with
-  | Nothing => Nothing
-  | Just x' => Just (f x')
+  | Nothing => @Nothing Y
+  | Just x' => @Just Y (f x')
   end.
 
 Instance Maybe_Functor : Functor Maybe :=
@@ -31,10 +37,10 @@ Instance Maybe_Functor : Functor Maybe :=
 
 Definition Maybe_apply {X Y} (f : Maybe (X -> Y)) (x : Maybe X) : Maybe Y :=
   match f with
-  | Nothing => Nothing
+  | Nothing => @Nothing Y
   | Just f' => match x with
-    | Nothing => Nothing
-    | Just x' => Just (f' x')
+    | Nothing => @Nothing Y
+    | Just x' => @Just Y (f' x')
     end
   end.
 
@@ -46,9 +52,9 @@ Instance Maybe_Applicative : Applicative Maybe :=
 
 Definition Maybe_join {X} (x : Maybe (Maybe X)) : Maybe X :=
   match x with
-  | Nothing => Nothing
-  | Just Nothing => Nothing
-  | Just (Just x') => Just x'
+  | Nothing => @Nothing X
+  | Just Nothing => @Nothing X
+  | Just (Just x') => @Just X x'
   end.
 
 Instance Maybe_Monad : Monad Maybe :=
@@ -74,33 +80,27 @@ Ltac simple_solver :=
 Obligation Tactic := simple_solver.
 *)
 
-Definition isJust {a} (x : option a) := if x is Some _ then true else false.
+Definition isJust {a} (x : Maybe a) := if x is Just _ then true else false.
 
-Definition option_map `(f : a -> b) (x : option a) : option b :=
+Definition Maybe_choose {a} (x y : Maybe a) : Maybe a :=
   match x with
-  | None => None
-  | Some x => Some (f x)
+  | Nothing => y
+  | Just _ => x
   end.
 
-Definition option_choose {a} (x y : option a) : option a :=
-  match x with
-  | None => y
-  | Some _ => x
-  end.
-
-Instance option_Alternative : Alternative option := {
-  empty := fun _ => None;
-  choose := fun _ => option_choose
+Instance Maybe_Alternative : Alternative Maybe := {
+  empty := fun T => @Nothing T;
+  choose := fun _ => Maybe_choose
   (* some := fun _ x => match x with *)
-  (*   | None => None *)
-  (*   | Some x => Some [x] *)
+  (*   | Nothing => Nothing *)
+  (*   | Just x => Just [x] *)
   (*   end; *)
   (* many := fun _ x => match x with *)
-  (*   | None => Some [] *)
-  (*   | Some x => [x] *)
+  (*   | Nothing => Just [] *)
+  (*   | Just x => [x] *)
   (*   end *)
 }.
 
-Lemma option_choose_spec : forall a (x y : Maybe a),
+Lemma Maybe_choose_spec : forall a (x y : Maybe a),
   isJust (x <|> y) = isJust x || isJust y.
 Proof. by move=> a [x|] [y|] //=. Qed.
