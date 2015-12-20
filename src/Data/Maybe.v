@@ -3,13 +3,9 @@ Require Import Hask.Control.Monad.
 
 Generalizable All Variables.
 
-Inductive Maybe (a : Type) : Type :=
-  | Just : a -> Maybe a
-  | Nothing : Maybe a.
-
-(* Notation Maybe := option. *)
-(* Notation Nothing := None. *)
-(* Notation Just := Some. *)
+Notation Maybe   := option.
+Notation Nothing := None.
+Notation Just    := Some.
 
 Definition fromMaybe `(x : a) (my : Maybe a) : a :=
   match my with
@@ -23,12 +19,10 @@ Definition maybe `(x : b) `(f : a -> b) (my : Maybe a) : b :=
  | Nothing => x
   end.
 
-Set Printing Universes.
-
 Definition Maybe_map `(f : X -> Y) (x : Maybe X) : Maybe Y :=
   match x with
-  | Nothing => @Nothing Y
-  | Just x' => @Just Y (f x')
+  | Nothing => Nothing
+  | Just x' => Just (f x')
   end.
 
 Instance Maybe_Functor : Functor Maybe :=
@@ -37,24 +31,24 @@ Instance Maybe_Functor : Functor Maybe :=
 
 Definition Maybe_apply {X Y} (f : Maybe (X -> Y)) (x : Maybe X) : Maybe Y :=
   match f with
-  | Nothing => @Nothing Y
+  | Nothing => Nothing
   | Just f' => match x with
-    | Nothing => @Nothing Y
-    | Just x' => @Just Y (f' x')
+    | Nothing => Nothing
+    | Just x' => Just (f' x')
     end
   end.
 
 Instance Maybe_Applicative : Applicative Maybe :=
 { is_functor := Maybe_Functor
-; pure := Just
+; pure := @Just
 ; ap := @Maybe_apply
 }.
 
 Definition Maybe_join {X} (x : Maybe (Maybe X)) : Maybe X :=
   match x with
-  | Nothing => @Nothing X
-  | Just Nothing => @Nothing X
-  | Just (Just x') => @Just X x'
+  | Nothing => Nothing
+  | Just Nothing => Nothing
+  | Just (Just x') => Just x'
   end.
 
 Instance Maybe_Monad : Monad Maybe :=
@@ -85,12 +79,12 @@ Definition isJust {a} (x : Maybe a) := if x is Just _ then true else false.
 Definition Maybe_choose {a} (x y : Maybe a) : Maybe a :=
   match x with
   | Nothing => y
-  | Just _ => x
+  | Just _  => x
   end.
 
 Instance Maybe_Alternative : Alternative Maybe := {
-  empty := fun T => @Nothing T;
-  choose := fun _ => Maybe_choose
+  empty  := @Nothing;
+  choose := @Maybe_choose
   (* some := fun _ x => match x with *)
   (*   | Nothing => Nothing *)
   (*   | Just x => Just [x] *)

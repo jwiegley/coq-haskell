@@ -3,11 +3,11 @@ Require Import Hask.Ltac.
 
 Generalizable All Variables.
 
-Class Functor (f : Type -> Type) := {
+Class Functor (f : Type -> Type) : Type := {
   fmap : forall {a b : Type}, (a -> b) -> f a -> f b
 }.
 
-Arguments fmap {f _ a b} _ x.
+Arguments fmap {f _ a b} g x.
 
 Infix "<$>" := fmap (at level 28, left associativity, only parsing).
 Notation "x <&> f" :=
