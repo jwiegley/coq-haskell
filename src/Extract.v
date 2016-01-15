@@ -15,6 +15,7 @@ Require Import Hask.Data.IntMap.
 Require Import Hask.Data.IntSet.
 Require Import Hask.Data.List.Church.
 Require Import Hask.Data.List.
+Require Import Hask.Data.Monoid.
 Require Import Hask.Data.NonEmpty.
 Require Import Hask.Data.Vector.
 Require Import Hask.Haskell.
@@ -80,6 +81,9 @@ Separate Extraction
   olast
   Maybe_choose
   Maybe_map
+  Monoid
+  mempty
+  mappend
   partition
   put
   putT
