@@ -36,7 +36,7 @@ Defined.
 *)
 
 Definition EitherT_pure {E M} `{Applicative M} {X}
-  : X -> EitherT E M X := pure/M \o pure/(Either E).
+  : X -> EitherT E M X := pure[M] \o pure[Either E].
 
 Definition EitherT_apply {E M} `{Applicative M} {X Y}
   (mf : EitherT E M (X -> Y)) (mx : EitherT E M X) : EitherT E M Y :=

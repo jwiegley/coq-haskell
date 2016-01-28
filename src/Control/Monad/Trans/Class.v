@@ -9,8 +9,8 @@ Class MonadTrans (T : (Type -> Type) -> Type -> Type) :=
 
 Arguments lift {T _ M _ _ A} _.
 
-Notation "lift/ M" := (@lift M _ _ _) (at level 9).
-Notation "lift/ M N" := (@lift (fun X => M (N X)) _ _ _) (at level 9).
+Notation "lift[ M ]" := (@lift M _ _ _) (at level 9).
+Notation "lift[ M N ]" := (@lift (fun X => M (N X)) _ _ _) (at level 9).
 
 Module MonadTransLaws.
 
@@ -19,7 +19,7 @@ Include MonadLaws.
 Class MonadTransLaws `{MonadTrans T} :=
 { trans_law_1 :
     forall (M : Type -> Type) `{MonadLaws M} `{MonadLaws (T M)} A,
-      lift \o pure/M = (@pure (T M) _ A);
+      lift \o pure[M] = (@pure (T M) _ A);
   trans_law_2 :
     forall (M : Type -> Type) `{MonadLaws M} `{MonadLaws (T M)} A
       (f : A -> M A) (m : M A),
@@ -29,7 +29,7 @@ Class MonadTransLaws `{MonadTrans T} :=
 Theorem trans_law_1_x : forall (T : (Type -> Type) -> Type -> Type)
   {M : Type -> Type} `{m : MonadLaws M} `{tm : MonadLaws (T M)}
   `{MonadTransLaws T} {A : Type} {x : A},
-  lift ((pure/M) x) = (@pure (T M) _ A) x.
+  lift (pure[M] x) = (@pure (T M) _ A) x.
 Proof.
   intros.
   destruct H2.

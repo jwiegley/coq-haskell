@@ -13,7 +13,7 @@ Definition fromLogicT (M : Type -> Type) `{Monad M} (A : Type)
   match l with
     LogicT_ _ await =>
       LogicT_' M A (fun yield =>
-        await (compose (join/M) \o (@fmap M _ _ _) \o yield) \o pure)
+        await (compose (join[M]) \o (@fmap M _ _ _) \o yield) \o pure)
   end.
 
 Definition toLogicT (M : Type -> Type) `{Monad M} (A : Type)
@@ -67,8 +67,8 @@ Proof.
     unfold compose at 2.
     unfold compose at 1.
     extensionality x0.
-    assert ((join/M) ((fmap[M] (x y \o pure/M)) x0) =
-            (join/M \o fmap[M] (x y \o pure/M)) x0).
+    assert ((join[M]) ((fmap[M] (x y \o pure[M])) x0) =
+            (join[M] \o fmap[M] (x y \o pure[M])) x0).
       auto. rewrite H0. clear H0.
     rewrite <- fun_composition.
     rewrite comp_assoc.
