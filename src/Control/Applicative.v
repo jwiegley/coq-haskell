@@ -155,3 +155,9 @@ Notation "f <|> g" := (choose f g) (at level 28, left associativity).
 (*     empty := fun _ => []; *)
 (*     choose := app *)
 (* }. *)
+
+Instance Compose_Alternative
+  `{Alternative F} `{Alternative G} : Alternative (F \o G)  :=
+{ empty  := fun A => @empty F _ (G A)
+; choose := fun A => @choose F _ (G A) (* jww (2016-01-28): correct? *)
+}.
