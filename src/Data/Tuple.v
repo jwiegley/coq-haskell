@@ -1,4 +1,4 @@
-Require Import Hask.Ssr.
+Require Import Hask.Ltac.
 Require Import Hask.Control.Iso.
 
 Generalizable All Variables.
@@ -80,13 +80,41 @@ Proof. reflexivity. Qed.
 
 Lemma fst_snd : forall a b (z : a * b),
   (let '(x, y) := z in (x, y)) = (fst z, snd z).
-Proof. by move=> ? ? [*]. Qed.
+Proof. intros ? ? [?]; auto. Qed.
 
-Lemma unsplit : forall a b (xs : seq (a * b)),
-  [seq (fst x, snd x) | x <- xs] = xs.
+Require Import Coq.Lists.List.
+
+Lemma unsplit : forall a b (xs : list (a * b)),
+  map (fun x => (fst x, snd x)) xs = xs.
 Proof.
-  move=> a b.
-  elim=> //= [x xs IHxs].
+  intros.
+  induction xs as [|x xs IHxs]; auto; simpl.
   rewrite IHxs.
-  by case: x => [*].
+  destruct x; auto.
 Qed.
+
+Definition prod_map {A B C : Type} (f : A -> B) (x : C * A) : C * B :=
+  match x with (a, b) => (a, f b) end.
+
+Module TupleLaws.
+
+Require Import FunctionalExtensionality.
+
+Theorem prod_map_id {E A} : @prod_map A A E id = id.
+Proof.
+  extensionality x.
+  destruct x; auto.
+Qed.
+
+Theorem prod_map_comp {E A B C} (f : B -> C) (g : A -> B) :
+  @prod_map B C E f \o @prod_map A B E g = @prod_map A C E (f \o g).
+Proof.
+  extensionality x.
+  destruct x; auto.
+Qed.
+
+Corollary prod_map_comp_x {E A B C} (f : B -> C) (g : A -> B) (x : E * A) :
+  prod_map f (prod_map g x) = prod_map (fun x => f (g x)) x.
+Proof. destruct x; auto. Qed.
+
+End TupleLaws.

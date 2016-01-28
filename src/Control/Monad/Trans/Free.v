@@ -24,11 +24,12 @@ Arguments FT {f m a x} _ _.
 
 Fixpoint iterTi `{Functor f} `{Monad m}
   `(phi : f (m a) -> m a) (ft : FreeTi f m a) : m a :=
-  let: FT s k z := ft in
-  y <-- z ;;
-  match y with
-    | Pure x => @pure m _ a x
-    | Free x => phi $ fmap (iterTi phi \o k) x
+  match ft with FT s k z =>
+    y <- z ;
+    match y with
+      | Pure x => @pure m _ a x
+      | Free x => phi $ fmap (iterTi phi \o k) x
+    end
   end.
 
 (* Definition wrap `{Functor f} `{Monad m} {a} : *)
@@ -41,11 +42,12 @@ Fixpoint iterTi `{Functor f} `{Monad m}
 
 Fixpoint toFreeT `{Functor f} `{Monad m} `(ft : FreeTi f m a) : FreeT f m a :=
   fun s k h =>
-    let: FT _ g z := ft in
-    y <-- z ;;
-    match y with
-      | Pure x => k x
-      | Free fb => h _ (fun x => toFreeT (g x) _ k h) fb
+    match ft with FT _ g z =>
+      y <- z ;
+      match y with
+        | Pure x => k x
+        | Free fb => h _ (fun x => toFreeT (g x) _ k h) fb
+      end
     end.
 
 Program Instance FreeT_Functor {f m} : Functor (FreeT f m) := {

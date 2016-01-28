@@ -1,11 +1,14 @@
-Require Import Hask.Ssr.
 Require Import Hask.Control.Monad.
 
 Generalizable All Variables.
 
-Notation Maybe   := option.
-Notation Nothing := None.
-Notation Just    := Some.
+Inductive Maybe (A : Type) := Nothing | Just : A -> Maybe A.
+Arguments Nothing {A}.
+Arguments Just {A} _.
+
+(* Notation Maybe   := option. *)
+(* Notation Nothing := None. *)
+(* Notation Just    := Some. *)
 
 Definition fromMaybe `(x : a) (my : Maybe a) : a :=
   match my with
@@ -74,7 +77,7 @@ Ltac simple_solver :=
 Obligation Tactic := simple_solver.
 *)
 
-Definition isJust {a} (x : Maybe a) := if x is Just _ then true else false.
+Definition isJust {a} (x : Maybe a) := if x then false else true.
 
 Definition Maybe_choose {a} (x y : Maybe a) : Maybe a :=
   match x with
@@ -96,5 +99,8 @@ Instance Maybe_Alternative : Alternative Maybe := {
 }.
 
 Lemma Maybe_choose_spec : forall a (x y : Maybe a),
-  isJust (x <|> y) = isJust x || isJust y.
-Proof. by move=> a [x|] [y|] //=. Qed.
+  isJust (x <|> y) = (isJust x || isJust y)%bool.
+Proof.
+  intros a x y.
+  destruct x; auto.
+Qed.

@@ -1,4 +1,4 @@
-Require Import Hask.Ssr.
+Require Export Hask.Ltac.
 Require Export Hask.Data.Functor.
 Require Export Hask.Data.Functor.Const.
 
@@ -17,12 +17,12 @@ Class Applicative (f : Type -> Type) := {
 Arguments pure {f _ _} _.
 Arguments ap   {f _ _ _} _ x.
 
-Notation "pure/ M" := (@pure M _ _) (at level 28).
-Notation "pure/ M N" := (@pure (fun X => M (N X)) _ _) (at level 26).
+Notation "pure[ M ]" := (@pure M _ _) (at level 19, M at next level).
+Notation "pure[ M N ]" := (@pure (fun X => M (N X)) _ _) (at level 9).
 
-Notation "ap[ M ]  f" := (@ap M _ _ _ f) (at level 28).
-Notation "ap[ M N ]  f" := (@ap (fun X => M (N X)) _ _ _ f) (at level 26).
-Notation "ap[ M N O ]  f" := (@ap (fun X => M (N (O X))) _ _ _ f) (at level 24).
+Notation "ap[ M ]" := (@ap M _ _ _) (at level 9).
+Notation "ap[ M N ]" := (@ap (fun X => M (N X)) _ _ _) (at level 9).
+Notation "ap[ M N O ]" := (@ap (fun X => M (N (O X))) _ _ _) (at level 9).
 
 Infix "<*>" := ap (at level 28, left associativity).
 
@@ -49,7 +49,7 @@ Require Import FunctionalExtensionality.
 Class ApplicativeLaws (f : Type -> Type) `{Applicative f} := {
   has_functor_laws :> FunctorLaws f;
 
-  ap_id : forall a : Type, ap (pure (@id a)) =1 id;
+  ap_id : forall a : Type, ap (pure (@id a)) = id;
   ap_comp : forall (a b c : Type) (v : f (a -> b)) (u : f (b -> c)) (w : f a),
     pure (fun f g x => f (g x)) <*> u <*> v <*> w = u <*> (v <*> w);
   ap_homo : forall (a b : Type) (x : a) (f : a -> b),
@@ -58,73 +58,79 @@ Class ApplicativeLaws (f : Type -> Type) `{Applicative f} := {
     u <*> pure y = pure (fun f => f y) <*> u;
 
   ap_fmap : forall (a b : Type) (f : a -> b),
-    ap (pure f) =1 @fmap _ is_functor _ _ f
+    ap (pure f) = @fmap _ is_functor _ _ f
 }.
 
 Corollary fmap_pure `{ApplicativeLaws m} : forall (a b : Type) (f : a -> b),
-  fmap f \o pure =1 pure \o f.
+  fmap f \o pure = pure \o f.
 Proof.
-  move=> a b f x.
-  rewrite /funcomp -ap_fmap.
-  exact: ap_homo.
+  intros a b f.
+  extensionality x.
+  unfold Basics.compose.
+  rewrite <- ap_fmap.
+  apply ap_homo.
 Qed.
 
 Corollary fmap_pure_x `{ApplicativeLaws m} : forall (a b : Type) (f : a -> b) x,
   fmap f (pure x) = pure (f x).
-Proof. exact: fmap_pure. Qed.
-
-Corollary ap_id_ext `{ApplicativeLaws f} : forall a : Type,
-  ap (pure (@id a)) = id.
 Proof.
-  move=> a.
-  extensionality x.
-  exact: ap_id.
+  intros.
+  replace (pure[m] (f x)) with ((pure[m] \o f) x).
+    rewrite <- fmap_pure.
+    reflexivity.
+  reflexivity.
 Qed.
 
-Corollary ap_fmap_ext `{ApplicativeLaws F} : forall (a b : Type) (f : a -> b),
-  ap (pure f) = @fmap _ is_functor _ _ f.
-Proof.
-  move=> a b f.
-  extensionality x.
-  exact: ap_fmap.
-Qed.
-
-Program Instance ApplicativeLaws_Compose (F : Type -> Type) (G : Type -> Type)
+Program Instance ApplicativeLaws_Compose
   `{ApplicativeLaws F} `{ApplicativeLaws G} : ApplicativeLaws (F \o G).
 Obligation 1. (* app_identity *)
-  move=> e.
-  by rewrite -ap_fmap ap_homo ap_id_ext ap_fmap fmap_id.
+  extensionality e.
+  rewrite <- ap_fmap, ap_homo, ap_id, ap_fmap, fmap_id.
+  reflexivity.
 Qed.
 Obligation 2. (* ap_composition *)
   (* Discharge w *)
-  rewrite -ap_comp.
+  rewrite <- ap_comp.
   f_equal.
   (* Discharge v *)
-  rewrite -ap_fmap_ext -ap_comp -[X in _ <*> _ <*> X v]ap_fmap_ext -ap_comp.
+  (* -[X in _ <*> _ <*> X v]ap_fmap *)
+  rewrite <- ap_fmap, <- ap_comp.
+  symmetry.
+  rewrite <- ap_fmap, <- ap_fmap, <- ap_comp.
   f_equal.
   (* Discharge u *)
-  rewrite fmap_pure_x ap_homo !ap_fmap !fmap_comp_x ap_interchange
-          ap_fmap fmap_comp_x ap_fmap_ext.
+  rewrite fmap_pure_x, ap_homo.
+  repeat rewrite ap_fmap.
+  repeat rewrite fmap_comp_x.
+  rewrite ap_interchange, ap_fmap, fmap_comp_x.
   f_equal.
   (* Discharge compose *)
   extensionality u'.
   extensionality v'.
-  rewrite -ap_fmap_ext.
+  rewrite <- ap_fmap.
   extensionality w'.
-  by rewrite /= ap_comp.
+  rewrite ap_comp.
+  reflexivity.
 Qed.
 Obligation 3. (* ap_homo *)
-  by rewrite -ap_fmap !ap_homo.
+  rewrite <- ap_fmap.
+  repeat rewrite ap_homo.
+  reflexivity.
 Qed.
 Obligation 4. (* ap_interchange *)
-  rewrite -!ap_fmap ap_interchange ap_homo !ap_fmap fmap_comp_x.
+  repeat rewrite <- ap_fmap.
+  rewrite ap_interchange, ap_homo.
+  repeat rewrite ap_fmap.
+  rewrite fmap_comp_x.
   f_equal.
   extensionality e.
-  by rewrite ap_interchange.
+  rewrite ap_interchange, ap_fmap.
+  reflexivity.
 Qed.
 Obligation 5. (* ap_fmap *)
-  move=> x.
-  by rewrite -ap_fmap ap_homo ap_fmap ap_fmap_ext.
+  extensionality x.
+  rewrite <- ap_fmap, ap_homo, ap_fmap, ap_fmap.
+  reflexivity.
 Qed.
 
 End ApplicativeLaws.

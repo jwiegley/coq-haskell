@@ -7,6 +7,7 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 Generalizable All Variables.
 
+(*
 Inductive IntSet := getIntSet of seq nat.
 
 Arguments getIntSet _.
@@ -72,3 +73,4 @@ Canonical IntSet_eqMixin := EqMixin eqIntSetP.
 Canonical IntSet_eqType := Eval hnf in EqType IntSet IntSet_eqMixin.
 
 End EqIntSet.
+*)

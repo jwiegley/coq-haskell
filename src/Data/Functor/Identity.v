@@ -20,7 +20,7 @@ Program Instance Identity_Monad : Monad Identity := {
   join := fun _ => id
 }.
 
-Inductive IdentityF (a : Type) := Id of a.
+Inductive IdentityF (a : Type) := Id : a -> IdentityF a.
 
 Definition runIdentityF `(x : IdentityF a) : a :=
   match x with Id y => y end.

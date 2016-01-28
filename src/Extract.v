@@ -28,37 +28,37 @@ Separate Extraction
   Hask.Control.Monad.Monad
   apply
   bind
-  catMaybes
+  (* catMaybes *)
   compose
   concatMapM
   const
   curry
-  distance
-  emptyIntMap
-  emptyIntSet
-  eqIntMap
-  eqIntSet
-  eq_op
-  exist_in_cons
+  (* distance *)
+  (* emptyIntMap *)
+  (* emptyIntSet *)
+  (* eqIntMap *)
+  (* eqIntSet *)
+  (* eq_op *)
+  (* exist_in_cons *)
   extend
-  fin_contra
-  fin_ind
-  fin_rect
+  (* fin_contra *)
+  (* fin_ind *)
+  (* fin_rect *)
   first
   flip
   foldM
-  foldl_with_index
+  (* foldl_with_index *)
   foldrM
-  foldr_with_index
-  forFold
+  (* foldr_with_index *)
+  (* forFold *)
   forFoldM
-  forFoldr
+  (* forFoldr *)
   forFoldrM
   forM
   forM_
-  fromChurch
+  (* fromChurch *)
   get
-  getBy
+  (* getBy *)
   getT
   gets
   getsT
@@ -66,51 +66,51 @@ Separate Extraction
   iterT
   kleisli_compose
   lebf
-  lift
+  (* lift *)
   liftA2
   liftCoyoneda
   liftF
   liftStateT
-  list_membership
+  (* list_membership *)
   lowerCoyoneda
-  map_fst_filter_snd
+  (* map_fst_filter_snd *)
   modify
   modifyT
-  oddnum
-  oends
-  olast
+  (* oddnum *)
+  (* oends *)
+  (* olast *)
   Maybe_choose
   Maybe_map
   Monoid
   mempty
   mappend
-  partition
+  (* partition *)
   put
   putT
   runIdentityF
-  safe_hd
-  safe_last
+  (* safe_hd *)
+  (* safe_last *)
   second
-  sumlist
-  toChurch
-  to_from_Church
+  (* sumlist *)
+  (* toChurch *)
+  (* to_from_Church *)
   undefined
-  vapp
-  vcons
-  vconst
-  vec_ind
-  vec_rect
-  vecn_ind
-  vecn_rect
-  vfoldl
-  vfoldl_with_index
-  vfoldr_with_index
-  vmap
-  vnil
-  vnth
-  vnth_vshiftin
-  vreplace
-  vshiftin
-  vsing
-  vec_to_seq
-  seq_to_vec.
+  (* vapp *)
+  (* vcons *)
+  (* vconst *)
+  (* vec_ind *)
+  (* vec_rect *)
+  (* vecn_ind *)
+  (* vecn_rect *)
+  (* vfoldl *)
+  (* vfoldl_with_index *)
+  (* vfoldr_with_index *)
+  (* vmap *)
+  (* vnil *)
+  (* vnth *)
+  (* vnth_vshiftin *)
+  (* vreplace *)
+  (* vshiftin *)
+  (* vsing *)
+  (* vec_to_seq *)
+  (* seq_to_vec *).

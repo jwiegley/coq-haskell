@@ -9,6 +9,7 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 Generalizable All Variables.
 
+(*
 Inductive IntMap (a : Type) := getIntMap of seq (nat * a).
 
 Arguments getIntMap {a} _.
@@ -189,3 +190,4 @@ Definition IntMap_groupOn {a} (p : a -> nat) (l : seq a) :
     IntMap_alter (fun mxs => if mxs is Some xs
                              then Some (NE_Cons x xs)
                              else Some [::: x]) n acc.
+*)

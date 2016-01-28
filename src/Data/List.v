@@ -1,4 +1,3 @@
-Require Import Hask.Ssr.
 Require Import Hask.Ltac.
 Require Import Hask.Control.Monad.
 
@@ -11,16 +10,20 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
-Definition concat {A} : seq (seq A) -> seq A := flatten.
+Definition concat {A} : list (list A) -> list A := flatten.
 
-Fixpoint lookup {a : eqType} {b} (dflt : b) (v : seq (a * b)) (x : a) : b :=
-  if v is (k, v) :: xs
-  then if k == x
-       then v
-       else lookup dflt xs x
-  else dflt.
+Fixpoint lookup {a : Type} (dec_eq : a -> a -> bool) {b}
+  (dflt : b) (v : list (a * b)) (x : a) : b :=
+  match v with
+  | nil => dflt
+  | cons (k, v) xs =>
+    if dec_eq k x
+    then v
+    else lookup dec_eq dflt xs x
+  end.
 
-Fixpoint maybeLookup {a : eqType} {b} (v : seq (a * b)) (x : a) : option b :=
+(*
+Fixpoint maybeLookup {a : eqType} {b} (v : list (a * b)) (x : a) : option b :=
   if v is (k, v) :: xs
   then if k == x
        then Some v
@@ -28,14 +31,14 @@ Fixpoint maybeLookup {a : eqType} {b} (v : seq (a * b)) (x : a) : option b :=
   else None.
 
 Fixpoint valueLookup {a} {b : eqType} (dflt : a)
-  (v : seq (a * b)) (x : b) : a :=
+  (v : list (a * b)) (x : b) : a :=
   if v is (k, v) :: xs
   then if v == x
        then k
        else valueLookup dflt xs x
   else dflt.
 
-Fixpoint maybeValueLookup {a} {b : eqType} (v : seq (a * b)) (x : b) :
+Fixpoint maybeValueLookup {a} {b : eqType} (v : list (a * b)) (x : b) :
   option a :=
   if v is (k, v) :: xs
   then if v == x
@@ -43,12 +46,12 @@ Fixpoint maybeValueLookup {a} {b : eqType} (v : seq (a * b)) (x : b) :
        else maybeValueLookup xs x
   else None.
 
-Definition listToMaybe `(xs : seq a) : option (seq a) :=
+Definition listToMaybe `(xs : list a) : option (list a) :=
   if xs is [::]
   then None
   else Some xs.
 
-Definition maybeToList `(mx : option a) : seq a :=
+Definition maybeToList `(mx : option a) : list a :=
   match mx with
   | Some x => [:: x]
   | None   => [::]
@@ -57,7 +60,7 @@ Definition maybeToList `(mx : option a) : seq a :=
 Lemma rcons_nil : forall a us (u : a), rcons us u = [::] -> False.
 Proof. by move=> a us u; case: us => // [|? ?] in u *. Qed.
 
-Definition olast a (l : seq a) : option a :=
+Definition olast a (l : list a) : option a :=
   let fix go res xs :=
       match xs with
       | nil => res
@@ -65,7 +68,7 @@ Definition olast a (l : seq a) : option a :=
       end in
   go None l.
 
-Example olast_ex1 : olast ([::] : seq nat) == None.
+Example olast_ex1 : olast ([::] : list nat) == None.
 Proof. by []. Qed.
 
 Example olast_ex2 : olast [:: 1] == Some 1.
@@ -134,7 +137,7 @@ Proof.
   exact: IHzs.
 Qed.
 
-Definition oends a (l : seq a) : option (a + (a * a)).
+Definition oends a (l : list a) : option (a + (a * a)).
 Proof.
   case: l => [|x xs].
     exact: None.
@@ -143,7 +146,7 @@ Proof.
   exact: Some (inr (x, y)).
 Defined.
 
-Lemma oends_spec a (l : seq a) :
+Lemma oends_spec a (l : list a) :
   match oends l with
   | Some (inr (x, y)) => head x l = x /\ last y l = y
   | Some (inl x)      => head x l = last x l
@@ -156,7 +159,7 @@ Proof.
   by rewrite last_rcons.
 Qed.
 
-Lemma last_leq : forall (z y : nat) (xs : seq nat) (n : nat),
+Lemma last_leq : forall (z y : nat) (xs : list nat) (n : nat),
   last z xs <= n -> y <= z -> last y xs <= n.
 Proof.
   move=> z y.
@@ -164,7 +167,7 @@ Proof.
   exact: leq_trans IHxs _.
 Qed.
 
-Lemma last_leq_ltn : forall (z y : nat) (xs : seq nat) (n : nat),
+Lemma last_leq_ltn : forall (z y : nat) (xs : list nat) (n : nat),
   last z xs < n -> y <= z -> last y xs < n.
 Proof.
   move=> z y.
@@ -172,7 +175,7 @@ Proof.
   exact: leq_ltn_trans IHxs _.
 Qed.
 
-Lemma last_ltn : forall (z y : nat) (xs : seq nat) (n : nat),
+Lemma last_ltn : forall (z y : nat) (xs : list nat) (n : nat),
   last z xs < n -> y <= z -> last y xs < n.
 Proof.
   move=> z y.
@@ -180,11 +183,11 @@ Proof.
   exact: leq_ltn_trans IHxs _.
 Qed.
 
-Lemma list_cons_nonzero : forall {a x} {xs l : seq a},
+Lemma list_cons_nonzero : forall {a x} {xs l : list a},
   l = x :: xs -> size l > 0.
 Proof. by move=> a x xs l ->. Qed.
 
-Definition exist_in_cons : forall {A : eqType} {a} {l : seq A},
+Definition exist_in_cons : forall {A : eqType} {a} {l : list A},
   {x : A | x \in l} -> {x : A | x \in a :: l}.
 Proof.
   move=> A a l.
@@ -194,8 +197,8 @@ Proof.
   by apply/orP; right.
 Defined.
 
-Definition list_membership {a : eqType} (l : seq a) :
-  seq { x : a | x \in l } :=
+Definition list_membership {a : eqType} (l : list a) :
+  list { x : a | x \in l } :=
   let fix go l :=
       match l with
       | nil => nil
@@ -204,7 +207,7 @@ Definition list_membership {a : eqType} (l : seq a) :
       end in
   go l.
 
-Fixpoint init {a : Type} (x : a) (l : seq a) :=
+Fixpoint init {a : Type} (x : a) (l : list a) :=
   match l with
     | nil => nil
     | cons y nil => [:: x]
@@ -271,7 +274,7 @@ Proof.
   by move/IHxs: H3 => [? ?].
 Qed.
 
-Lemma StronglySorted_inv_app : forall a R (l1 l2 : seq a),
+Lemma StronglySorted_inv_app : forall a R (l1 l2 : list a),
   StronglySorted R (l1 ++ l2)
     -> StronglySorted R l1 /\ StronglySorted R l2.
 Proof.
@@ -298,14 +301,14 @@ Proof.
   by inv H; inv H3.
 Qed.
 
-Lemma StronglySorted_cat {A : Type} {xs ys : seq A} {R : A -> A -> Prop}
+Lemma StronglySorted_cat {A : Type} {xs ys : list A} {R : A -> A -> Prop}
   `{Transitive _ R} :
   StronglySorted R xs -> StronglySorted R ys
     -> (match olast xs, ys with
         | Some x, y :: _ => R x y
         | _, _ => True
         end)
-    -> StronglySorted R (xs ++ ys)%SEQ.
+    -> StronglySorted R (xs ++ ys)%LIST.
 Proof.
   move=> Hsort1 Hsort2 Hrel.
   case/lastP: xs => //= [xs1 x1] in Hsort1 Hrel *.
@@ -339,7 +342,7 @@ Proof.
 Qed.
 
 Lemma StronglySorted_cat_cons
-  {A : Type} {x y : A} {xs ys : seq A} {R : A -> A -> Prop} `{Transitive _ R} :
+  {A : Type} {x y : A} {xs ys : list A} {R : A -> A -> Prop} `{Transitive _ R} :
   StronglySorted R (x :: xs) -> StronglySorted R (y :: ys)
     -> R (last x xs) y
     -> StronglySorted R (x :: xs ++ y :: ys).
@@ -444,7 +447,7 @@ Proof.
   exact: IHzs H1.
 Qed.
 
-Fixpoint maybe_nth {a} (v : seq a) i {struct i} :=
+Fixpoint maybe_nth {a} (v : list a) i {struct i} :=
   match v with
   | [::] => None
   | x :: s' =>
@@ -454,21 +457,21 @@ Fixpoint maybe_nth {a} (v : seq a) i {struct i} :=
       end
   end.
 
-Fixpoint apply_nth {a} (def : a) (v : seq a) i (f : a -> a) {struct i} :=
+Fixpoint apply_nth {a} (def : a) (v : list a) i (f : a -> a) {struct i} :=
   if v is x :: v'
   then if i is i'.+1
        then x :: apply_nth def v' i' f
        else f x :: v'
   else ncons i def [:: def].
 
-Definition forFold {A B : Type} (b : B) (v : seq A) (f : B -> A -> B) : B :=
+Definition forFold {A B : Type} (b : B) (v : list A) (f : B -> A -> B) : B :=
   foldl f b v.
 
-Definition forFoldr {A B : Type} (b : B) (v : seq A) (f : A -> B -> B) : B :=
+Definition forFoldr {A B : Type} (b : B) (v : list A) (f : A -> B -> B) : B :=
   foldr f b v.
 
 Definition foldl_with_index
-  {A B : Type} (f : nat -> B -> A -> B) (b : B) (v : seq A) : B :=
+  {A B : Type} (f : nat -> B -> A -> B) (b : B) (v : list A) : B :=
   let fix go n xs z :=
       match xs with
         | nil => z
@@ -482,12 +485,12 @@ Example ex_foldl_with_index_1 :
 Proof. reflexivity. Qed.
 
 Lemma foldl_cons : forall a (x : a) xs,
-  foldl (fun us : seq a => cons^~ us) [:: x] xs
-    = foldl (fun us : seq a => cons^~ us) [::] [:: x & xs].
+  foldl (fun us : list a => cons^~ us) [:: x] xs
+    = foldl (fun us : list a => cons^~ us) [::] [:: x & xs].
 Proof. by move=> a x; elim. Qed.
 
 Definition foldr_with_index
-  {A B : Type} (f : nat -> A -> B -> B) (b : B) (v : seq A) : B :=
+  {A B : Type} (f : nat -> A -> B -> B) (b : B) (v : list A) : B :=
   let fix go n xs z :=
       match xs with
         | nil => z
@@ -500,14 +503,14 @@ Example ex_foldr_with_index_1 :
     == [:: (0, 1); (1, 2); (2, 3)].
 Proof. reflexivity. Qed.
 
-Definition catMaybes {a} (l : seq (option a)) : seq a :=
+Definition catMaybes {a} (l : list (option a)) : list a :=
   (fun f => foldr f [::] l) (fun mx rest =>
     if mx is Some x
     then x :: rest
     else rest).
 
 Fixpoint mapAccumL {A X Y : Type} (f : A -> X -> (A * Y))
-  (s : A) (v : seq X) : A * seq Y :=
+  (s : A) (v : list X) : A * list Y :=
   match v with
   | nil => (s, nil)
   | x :: xs =>
@@ -520,7 +523,7 @@ Example ex_mapAccumL_1 :
   mapAccumL (fun n x => (n.+1, x.+2)) 0 [:: 1; 2; 3] == (3, [:: 3; 4; 5]).
 Proof. reflexivity. Qed.
 
-Definition getBy {a} (p : a -> bool) (xs : seq a) : option a :=
+Definition getBy {a} (p : a -> bool) (xs : list a) : option a :=
   (fun f => foldl f None xs) (fun acc x =>
     match acc with
     | Some y => Some y
@@ -530,9 +533,9 @@ Definition getBy {a} (p : a -> bool) (xs : seq a) : option a :=
       else None
     end).
 
-Definition sumlist : seq nat -> nat := foldl addn 0.
+Definition sumlist : list nat -> nat := foldl addn 0.
 
-Definition safe_nth {a} (xs : seq a) (n : nat) (H : n < size xs) : a.
+Definition safe_nth {a} (xs : list a) (n : nat) (H : n < size xs) : a.
 Proof.
   elim: xs => [|x xs IHxs] in n H *.
     by [].
@@ -546,12 +549,12 @@ Proof.
   by ordered.
 Defined.
 
-Definition safe_hd {a} (xs : seq a) : 0 < size xs -> a.
+Definition safe_hd {a} (xs : list a) : 0 < size xs -> a.
 Proof. case: xs => //. Defined.
 
 Arguments safe_hd [a] xs H.
 
-Definition safe_last {a} (xs : seq a) : 0 < size xs -> a.
+Definition safe_last {a} (xs : list a) : 0 < size xs -> a.
 Proof.
   case: xs => [//|y ys] /= *.
   exact: (last y ys).
@@ -559,7 +562,7 @@ Defined.
 
 Arguments safe_last [a] xs H.
 
-Fixpoint span {a} (p : a -> bool) (l : seq a) : (seq a * seq a) :=
+Fixpoint span {a} (p : a -> bool) (l : list a) : (list a * list a) :=
   match l with
   | nil => (nil, nil)
   | x :: xs =>
@@ -568,7 +571,7 @@ Fixpoint span {a} (p : a -> bool) (l : seq a) : (seq a * seq a) :=
     else (nil,l)
   end.
 
-Lemma span_cat {a} (l : seq a) : forall p l1 l2,
+Lemma span_cat {a} (l : list a) : forall p l1 l2,
   (l1, l2) = span p l
     -> l = l1 ++ l2 /\ all p l1 /\ (if l2 is x :: _ then ~~ (p x) else True).
 Proof.
@@ -592,8 +595,8 @@ Example span_ex1 :
   span (fun x => x < 10) [:: 1; 5; 10; 15] = ([:: 1; 5], [:: 10; 15]).
 Proof. reflexivity. Qed.
 
-Program Fixpoint groupBy {a} (p : a -> a -> bool) (l : seq a)
-  {measure (size l)} : seq (seq a) :=
+Program Fixpoint groupBy {a} (p : a -> a -> bool) (l : list a)
+  {measure (size l)} : list (list a) :=
   match l with
   | [::] => nil
   | x :: xs => let: (ys, zs) := span (p x) xs in
@@ -619,13 +622,13 @@ Example groupBy_ex1 :
     = [:: [:: 1]; [:: 3; 3]; [:: 4]; [:: 5; 5]; [:: 9]; [:: 6]; [:: 8]].
 Proof. reflexivity. Qed.
 
-Definition partition {a} (p : a -> bool) : seq a -> seq a * seq a :=
+Definition partition {a} (p : a -> bool) : list a -> list a * list a :=
   foldr (fun x acc =>
            if p x
            then (x :: fst acc, snd acc)
            else (fst acc, x :: snd acc)) ([::], [::]).
 
-Lemma partition_all {a} {p q : a -> bool} (xs : seq a) :
+Lemma partition_all {a} {p q : a -> bool} (xs : list a) :
   all p xs -> let: (ys, zs) := partition q xs in
               all (fun x => p x && q x) ys &&
               all (fun x => p x && ~~ q x) zs.
@@ -641,7 +644,7 @@ Proof.
   by ordered.
 Qed.
 
-Lemma perm_eq_nil : forall (a : eqType) (xs : seq a),
+Lemma perm_eq_nil : forall (a : eqType) (xs : list a),
   perm_eq [::] xs -> xs = [::].
 Proof.
   move=> a.
@@ -652,7 +655,7 @@ Proof.
   discriminate H1.
 Qed.
 
-Lemma all_perm : forall (a : eqType) (xs ys : seq a),
+Lemma all_perm : forall (a : eqType) (xs ys : list a),
   perm_eq xs ys -> all^~ xs =1 all^~ ys.
 Proof.
   move=> a xs ys H P.
@@ -660,7 +663,7 @@ Proof.
   by rewrite (eq_all_r H).
 Qed.
 
-Lemma all_catC {a} (P : pred a) (xs ys : seq a) :
+Lemma all_catC {a} (P : pred a) (xs ys : list a) :
   all P (xs ++ ys) = all P (ys ++ xs).
 Proof.
   case: xs => /= [|x xs] in ys *.
@@ -670,7 +673,7 @@ Proof.
   by rewrite !all_cat /= andbA andbC.
 Qed.
 
-Lemma all_flip : forall A (P : rel A) (_ : symmetric P) x (xs : seq A),
+Lemma all_flip : forall A (P : rel A) (_ : symmetric P) x (xs : list A),
   all (P x) xs = all (P ^~ x) xs.
 Proof.
   move=> A P H x.
@@ -678,7 +681,7 @@ Proof.
   by rewrite -IHys H.
 Qed.
 
-Lemma all_all_cons : forall a (xs ys : seq a) (x : a) (R : rel a),
+Lemma all_all_cons : forall a (xs ys : list a) (x : a) (R : rel a),
   all (fun y : a => all (R y) (x :: xs)) ys =
   all (R ^~ x) ys && all (fun y : a => all (R y) xs) ys.
 Proof.
@@ -689,7 +692,7 @@ Proof.
   by rewrite and_swap.
 Qed.
 
-Lemma all_all_cat : forall A (P : rel A) (xs ys zs : seq A),
+Lemma all_all_cat : forall A (P : rel A) (xs ys zs : list A),
   all (fun x => all (P x) (xs ++ ys)) zs
     = all (fun x => all (P x) xs) zs && all (fun x => all (P x) ys) zs.
 Proof.
@@ -703,7 +706,7 @@ Proof.
   by rewrite andbC.
 Qed.
 
-Lemma all_all_flip : forall A (P : rel A) (_ : symmetric P) (xs ys : seq A),
+Lemma all_all_flip : forall A (P : rel A) (_ : symmetric P) (xs ys : list A),
   all (fun x => all (P x) ys) xs = all (fun x => all (P ^~ x) ys) xs.
 Proof.
   move=> A P H.
@@ -711,7 +714,7 @@ Proof.
   by rewrite -IHzs all_flip.
 Qed.
 
-Lemma perm_cat_cons (T : eqType) (x : T) : forall (s1 s2 : seq_predType T),
+Lemma perm_cat_cons (T : eqType) (x : T) : forall (s1 s2 : list_predType T),
   perm_eql (x :: s1 ++ s2) (s1 ++ x :: s2).
 Proof.
   move=> s1 s2.
@@ -720,7 +723,7 @@ Proof.
   exact: perm_eq_refl.
 Qed.
 
-Lemma perm_rem_cons (T : eqType) (x : T) : forall (s1 s2 : seq_predType T),
+Lemma perm_rem_cons (T : eqType) (x : T) : forall (s1 s2 : list_predType T),
   x \in s1 -> perm_eql (rem x s1 ++ x :: s2) (s1 ++ s2).
 Proof.
   move=> s1 s2 Hin.
@@ -730,18 +733,18 @@ Proof.
 Qed.
 
 Definition map_fst_filter_snd :
-  forall (a b : eqType) (i : b) (xs : seq (a * b)),
-  all (fun x => (x, i) \in xs) [seq fst x | x <- xs & snd x == i].
+  forall (a b : eqType) (i : b) (xs : list (a * b)),
+  all (fun x => (x, i) \in xs) [list fst x | x <- xs & snd x == i].
 Proof.
   move=> a b i xs.
   apply/allP => x /mapP[[x1 y1]].
   by rewrite mem_filter => /= /andP [/eqP/=-> pIxs ->].
 Qed.
 
-Lemma has_size : forall (a : eqType) x (xs : seq a), x \in xs -> 0 < size xs.
+Lemma has_size : forall (a : eqType) x (xs : list a), x \in xs -> 0 < size xs.
 Proof. move=> a x; elim=> //. Qed.
 
-Fixpoint insert {a} (P : a -> a -> bool) (z : a) (l : seq a) : seq a :=
+Fixpoint insert {a} (P : a -> a -> bool) (z : a) (l : list a) : list a :=
   if l is x :: xs
   then if P x z
        then x :: insert P z xs
@@ -749,7 +752,7 @@ Fixpoint insert {a} (P : a -> a -> bool) (z : a) (l : seq a) : seq a :=
   else [:: z].
 Arguments insert {a} P z l : simpl never.
 
-Fixpoint sortBy {a} (p : a -> a -> bool) (l : seq a) : seq a :=
+Fixpoint sortBy {a} (p : a -> a -> bool) (l : list a) : list a :=
   match l with
   | [::] => nil
   | x :: xs => insert p x (sortBy p xs)
@@ -807,7 +810,7 @@ Proof.
 Qed.
 
 Lemma StronglySorted_impl_cons : forall a (R : a -> a -> bool) `{Transitive _ R}
-  x y (ys : seq a), StronglySorted R (x :: y :: ys) -> R x (last y ys).
+  x y (ys : list a), StronglySorted R (x :: y :: ys) -> R x (last y ys).
 Proof.
   move=> a R H x y ys Hsort.
   elim: ys => [|z zs IHzs] /= in x y Hsort *.
@@ -850,7 +853,7 @@ Proof.
   by rewrite IHus insert_all.
 Qed.
 
-Lemma perm_cons_swap (T : eqType) (x y : T) : forall (xs : seq_predType T),
+Lemma perm_cons_swap (T : eqType) (x y : T) : forall (xs : list_predType T),
   perm_eql (x :: y :: xs) (y :: x :: xs).
 Proof.
   move=> xs; apply/perm_eqlP.
@@ -858,7 +861,7 @@ Proof.
   exact: perm_eq_refl.
 Qed.
 
-Lemma insert_perm (T : eqType) P (x : T) : forall (xs : seq_predType T),
+Lemma insert_perm (T : eqType) P (x : T) : forall (xs : list_predType T),
   perm_eql (insert P x xs) (x :: xs).
 Proof.
   elim=> //= [y ys IHys]; rewrite /insert.
@@ -878,12 +881,12 @@ Proof.
 Qed.
 
 Lemma proj_rem_uniq (a b : eqType) (f : a -> b) : forall x xs,
-  uniq [seq f i | i <- xs] -> uniq [seq f i | i <- rem x xs].
-Proof. by move=> x xs; apply/subseq_uniq/map_subseq/rem_subseq. Qed.
+  uniq [list f i | i <- xs] -> uniq [list f i | i <- rem x xs].
+Proof. by move=> x xs; apply/sublist_uniq/map_sublist/rem_sublist. Qed.
 
-Lemma in_proj : forall (a b : eqType) (x : a) (y : b) (xs : seq (a * b)),
-  (x \notin [seq fst i | i <- xs]) ||
-  (y \notin [seq snd i | i <- xs]) -> (x, y) \notin xs.
+Lemma in_proj : forall (a b : eqType) (x : a) (y : b) (xs : list (a * b)),
+  (x \notin [list fst i | i <- xs]) ||
+  (y \notin [list snd i | i <- xs]) -> (x, y) \notin xs.
 Proof.
   move=> a b x y.
   elim=> //= [z zs IHzs] H1.
@@ -905,9 +908,9 @@ Proof.
   by right.
 Qed.
 
-Lemma uniq_proj : forall (a b : eqType) (xs : seq (a * b)),
-  uniq [seq fst i | i <- xs] ->
-  uniq [seq snd i | i <- xs] -> uniq xs.
+Lemma uniq_proj : forall (a b : eqType) (xs : list (a * b)),
+  uniq [list fst i | i <- xs] ->
+  uniq [list snd i | i <- xs] -> uniq xs.
 Proof.
   move=> a b.
   elim=> //= [x xs IHxs] /andP [H1 H2] /andP [H3 H4].
@@ -917,8 +920,8 @@ Proof.
   apply/orP; by left.
 Qed.
 
-Lemma subseq_in_cons : forall (a : eqType) x y (xs ys : seq a),
-  subseq (x :: xs) (y :: ys) -> x != y -> subseq (x :: xs) ys.
+Lemma sublist_in_cons : forall (a : eqType) x y (xs ys : list a),
+  sublist (x :: xs) (y :: ys) -> x != y -> sublist (x :: xs) ys.
 Proof.
   move=> a x y xs ys Hsub Hneq.
   elim: ys => /= [|z zs IHzs] in Hsub *.
@@ -934,13 +937,13 @@ Proof.
   assumption.
 Qed.
 
-Lemma subseq_sing : forall (a : eqType) (x : a) xs s,
-  subseq (x :: xs) s -> subseq [:: x] s.
+Lemma sublist_sing : forall (a : eqType) (x : a) xs s,
+  sublist (x :: xs) s -> sublist [:: x] s.
 Proof.
   move=> a x xs s Hsub.
   elim: s => // [y ys IHys] in Hsub *.
-  rewrite sub1seq.
-  rewrite sub1seq in IHys.
+  rewrite sub1list.
+  rewrite sub1list in IHys.
   rewrite in_cons.
   apply/orP.
   case E: (x == y).
@@ -949,68 +952,68 @@ Proof.
   move/negP in E.
   move/negP in E.
   apply: IHys.
-  apply: subseq_in_cons.
+  apply: sublist_in_cons.
     exact Hsub.
   exact E.
 Qed.
 
-Lemma in_subseq_sing : forall {E : eqType} (s : seq E) v (y : E) ys,
-  v = y :: ys -> subseq v s -> y \in s.
+Lemma in_sublist_sing : forall {E : eqType} (s : list E) v (y : E) ys,
+  v = y :: ys -> sublist v s -> y \in s.
 Proof.
   move=> E s v y ys ->.
-  rewrite -sub1seq.
-  exact: subseq_sing.
+  rewrite -sub1list.
+  exact: sublist_sing.
 Qed.
 
-Fixpoint subseq_impl_cons (a : eqType) (x : a) xs s :
-  subseq (x :: xs) s -> subseq xs s.
+Fixpoint sublist_impl_cons (a : eqType) (x : a) xs s :
+  sublist (x :: xs) s -> sublist xs s.
 Proof.
   elim: s => //= [z zs IHzs].
   case: xs => // [y ys] in IHzs *.
   case: (x == z).
     case: (y == z).
-      exact: subseq_impl_cons.
+      exact: sublist_impl_cons.
     exact.
   case: (y == z).
     move=> Hsub.
     specialize (IHzs Hsub).
-    apply: subseq_impl_cons.
+    apply: sublist_impl_cons.
     exact IHzs.
   exact.
 Qed.
 
-Lemma subseq_cons_add : forall (a : eqType) (x : a) xs s,
-  subseq xs s -> subseq xs (x :: s).
+Lemma sublist_cons_add : forall (a : eqType) (x : a) xs s,
+  sublist xs s -> sublist xs (x :: s).
 Proof.
   move=> a x.
   elim=> // [y ys IHys] s Hsub.
   rewrite /=.
   case: (y == x).
-    apply: subseq_impl_cons.
+    apply: sublist_impl_cons.
     exact Hsub.
   exact.
 Qed.
 
-Lemma subseq_cons_rem : forall (a : eqType) (x : a) xs s,
-  subseq (x :: xs) s -> subseq xs (rem x s).
+Lemma sublist_cons_rem : forall (a : eqType) (x : a) xs s,
+  sublist (x :: xs) s -> sublist xs (rem x s).
 Proof.
   move=> a x xs.
   elim=> //= [y ys IHys].
   rewrite eq_sym.
   case E: (y == x); first exact.
   move/IHys => Hsub {IHys}.
-  exact: subseq_cons_add.
+  exact: sublist_cons_add.
 Qed.
 
-Lemma all_xpredT_true : forall a (xs : seq a), all xpredT xs.
+Lemma all_xpredT_true : forall a (xs : list a), all xpredT xs.
 Proof. by move=> ?; elim. Qed.
 
-Fixpoint between_all `(R : rel a) (xs : seq a) : bool :=
+Fixpoint between_all `(R : rel a) (xs : list a) : bool :=
   if xs is y :: ys
   then all (R y) ys && between_all R ys
   else true.
 
-Lemma between_all_cat : forall a (xs ys : seq a) (R : rel a),
+Lemma between_all_cat : forall a (xs ys : list a) (R : rel a),
   between_all R (xs ++ ys) =
   [&& between_all R xs
   ,   between_all R ys
@@ -1032,7 +1035,7 @@ Proof.
   by rewrite -!andbA and_swap.
 Qed.
 
-Lemma between_all_catC {a} (xs ys : seq a) (R : rel a) (_ : symmetric R) :
+Lemma between_all_catC {a} (xs ys : list a) (R : rel a) (_ : symmetric R) :
   between_all R (xs ++ ys) = between_all R (ys ++ xs).
 Proof.
   elim: xs => /= [|x xs IHxs] in ys *.
@@ -1052,9 +1055,9 @@ Proof.
 Qed.
 
 Lemma allpairs_map :
-  forall a b c (f : a -> b -> c) (xs : seq a) (ys : seq b),
-  [seq f x y | x <- xs, y <- ys] =
-  flatten [seq [seq f x y | y <- ys] | x <- xs].
+  forall a b c (f : a -> b -> c) (xs : list a) (ys : list b),
+  [list f x y | x <- xs, y <- ys] =
+  flatten [list [list f x y | y <- ys] | x <- xs].
 Proof.
   move=> a b c f.
   elim=> //= [x xs IHxs] y.
@@ -1062,20 +1065,20 @@ Proof.
   exact: IHxs.
 Qed.
 
-Instance List_Functor : Functor seq := {
+Instance List_Functor : Functor list := {
   fmap := fun _ _ => map
 }.
 
-Instance List_Applicative : Applicative seq := {
+Instance List_Applicative : Applicative list := {
   pure := fun _ x => [:: x];
-  ap   := fun _ _ fs xs => [seq f x | f <- fs, x <- xs]
+  ap   := fun _ _ fs xs => [list f x | f <- fs, x <- xs]
 }.
 
 Module ListLaws.
 
 Include MonadLaws.
 
-Program Instance List_FunctorLaws : FunctorLaws seq.
+Program Instance List_FunctorLaws : FunctorLaws list.
 Obligation 1.
   move=> xs.
   by rewrite map_id.
@@ -1085,7 +1088,7 @@ Obligation 2.
   by rewrite /funcomp /= -!map_comp /funcomp.
 Qed.
 
-Program Instance List_ApplicativeLaws : ApplicativeLaws seq.
+Program Instance List_ApplicativeLaws : ApplicativeLaws list.
 Obligation 1.
   move=> xs.
   elim: xs => [|x xs IHxs] //=.
@@ -1112,3 +1115,4 @@ Obligation 5.
 Qed.
 
 End ListLaws.
+*)

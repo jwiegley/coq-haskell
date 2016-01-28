@@ -17,6 +17,7 @@ Definition vnil : Vec 0 := tt.
 
 Definition vsing (x : A) : Vec 1 := (x, tt).
 
+(*
 Definition vcons {n} (x : A) (v : Vec n) : Vec n.+1 := (x, v).
 
 Definition fin_contra : forall {x}, 'I_0 -> x.
@@ -423,3 +424,6 @@ Proof.
 Defined.
 
 End VectorSpec.
+*)
+
+End Vector.

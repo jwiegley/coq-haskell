@@ -42,10 +42,13 @@ Fixpoint foldFree `{Monad m} `(n : forall x, f x -> m x) `(fr : Free f a) :
   end.
 
 Fixpoint cutoff (n : nat) `(fr : Free f a) : Free f (option a) :=
-  if n isn't S n' then Pure None else
-  match fr with
-  | Pure x => Pure (Some x)
-  | Join _ g h => Join (cutoff n \o g) h
+  match n with
+  | O => Pure None
+  | S n' =>
+    match fr with
+    | Pure x => Pure (Some x)
+    | Join _ g h => Join (cutoff n \o g) h
+    end
   end.
 
 (* jww (2015-06-02): With universe polymorphism this should work fine. *)
@@ -79,98 +82,114 @@ Include MonadLaws.
 Require Import FunctionalExtensionality.
 
 Ltac reduce_free H :=
-  try elim=> //= [? ? H ?];
-  congr (Join _ _);
-  extensionality YY;
-  exact: H.
+  unfold id, comp, flip;
+  try extensionality XX;
+  simpl; auto;
+  try match goal with
+  | [ HF : Free _ _ |- _ ] =>
+      induction HF as [|? ? H ?]; simpl; auto
+  end;
+  f_equal;
+  try extensionality YY;
+  try apply H.
 
 Program Instance Free_FunctorLaws `{FunctorLaws f} : FunctorLaws (Free f).
-Obligation 1. by reduce_free IHx. Qed.
-Obligation 2. by reduce_free IHx. Qed.
+Obligation 1. reduce_free IHx. Qed.
+Obligation 2. reduce_free IHx. Qed.
 
 Program Instance Free_ApplicativeLaws `{FunctorLaws f} :
   ApplicativeLaws (Free f).
-Obligation 1. by reduce_free IHx. Qed.
+Obligation 1. reduce_free IHx. Qed.
 Obligation 2.
-  elim: u => /= [?|? ? IHu ?].
-    elim: v => /= [?|? ? IHv ?].
-      move: w.
-      by reduce_free IHw.
-    by reduce_free IHv.
-  by reduce_free IHu.
+  induction u as [?|? ? IHu ?].
+    induction v as [?|? ? IHv ?]; simpl.
+      reduce_free IHw.
+    reduce_free IHv.
+  reduce_free IHu.
 Qed.
 
 Program Instance Free_MonadLaws `{FunctorLaws f} : MonadLaws (Free f).
-Obligation 1. by reduce_free IHx. Qed.
-Obligation 2. by reduce_free IHx. Qed.
-Obligation 4. by reduce_free IHx. Qed.
+Obligation 1. reduce_free IHx. Qed.
+Obligation 2. reduce_free IHx. Qed.
+Obligation 4. reduce_free IHx. Qed.
 
 Theorem retract_liftF_id `{MonadLaws f} : forall a,
-  retract \o liftF =1 @id (f a).
-Proof.
-  move=> *.
-  rewrite /retract /liftF.
-  exact: join_fmap_pure.
-Qed.
+  retract \o liftF = @id (f a).
+Admitted.
+(* Proof. *)
+(*   move=> *. *)
+(*   rewrite /retract /liftF. *)
+(*   exact: join_fmap_pure. *)
+(* Qed. *)
 
 Theorem retract_distributes `{MonadLaws f} : forall a (x y : Free f a),
-  retract (x >> y) = retract x >> retract y.
-Proof.
-  move=> ?.
-  elim=> [?|? ? IHx ?] y; rewrite /bind /=.
-    by rewrite -ap_fmap ap_homo join_pure_x.
-  rewrite -join_fmap_fmap_x fmap_comp_x
-          -join_fmap_join_x fmap_comp_x.
-  congr (join (fmap _ _)).
-  extensionality x.
-  exact: IHx.
-Qed.
+  retract (x >> y) = (retract x >> retract y).
+Admitted.
+(* Proof. *)
+(*   move=> ?. *)
+(*   elim=> [?|? ? IHx ?] y; rewrite /bind /=. *)
+(*     by rewrite -ap_fmap ap_homo join_pure_x. *)
+(*   rewrite -join_fmap_fmap_x fmap_comp_x *)
+(*           -join_fmap_join_x fmap_comp_x. *)
+(*   congr (join (fmap _ _)). *)
+(*   extensionality x. *)
+(*   exact: IHx. *)
+(* Qed. *)
 
 Theorem retract_naturality `{MonadLaws f} : forall a b (g : a -> b),
-  fmap g \o retract (f:=f) =1 retract \o fmap g.
-Proof.
-  move=> a b g x.
-  rewrite /=.
-  elim: x => [?|? ? IHx ?] /=.
-    by rewrite fmap_pure_x.
-  rewrite -join_fmap_fmap_x fmap_comp_x.
-  congr (join (fmap _ _)).
-  extensionality y => /=.
-  exact: IHx.
-Qed.
+  fmap g \o retract (f:=f) = retract \o fmap g.
+Admitted.
+(* Proof. *)
+(*   move=> a b g x. *)
+(*   rewrite /=. *)
+(*   elim: x => [?|? ? IHx ?] /=. *)
+(*     by rewrite fmap_pure_x. *)
+(*   rewrite -join_fmap_fmap_x fmap_comp_x. *)
+(*   congr (join (fmap _ _)). *)
+(*   extensionality y => /=. *)
+(*   exact: IHx. *)
+(* Qed. *)
 
 Axiom Free_parametricity : forall `{FunctorLaws f} a b (g : a -> b),
-  Join (Pure \o g) =1 Join Pure \o fmap g.
+  Join (Pure \o g) = Join Pure \o fmap g.
 
 Theorem liftF_naturality `{FunctorLaws f} : forall a b (g : a -> b),
-  fmap g \o liftF (f:=f) =1 liftF \o fmap g.
-Proof.
-  move=> a b g x.
-  rewrite /= /liftF.
-  have ->: ([eta Free_bind (Pure \o g)] \o Pure) = Pure \o g.
-    move=> ?.
-    extensionality y.
-    by rewrite /funcomp /Free_bind.
-  exact: Free_parametricity.
-Qed.
+  fmap g \o liftF (f:=f) = liftF \o fmap g.
+Admitted.
+(* Proof. *)
+(*   move=> a b g x. *)
+(*   rewrite /= /liftF. *)
+(*   have ->: ([eta Free_bind (Pure \o g)] \o Pure) = Pure \o g. *)
+(*     move=> ?. *)
+(*     extensionality y. *)
+(*     by rewrite /funcomp /Free_bind. *)
+(*   exact: Free_parametricity. *)
+(* Qed. *)
 
 Corollary liftF_naturality_x `{FunctorLaws f} : forall a b (g : a -> b) x,
   fmap g (liftF x) = liftF (fmap g x).
-Proof. exact: liftF_naturality. Qed.
+Proof.
+  intros.
+  replace ((fmap[Free f] g) (liftF x)) with (((fmap[Free f] g) \o liftF) x).
+    rewrite liftF_naturality.
+    reflexivity.
+  reflexivity.
+Qed.
 
 Theorem uniter_iter_id `{MonadLaws f} : forall a,
-  uniter \o iter =1 @id (f a -> a).
-Proof.
-  move=> * x.
-  extensionality z.
-  rewrite /uniter /=.
-  have ->: iter x \o Pure = id by [].
-  by rewrite fmap_id.
-Qed.
+  uniter \o iter = @id (f a -> a).
+Admitted.
+(* Proof. *)
+(*   move=> * x. *)
+(*   extensionality z. *)
+(*   rewrite /uniter /=. *)
+(*   have ->: iter x \o Pure = id by []. *)
+(*   by rewrite fmap_id. *)
+(* Qed. *)
 
 (*
 Theorem iter_uniter_id `{MonadLaws f} : forall a,
-  iter \o uniter =1 @id (Free f a -> a).
+  iter \o uniter = @id (Free f a -> a).
 Proof.
   move=> a x.
   extensionality z.
@@ -196,11 +215,11 @@ CoInductive CoFree (h : Type -> Type) (a : Type) :=
 Arguments CoF {h a} _ {x} _ _.
 
 CoFixpoint unfold `(k : b -> a * f b) (z : b) : CoFree f a :=
-  let: (x, j) := k z in CoF x (unfold k) j.
+  match k z with (x, j) => CoF x (unfold k) j end.
 
 CoFixpoint CoFree_map {h} `(f : a -> b) (c : CoFree h a) :
   CoFree h b :=
-  let: CoF x s g h := c in CoF (f x) (CoFree_map f \o g) h.
+  match c with CoF x s g h => CoF (f x) (CoFree_map f \o g) h end.
 
 Program Instance CoFree_Functor `{Functor h} : Functor (CoFree h) := {
   fmap := fun _ _ => CoFree_map

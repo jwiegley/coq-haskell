@@ -17,6 +17,7 @@ Inductive NonEmpty (a : Type) : Type :=
 Arguments NE_Sing [_] _.
 Arguments NE_Cons [_] _ _.
 
+(*
 Notation "[ ::: x1 ]" := (NE_Sing x1)
   (at level 0, format "[ :::  x1 ]") : seq_scope.
 
@@ -283,3 +284,4 @@ Notation " [ x ; y ; z ; w ; v ] " :=
 Infix "++" := NE_append.
 
 End NonEmptyNotations.
+*)

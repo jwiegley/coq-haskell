@@ -44,14 +44,17 @@ Axiom fmap_cps : forall `{Functor f} a b c (k : forall r, (a -> r) -> f r)
 Program Instance Yoneda_lemma `{FunctorLaws f} :
   forall a, @IsomorphismLaws (Yoneda f a) (f a) (Yoneda_lemma a).
 Obligation 1.
-  move=> x /=.
+  extensionality x.
+  simpl.
   extensionality r.
   extensionality g.
-  exact: fmap_cps.
+  apply fmap_cps.
 Qed.
 Obligation 2.
-  move=> x.
-  by rewrite /funcomp fmap_id.
+  extensionality x.
+  unfold comp.
+  rewrite fmap_id.
+  reflexivity.
 Qed.
 
 Program Instance Yoneda_FunctorLaws {f : Type -> Type} : FunctorLaws (Yoneda f).
@@ -59,60 +62,78 @@ Program Instance Yoneda_FunctorLaws {f : Type -> Type} : FunctorLaws (Yoneda f).
 Program Instance Yoneda_ApplicativeLaws `{ApplicativeLaws f} :
   ApplicativeLaws (Yoneda f).
 Obligation 1.
-  move=> x /=.
+  extensionality x.
   extensionality r.
   extensionality k0.
-  rewrite ap_fmap -fmap_comp /funcomp fmap_id.
-  exact: fmap_cps.
+  rewrite ap_fmap, <- fmap_comp, fmap_id.
+  unfold comp, id.
+  apply fmap_cps.
 Qed.
 Obligation 2.
   extensionality r.
   extensionality k.
-  rewrite -ap_comp; f_equal.
-  rewrite !ap_fmap; f_equal.
-  rewrite !fmap_cps; f_equal.
+  rewrite <- ap_comp; f_equal.
+  repeat rewrite ap_fmap; f_equal.
+  repeat rewrite fmap_cps; f_equal.
 Qed.
 Obligation 3.
   extensionality r.
   extensionality k.
-  by rewrite ap_fmap /compose -fmap_comp /funcomp !fmap_pure_x.
+  rewrite ap_fmap.
+  unfold comp.
+  rewrite <- fmap_comp_x.
+  repeat rewrite fmap_pure_x.
+  reflexivity.
 Qed.
 Obligation 4.
   extensionality r.
   extensionality k.
-  rewrite ap_fmap -fmap_comp ap_interchange /funcomp
-          ap_fmap !fmap_cps.
+  rewrite ap_fmap, <- fmap_comp, ap_interchange.
+  unfold comp.
+  rewrite ap_fmap.
+  repeat rewrite fmap_cps.
   f_equal.
 Qed.
 Obligation 5.
-  move=> k /=.
+  extensionality k.
   extensionality r.
   extensionality g.
-  rewrite ap_fmap -fmap_comp /funcomp !fmap_cps.
+  rewrite ap_fmap, <- fmap_comp_x.
+  unfold comp.
+  repeat rewrite fmap_cps.
   f_equal.
 Qed.
 
 Program Instance Yoneda_MonadLaws `{MonadLaws m} : MonadLaws (Yoneda m).
 Obligation 1.
-  move=> k /=.
-  rewrite /Yoneda_join.
+  extensionality k.
+  unfold Yoneda_join.
   extensionality r.
   extensionality h.
-  by rewrite -join_fmap_join_x fmap_cps.
+  simpl.
+  rewrite <- join_fmap_join_x, fmap_cps.
+  reflexivity.
 Qed.
 Obligation 2.
-  move=> k /=.
-  rewrite /Yoneda_join.
+  extensionality k.
+  unfold Yoneda_join.
   extensionality r.
   extensionality h.
-  by rewrite /funcomp -fmap_cps join_fmap_pure_x.
+  unfold comp.
+  replace (fun x : a => pure[m] (h x)) with (pure[m] \o h).
+    rewrite <- fmap_cps.
+    rewrite join_fmap_pure_x.
+    reflexivity.
+  reflexivity.
 Qed.
 Obligation 3.
-  move=> k /=.
-  rewrite /Yoneda_join.
+  extensionality k.
+  unfold Yoneda_join.
   extensionality r.
   extensionality h.
-  by rewrite join_pure_x.
+  unfold comp.
+  rewrite join_pure_x.
+  reflexivity.
 Qed.
 
 End YonedaLaws.
@@ -132,10 +153,10 @@ Definition liftCoyoneda {f : Type -> Type} {a : Type} : f a -> Coyoneda f a :=
   COYO id.
 
 Definition lowerCoyoneda `{Functor f} {a : Type} (c : Coyoneda f a) : f a :=
-  let: COYO _ g h := c in fmap g h.
+  match c with COYO _ g h => fmap g h end.
 
 Instance Coyoneda_Functor (f : Type -> Type) : Functor (Coyoneda f) := {
-  fmap := fun _ _ f x => let: COYO _ g h := x in COYO (f \o g) h
+  fmap := fun _ _ f x => match x with COYO _ g h => COYO (f \o g) h end
 }.
 
 Module CoyonedaLaws.
@@ -146,24 +167,26 @@ Require Import FunctionalExtensionality.
 
 Program Instance Coyoneda_FunctorLaws (f : Type -> Type) :
   FunctorLaws (Coyoneda f).
-Obligation 1. by move=> [*]. Qed.
-Obligation 2. by move=> [*]. Qed.
+Obligation 1. extensionality x. destruct x; reflexivity. Qed.
+Obligation 2. extensionality x. destruct x; reflexivity. Qed.
 
 Theorem coyo_to `{FunctorLaws f} : forall a (x : f a),
   lowerCoyoneda (liftCoyoneda x) = x.
 Proof.
-  move=> a x.
-  rewrite /lowerCoyoneda /liftCoyoneda.
-  exact: fmap_id.
+  intros a x.
+  unfold lowerCoyoneda, liftCoyoneda.
+  rewrite fmap_id.
+  reflexivity.
 Qed.
 
 Theorem coyo_lower_naturality `{FunctorLaws f} : forall a b (g : a -> b),
   fmap g \o lowerCoyoneda (f:=f) = lowerCoyoneda \o fmap g.
 Proof.
-  move=> a b k.
+  intros a b k.
   extensionality x.
-  move: x => [x g h] /=.
-  exact: fmap_comp.
+  destruct x as [x g h]; simpl.
+  rewrite fmap_comp_x.
+  reflexivity.
 Qed.
 
 Axiom coyo_parametricity : forall `{FunctorLaws f} a b (g : a -> b),
@@ -172,23 +195,24 @@ Axiom coyo_parametricity : forall `{FunctorLaws f} a b (g : a -> b),
 Theorem coyo_lift_naturality `{FunctorLaws f} : forall a b (g : a -> b),
   fmap g \o liftCoyoneda (f:=f) = liftCoyoneda \o fmap g.
 Proof.
-  move=> a b g.
-  rewrite /liftCoyoneda.
+  intros a b g.
+  unfold liftCoyoneda.
   extensionality x.
-  rewrite /=.
-  recomp.
-  congr (_ x).
-  replace (g \o id) with g; last by [].
-  exact: coyo_parametricity.
+  simpl.
+  replace (g \o id) with g; auto.
+  rewrite coyo_parametricity.
+  reflexivity.
 Qed.
 
 Theorem coyo_from `{FunctorLaws f} : forall a (x : Coyoneda f a),
   liftCoyoneda (lowerCoyoneda x) = x.
 Proof.
-  move=> a [x g h].
-  rewrite /lowerCoyoneda.
-  recomp.
-  by rewrite -coyo_lift_naturality.
+  intros a [x g h].
+  unfold lowerCoyoneda.
+  replace (liftCoyoneda ((fmap[f] g) h)) with ((liftCoyoneda \o (fmap[f] g)) h).
+    rewrite <- coyo_lift_naturality.
+    reflexivity.
+  reflexivity.
 Qed.
 
 End CoyonedaLaws.

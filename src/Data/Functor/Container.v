@@ -132,8 +132,9 @@ Variable S : Type.
 Variable P : S -> Type.
 
 Program Instance Container_FunctorLaws : FunctorLaws (Container P).
-Obligation 1. by case. Qed.
+Obligation 1. extensionality x; destruct x; reflexivity. Qed.
 
+(*
 Ltac reduce_cfree H :=
   try elim=> //= [? ? H];
   congr (CJoin _ _);
@@ -159,5 +160,6 @@ Program Instance CFree_MonadLaws : MonadLaws (CFree P).
 Obligation 1. by reduce_cfree IHx. Qed.
 Obligation 2. by reduce_cfree IHx. Qed.
 Obligation 4. by reduce_cfree IHx. Qed.
+*)
 
 End ContainerLaws.

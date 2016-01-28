@@ -1,4 +1,3 @@
-Require Import Hask.Ssr.
 Require Import Hask.Control.Monad.
 
 Generalizable All Variables.
@@ -62,8 +61,8 @@ Qed.
 *)
 
 Class IsomorphismLaws (A B : Type) `{A ≅ B} : Type := {
-    iso_to_id   : iso_from \o iso_to =1 id;
-    iso_from_id : iso_to \o iso_from =1 id
+    iso_to_id   : iso_from \o iso_to = id;
+    iso_from_id : iso_to \o iso_from = id
 }.
 
 End IsomorphismLaws.

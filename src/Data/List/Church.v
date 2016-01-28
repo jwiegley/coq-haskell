@@ -7,15 +7,16 @@ Generalizable All Variables.
 
 Definition Church (a : Type) := forall r, (a -> r -> r) -> r -> r.
 
-Definition toChurch {a} : seq a -> Church a :=
+(*
+Definition toChurch {a} : list a -> Church a :=
   fun xs _ c n => foldr c n xs.
 
-Definition fromChurch `(xs : Church a) : seq a := xs _ cons nil.
+Definition fromChurch `(xs : Church a) : list a := xs _ cons nil.
 
 Axiom Church_parametricity : forall (a : Type)
   (l : forall r : Type, (a -> r -> r) -> r -> r)
   (r : Type) (c : a -> r -> r) (n : r),
-  foldr c n (l (seq a) cons [::]) = l r c n.
+  foldr c n (l (list a) cons [::]) = l r c n.
 
 Definition to_from_Church : forall a (l : Church a),
   toChurch (fromChurch l) = l.
@@ -28,7 +29,7 @@ Proof.
   exact: Church_parametricity.
 Qed.
 
-Definition from_to_Church : forall a (l : seq a),
+Definition from_to_Church : forall a (l : list a),
   fromChurch (toChurch l) = l.
 Proof.
   rewrite /Church /toChurch /fromChurch.
@@ -67,3 +68,4 @@ Proof.
   elim/Church_ind: xs => //= [x xs IHxs] ys.
   by rewrite IHxs.
 Qed.
+*)

@@ -1,4 +1,3 @@
-Require Import Hask.Ssr.
 Require Import Omega.
 
 Set Implicit Arguments.
@@ -14,19 +13,38 @@ Tactic Notation "invert" "as" simple_intropattern(pat) :=
   intros top; inversion top as pat; clear top.
 
 Lemma ltn_leq_trans : forall n m p : nat, m < n -> n <= p -> m < p.
-Proof.
-  move=> n m p H1 H2.
-  exact: (leq_trans H1).
-Qed.
+Proof. intros. omega. Qed.
 
-Ltac recomp :=
-  repeat match goal with
-    | [ |- ?F (?G ?X) = _ ] =>
-        replace (F (G X)) with ((F \o G) X); last by rewrite /funcomp
-    | [ |- _ = ?F (?G ?X) ] =>
-        replace (F (G X)) with ((F \o G) X); last by rewrite /funcomp
-    end.
+Definition comp {a b c} (f : b -> c) (g : a -> b) (x : a) : c := f (g x).
+Arguments comp {a b c} f g x /.
 
+Infix "\o" := comp (at level 50).
+
+Theorem comp_id_left : forall {A B} (f : A -> B), id \o f = f.
+Proof. reflexivity. Qed.
+
+Hint Resolve comp_id_left.
+
+Theorem comp_id_right : forall {A B} (f : A -> B), f \o id = f.
+Proof. reflexivity. Qed.
+
+Hint Resolve comp_id_right.
+
+Theorem comp_assoc : forall {A B C D} (f : C -> D) (g : B -> C) (h : A -> B),
+  f \o (g \o h) = (f \o g) \o h.
+Proof. reflexivity. Qed.
+
+Hint Resolve comp_assoc.
+
+Theorem uncompose : forall {A B C} (f : B -> C) (g : A -> B) (x : A) (y : C),
+  (f \o g) x = f (g x).
+Proof. reflexivity. Qed.
+
+Ltac uncompose k :=
+  rewrite <- (uncompose k);
+  repeat (rewrite <- comp_assoc).
+
+(*
 Ltac breakup :=
   repeat match goal with
     | [ H: is_true (_ && _) |- _ ] => move/andP: H => [? ?]
@@ -171,6 +189,7 @@ Ltac match_all :=
       clear H_1;
       ordered
   end.
+*)
 
 Ltac move_to_top x :=
   match reverse goal with

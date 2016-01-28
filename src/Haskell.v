@@ -30,35 +30,35 @@ Extract Inductive sigT    => "(,)" ["(,)"].
 Extract Inductive option  => "Prelude.Maybe" ["Prelude.Just" "Prelude.Nothing"].
 Extract Inductive sumor   => "Prelude.Maybe" ["Prelude.Just" "Prelude.Nothing"].
 
-Extract Inductive ordinal => "Prelude.Int" [""].
+(* Extract Inductive ordinal => "Prelude.Int" [""]. *)
 
-Extract Inlined Constant addn      => "(Prelude.+)".
+(* Extract Inlined Constant addn      => "(Prelude.+)". *)
 Extract Inlined Constant andb      => "(Prelude.&&)".
 Extract Inlined Constant app       => "(Prelude.++)".
-Extract Inlined Constant cat       => "(Prelude.++)".
-Extract Inlined Constant eqb       => "(Prelude.==)".
-Extract Inlined Constant eqn       => "(Prelude.==)".
-Extract Inlined Constant filter    => "Prelude.filter".
-Extract Inlined Constant foldl     => "Data.List.foldl'".
-Extract Inlined Constant foldr     => "Prelude.foldr".
+(* Extract Inlined Constant cat       => "(Prelude.++)". *)
+(* Extract Inlined Constant eqb       => "(Prelude.==)". *)
+(* Extract Inlined Constant eqn       => "(Prelude.==)". *)
+(* Extract Inlined Constant filter    => "Prelude.filter". *)
+(* Extract Inlined Constant foldl     => "Data.List.foldl'". *)
+(* Extract Inlined Constant foldr     => "Prelude.foldr". *)
 Extract Inlined Constant fst       => "Prelude.fst".
-Extract Inlined Constant has       => "Data.List.any".
+(* Extract Inlined Constant has       => "Data.List.any". *)
 Extract Inlined Constant length    => "Data.List.length".
-Extract Inlined Constant leq       => "(Prelude.<=)".
-Extract Inlined Constant map       => "Prelude.map".
-Extract Inlined Constant maxn      => "Prelude.max".
-Extract Inlined Constant minn      => "Prelude.min".
+(* Extract Inlined Constant leq       => "(Prelude.<=)". *)
+(* Extract Inlined Constant map       => "Prelude.map". *)
+(* Extract Inlined Constant maxn      => "Prelude.max". *)
+(* Extract Inlined Constant minn      => "Prelude.min". *)
 Extract Inlined Constant minus     => "(Prelude.-)".
 Extract Inlined Constant mult      => "(Prelude.*)".
 Extract Inlined Constant negb      => "Prelude.not".
 Extract Inlined Constant orb       => "(Prelude.||)".
 Extract Inlined Constant plus      => "(Prelude.+)".
-Extract Inlined Constant predn     => "Prelude.pred".
+(* Extract Inlined Constant predn     => "Prelude.pred". *)
 Extract Inlined Constant proj1_sig => "".
 Extract Inlined Constant projT1    => "Prelude.fst".
-Extract Inlined Constant size      => "Data.List.length".
+(* Extract Inlined Constant size      => "Data.List.length". *)
 Extract Inlined Constant snd       => "Prelude.snd".
-Extract Inlined Constant subn      => "(Prelude.-)".
+(* Extract Inlined Constant subn      => "(Prelude.-)". *)
 
 Extraction Implicit eq_rect [ x y ].
 Extraction Implicit eq_rect_r [ x y ].
@@ -70,24 +70,24 @@ Extract Inlined Constant eq_rect_r => "".
 Extract Inlined Constant eq_rec => "".
 Extract Inlined Constant eq_rec_r => "".
 
-Extraction Implicit funcomp [ u ].
+(* Extraction Implicit funcomp [ u ]. *)
 
-Extract Inlined Constant funcomp => "(Prelude..)".
+(* Extract Inlined Constant funcomp => "(Prelude..)". *)
 
-Extract Inductive simpl_fun => "(->)" [""].
+(* Extract Inductive simpl_fun => "(->)" [""]. *)
 
-Extract Inlined Constant fun_of_simpl => "(Prelude.$)".
-Extract Inlined Constant SimplRel => "".
+(* Extract Inlined Constant fun_of_simpl => "(Prelude.$)". *)
+(* Extract Inlined Constant SimplRel => "". *)
 
-Extract Inlined Constant ord_max => "".
+(* Extract Inlined Constant ord_max => "". *)
 
-Extraction Implicit nat_of_ord [ n ].
-Extraction Implicit widen_ord [ n m ].
+(* Extraction Implicit nat_of_ord [ n ]. *)
+(* Extraction Implicit widen_ord [ n m ]. *)
 
-Extract Inlined Constant nat_of_ord => "Prelude.id".
-Extract Inlined Constant widen_ord  => "Prelude.id".
+(* Extract Inlined Constant nat_of_ord => "Prelude.id". *)
+(* Extract Inlined Constant widen_ord  => "Prelude.id". *)
 
-Extract Inlined Constant ssr_have => "(Prelude.flip (Prelude.$))".
+(* Extract Inlined Constant ssr_have => "(Prelude.flip (Prelude.$))". *)
 
 (* Prelude *)
 
@@ -108,8 +108,8 @@ Extract Inlined Constant Arith.Plus.tail_plus => "(Prelude.+)".
 (* Extract Inductive IntMap => "Data.IntMap.IntMap" *)
 (*   ["Data.IntMap.fromList"] "(\fS m -> fS m)". *)
 
-Extract Inlined Constant IntMap_mergeWithKey' =>
-  "Hask.Utils.intMap_mergeWithKey'".
+(* Extract Inlined Constant IntMap_mergeWithKey' => *)
+(*   "Hask.Utils.intMap_mergeWithKey'". *)
 
 (* Extract Inlined Constant IntMap_lookup       => "Data.IntMap.lookup". *)
 (* Extract Inlined Constant IntMap_insert       => "Data.IntMap.insert". *)
@@ -134,25 +134,25 @@ Extract Inlined Constant IntMap_mergeWithKey' =>
 
 (* Data.List *)
 
-Extract Inlined Constant safe_hd => "Prelude.head".
-Extract Inlined Constant sumlist => "Data.List.sum".
+(* Extract Inlined Constant safe_hd => "Prelude.head". *)
+(* Extract Inlined Constant sumlist => "Data.List.sum". *)
 (* Extract Inlined Constant lebf    => "Data.Ord.comparing". *)
 (* Extract Inlined Constant insert  => "Data.List.insertBy". *)
 
-Extract Inlined Constant List.destruct_list => "Hask.Utils.uncons".
-Extract Inlined Constant list_membership    => "Prelude.const".
+(* Extract Inlined Constant List.destruct_list => "Hask.Utils.uncons". *)
+(* Extract Inlined Constant list_membership    => "Prelude.const". *)
 
 (* Data.NonEmpty *)
 
 Extract Inductive NonEmpty => "[]" ["(:[])" "(:)"]
   "(\ns nc l -> case l of [x] -> ns x; (x:xs) -> nc x xs)".
 
-Extract Inlined Constant NE_length  => "Prelude.length".
-Extract Inlined Constant NE_to_list => "Prelude.id".
-Extract Inlined Constant NE_head    => "Prelude.head".
-Extract Inlined Constant NE_last    => "Prelude.last".
-Extract Inlined Constant NE_map     => "Prelude.map".
-Extract Inlined Constant NE_foldl   => "Data.List.foldl'".
+(* Extract Inlined Constant NE_length  => "Prelude.length". *)
+(* Extract Inlined Constant NE_to_list => "Prelude.id". *)
+(* Extract Inlined Constant NE_head    => "Prelude.head". *)
+(* Extract Inlined Constant NE_last    => "Prelude.last". *)
+(* Extract Inlined Constant NE_map     => "Prelude.map". *)
+(* Extract Inlined Constant NE_foldl   => "Data.List.foldl'". *)
 
 (* Data.Vector *)
 

@@ -1,4 +1,3 @@
-Require Import Hask.Ssr.
 Require Import Hask.Data.Functor.
 Require Import Hask.Data.Functor.Contravariant.
 

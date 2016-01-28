@@ -1,8 +1,7 @@
+Require Import Hask.Ltac.
 Require Import Hask.Prelude.
 
 Generalizable All Variables.
-
-(* jww (2015-06-17): NYI
 
 (* Even though we have the Category class in Category.v, the Functors
    and Monads I'm interested in reasoning about are all endofunctors on
@@ -23,12 +22,13 @@ Arguments ifun_composition [F] [IFunctor] [I O X] [Y] [Z] f g.
 
 Notation "f <$$> g" := (imap f g) (at level 28, left associativity).
 
-Notation "imap[ M ]  f" := (@imap M _ _ _ f) (at level 28).
-Notation "imap[ M N ]  f" := (@imap (fun X => M (N X)) _ _ _ f) (at level 26).
-Notation "imap[ M N O ]  f" := (@imap (fun X => M (N (O X))) _ _ _ f) (at level 24).
+Notation "imap[ M ]" := (@imap M _ _ _) (at level 9).
+Notation "imap[ M N ]" := (@imap (fun X => M (N X)) _ _ _) (at level 9).
+Notation "imap[ M N O ]" := (@imap (fun X => M (N (O X))) _ _ _) (at level 9).
 
 Coercion iobj : IFunctor >-> Funclass.
 
+(*
 Lemma ifun_irrelevance `(F : IFunctor)
   : forall (f g : forall {I O X Y}, (X -> Y) -> (F I O X -> F I O Y))
            i i' c c',
@@ -44,6 +44,7 @@ Proof.
   apply proof_irrelevance.
   apply proof_irrelevance.
 Qed.
+*)
 
 Section IFunctors.
 
@@ -90,12 +91,12 @@ Class IApplicative (F : Type -> Type -> Type -> Type) :=
 ; app_imap_unit : forall {I O X Y} (f : X -> Y), iap (ipure f) = @imap _ _ I O _ _ f
 }.
 
-Notation "ipure/ M" := (@ipure M _ _) (at level 28).
-Notation "ipure/ M N" := (@ipure (fun X => M (N X)) _ _) (at level 26).
+Notation "ipure[ M ]" := (@ipure M _ _) (at level 9).
+Notation "ipure[ M N ]" := (@ipure (fun X => M (N X)) _ _) (at level 9).
 
-Notation "iap[ M ]  f" := (@iap M _ _ _ f) (at level 28).
-Notation "iap[ M N ]  f" := (@iap (fun X => M (N X)) _ _ _ f) (at level 26).
-Notation "iap[ M N O ]  f" := (@iap (fun X => M (N (O X))) _ _ _ f) (at level 24).
+Notation "iap[ M ]" := (@iap M _ _ _) (at level 9).
+Notation "iap[ M N ]" := (@iap (fun X => M (N X)) _ _ _) (at level 9).
+Notation "iap[ M N O ]" := (@iap (fun X => M (N (O X))) _ _ _) (at level 9).
 
 Notation "f <**> g" := (iap f g) (at level 28, left associativity).
 
@@ -108,7 +109,8 @@ Definition iapp_merge {X Y Z W} (f : X -> Y) (g : Z -> W)
   match t with (x, z) => (f x, g z) end.
 
 Definition iapp_prod {F : Type -> Type -> Type -> Type} `{IApplicative F}
-  {I J K X Y} (x : F I J X) (y : F J K Y) : F I K (X * Y) := pair <$$> x <**> y.
+  {I J K X Y} (x : F I J X) (y : F J K Y) : F I K (X * Y)%type :=
+  pair <$$> x <**> y.
 
 Notation "f *** g" := (iapp_merge f g) (at level 28, left associativity).
 
@@ -121,6 +123,8 @@ Ltac rewrite_iapp_homomorphisms :=
 
 Section IApplicatives.
 
+  Require Import FunctionalExtensionality.
+
   Variable F : Type -> Type -> Type -> Type.
   Context `{IApplicative F}.
 
@@ -129,7 +133,7 @@ Section IApplicatives.
   Proof.
     intros.
     extensionality x.
-    unfold compose.
+    unfold comp.
     rewrite <- iapp_homomorphism.
     rewrite app_imap_unit.
     reflexivity.
@@ -140,9 +144,9 @@ Section IApplicatives.
   Proof.
     intros.
     assert (ipure (f x) = (@ipure _ _ I _ \o f) x).
-      unfold compose. reflexivity.
+      unfold comp. reflexivity.
     assert (imap f (ipure x) = (imap f \o @ipure _ _ I _) x).
-      unfold compose. reflexivity.
+      unfold comp. reflexivity.
     rewrite H0. rewrite H1.
     rewrite app_imap_compose.
     reflexivity.
@@ -180,7 +184,7 @@ Section IApplicatives.
     rewrite app_imap_unit.
     rewrite app_imap_unit.
     rewrite iapp_homomorphism_2.
-    unfold compose.
+    unfold comp.
     rewrite app_imap_unit.
     reflexivity.
   Qed.
@@ -234,7 +238,7 @@ Section IApplicatives.
     rewrite iapp_interchange.
     rewrite app_imap_unit.
     rewrite ifun_composition_x.
-    unfold compose.
+    unfold comp.
     reflexivity.
   Qed.
 
@@ -263,7 +267,7 @@ Section IApplicatives.
     rewrite app_homomorphism.
     rewrite app_homomorphism.
     rewrite app_imap_unit.
-    unfold compose.
+    unfold comp.
     split.
       assert (imap (fun x : A => (x, tt)) =
               (@from (F (A * unit)) (F A)
@@ -308,7 +312,7 @@ Section IApplicatives.
     rewrite iapp_interchange.
     rewrite app_imap_unit.
     rewrite ifun_composition_x.
-    unfold compose.
+    unfold comp.
     reflexivity.
   Qed.
 *)
@@ -358,8 +362,8 @@ Class IMonad (M : Type -> Type -> Type -> Type) :=
     ijoin \o imap (imap f) = imap f \o (@ijoin I A O _)
 }.
 
-Notation "ijoin/ M" := (@ijoin M _ _ _ _ _) (at level 28).
-Notation "ijoin/ M N" := (@ijoin (fun X => M (N X)) _ _ _ _ _) (at level 26).
+Notation "ijoin[ M ]" := (@ijoin M _ _ _ _ _) (at level 9).
+Notation "ijoin[ M N ]" := (@ijoin (fun X => M (N X)) _ _ _ _ _) (at level 9).
 
 Definition ibind {M : Type -> Type -> Type -> Type} `{IMonad M} {I J K X Y}
   (f : (X -> M J K Y)) (x : M I J X) : M I K Y :=
@@ -379,9 +383,9 @@ Theorem imonad_law_1_x
 Proof.
   intros.
   assert (ijoin (imap ijoin x) = (ijoin \o imap ijoin) x).
-    unfold compose. reflexivity.
+    unfold comp. reflexivity.
   assert (ijoin (ijoin x) = (ijoin \o ijoin) x).
-    unfold compose. reflexivity.
+    unfold comp. reflexivity.
   rewrite H. rewrite H0.
   rewrite imonad_law_1.
   reflexivity.
@@ -393,7 +397,7 @@ Theorem imonad_law_2_x
 Proof.
   intros.
   assert (ijoin (imap ipure x) = (ijoin \o imap ipure) x).
-    unfold compose. reflexivity.
+    unfold comp. reflexivity.
   rewrite H.
   rewrite imonad_law_2.
   reflexivity.
@@ -405,7 +409,7 @@ Theorem imonad_law_3_x
 Proof.
   intros.
   assert (ijoin (ipure x) = (ijoin \o ipure) x).
-    unfold compose. reflexivity.
+    unfold comp. reflexivity.
   rewrite H.
   rewrite imonad_law_3.
   reflexivity.
@@ -418,9 +422,9 @@ Theorem imonad_law_4_x
 Proof.
   intros.
   assert (ijoin (imap (imap f) x) = (ijoin \o imap (imap f)) x).
-    unfold compose. reflexivity.
+    unfold comp. reflexivity.
   assert (imap f (ijoin x) = (imap f \o ijoin) x).
-    unfold compose. reflexivity.
+    unfold comp. reflexivity.
   rewrite H. rewrite H0.
   rewrite imonad_law_4.
   reflexivity.
@@ -462,7 +466,7 @@ Obligation 1.
 Qed.
 Obligation 2.
   extensionality x.
-  unfold compose.
+  unfold comp.
   f_equal.
   extensionality y.
   destruct x.
@@ -515,7 +519,7 @@ Program Instance IState_IMonad : IMonad IState := {
 }.
 Obligation 1.
   extensionality x.
-  unfold compose.
+  unfold comp.
   f_equal.
   extensionality y.
   destruct x. simpl.
@@ -528,7 +532,7 @@ Obligation 1.
 Qed.
 Obligation 2.
   extensionality x.
-  unfold compose, id.
+  unfold comp, id.
   destruct x.
   f_equal. simpl.
   extensionality y.
@@ -537,7 +541,7 @@ Obligation 2.
 Qed.
 Obligation 3.
   extensionality x.
-  unfold compose, id.
+  unfold comp, id.
   destruct x. simpl.
   f_equal.
   extensionality y.
@@ -546,7 +550,7 @@ Obligation 3.
 Qed.
 Obligation 4.
   extensionality x.
-  unfold compose.
+  unfold comp.
   f_equal.
   extensionality y.
   destruct x. simpl.
@@ -555,5 +559,3 @@ Obligation 4.
   destruct (p0 a).
   reflexivity.
 Qed.
-
-*)

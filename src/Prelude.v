@@ -1,4 +1,3 @@
-Require Export Hask.Ssr.
 Require Import Hask.Ltac.
 Require Export Hask.Data.Either.
 Require Export Hask.Data.Maybe.
@@ -23,19 +22,22 @@ Definition apply `(f : a -> b) (x : a) : b := f x.
 Definition compose {a b c : Type} (f : b -> c) (g : a -> b) : a -> c := f \o g.
 
 Lemma compA {a b c d : Type} (h : a -> b) (g : b -> c) (f : c -> d) :
-  (f \o g) \o h =1 f \o (g \o h).
-Proof. done. Qed.
+  (f \o g) \o h = f \o (g \o h).
+Proof. reflexivity. Qed.
 
 Notation "f .: g" := (fun x y => f (g x y)) (at level 100).
 
+(*
 Lemma sym_neg : forall a (R : rel a), symmetric R -> symmetric (negb .: R).
 Proof.
   move=> a R H x y.
   by rewrite H.
 Qed.
+*)
 
 Definition lebf {a : Type} (f : a -> nat) (n m : a) := f n <= f m.
 
+(*
 Definition oddnum := { n : nat | odd n }.
 
 Program Definition odd1 := exist odd 1 _.
@@ -90,28 +92,21 @@ Proof.
 Qed.
 
 Definition distance (n m : nat) : nat := if n < m then m - n else n - m.
+*)
 
 Lemma ltn_plus : forall m n, 0 < n -> m < m + n.
-Proof. by elim. Qed.
+Proof. intros; omega. Qed.
 
 Lemma leq_plus : forall m n, m <= m + n.
-Proof. by elim. Qed.
+Proof. intros; omega. Qed.
 
 Lemma leq_add2r : forall p m n : nat, m <= n -> m + p <= n + p.
-Proof.
-  move=> p m n H1.
-  elim: p => [|p IHp].
-    by rewrite !addn0.
-  rewrite !addnS.
-  by ordered.
-Qed.
+Proof. intros; omega. Qed.
 
 Lemma leq_add2l : forall p m n : nat, m <= n -> p + m <= p + n.
-Proof.
-  move=> p m n H1.
-  by elim: p.
-Qed.
+Proof. intros; omega. Qed.
 
+(*
 Lemma leq_eqF : forall n m, (n == m) = false -> n <= m -> n < m.
 Proof.
   move=> n m.
@@ -126,9 +121,10 @@ Proof.
   have ->: n = n * 1 by ordered.
   exact: leq_mul.
 Qed.
+*)
 
 Lemma ltn0ltn : forall n m, n < m -> 0 < m.
-Proof. by ordered. Qed.
+Proof. intros; omega. Qed.
 
-Lemma ltn_subn : forall n m, n < m -> m > 0 -> n <= m.-1.
-Proof. by ordered. Qed.
+Lemma ltn_subn : forall n m, n < m -> m > 0 -> n <= m - 1.
+Proof. intros; omega. Qed.

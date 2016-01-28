@@ -51,56 +51,59 @@ Require Import FunctionalExtensionality.
 
 Program Instance State_FunctorLaws {s : Type} : FunctorLaws (State s).
 Obligation 1.
-  move=> x.
+  extensionality x.
   extensionality st.
-  by case: (x st).
+  unfold id.
+  destruct (x st); auto.
 Qed.
 Obligation 2.
-  rewrite /funcomp => x.
+  extensionality x.
   extensionality st.
-  by case: (x st).
+  unfold comp.
+  destruct (x st); auto.
 Qed.
 
 Program Instance State_Applicative {s : Type} : ApplicativeLaws (State s).
 Obligation 1.
-  move=> x.
+  extensionality x.
   extensionality st.
-  by case: (x st).
+  unfold id.
+  destruct (x st); auto.
 Qed.
 Obligation 2.
   extensionality st.
-  case: (u st) => f' st'.
-  case: (v st') => f'' st''.
-  by case: (w st'').
+  destruct (u st) as [f' st'].
+  destruct (v st') as [f'' st''].
+  destruct (w st''); auto.
 Qed.
 
 Program Instance State_Monad {s : Type} : MonadLaws (State s).
 Obligation 1.
-  move=> f.
+  extensionality f.
   extensionality st.
-  rewrite /funcomp /=.
-  case: (f st) => f' st'.
-  case: (f' st') => f'' st''.
-  by case: (f'' st'') => f''' st'''.
+  unfold comp; simpl.
+  destruct (f st) as [f' st'].
+  destruct (f' st') as [f'' st''].
+  destruct (f'' st'') as [f''' st''']; auto.
 Qed.
 Obligation 2.
-  move=> f.
+  extensionality f.
   extensionality st.
-  rewrite /funcomp /=.
-  by case: (f st) => f' st'.
+  unfold comp, id; simpl.
+  destruct (f st) as [f' st']; auto.
 Qed.
 Obligation 3.
-  move=> f.
+  extensionality f.
   extensionality st.
-  rewrite /funcomp /=.
-  by case: (f st) => f' st'.
+  unfold comp, id; simpl.
+  destruct (f st) as [f' st']; auto.
 Qed.
 Obligation 4.
-  move=> x.
+  extensionality x.
   extensionality st.
-  rewrite /funcomp /=.
-  case: (x st) => f' st'.
-  by case: (f' st') => f'' st''.
+  unfold comp; simpl.
+  destruct (x st) as [f' st'].
+  destruct (f' st') as [f'' st'']; auto.
 Qed.
 
 End StateLaws.

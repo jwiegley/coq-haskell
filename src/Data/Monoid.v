@@ -1,4 +1,3 @@
-Require Import Hask.Ssr.
 Require Import Hask.Control.Monad.
 
 Generalizable All Variables.
