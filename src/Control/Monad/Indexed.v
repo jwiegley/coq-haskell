@@ -369,13 +369,17 @@ Definition ibind {M : Type -> Type -> Type -> Type} `{IMonad M} {I J K X Y}
   (f : (X -> M J K Y)) (x : M I J X) : M I K Y :=
   @ijoin M _ I J K Y (@imap _ _ I J _ _ f x).
 
-Notation "m >>>= f" := (ibind f m) (at level 25, left associativity).
+Delimit Scope imonad_scope with imonad.
 
-Notation "X <<- A ;; B" := (A >>>= (fun X => B))
-  (right associativity, at level 84).
+Notation "m >>= f" := (ibind f m) (at level 42, right associativity) : imonad_scope.
 
-Notation "A ;;; B" := (_ <<- A ;; B)
-  (right associativity, at level 84).
+Notation "X <- A ; B" := (A >>= (fun X => B))%imonad
+  (at level 81, right associativity, only parsing) : imonad_scope.
+
+Notation "A ;; B" := (A >>= (fun _ => B))%imonad
+  (at level 42, right associativity, only parsing) : imonad_scope.
+
+Open Scope imonad_scope.
 
 Theorem imonad_law_1_x
   : forall M (m_dict : IMonad M) I J K O A (x : M I J (M J K (M K O A))),
@@ -432,7 +436,7 @@ Qed.
 
 Theorem imonad_assoc : forall M `{IMonad M}
   {I J K L A B C} (m : M I J A) (f : A -> M J K B) (g : B -> M K L C),
-  m >>>= f >>>= g = m >>>= (fun x => f x >>>= g).
+  (m >>= f) >>= g = m >>= (fun x => f x >>= g).
 Proof.
   intros.
   unfold ibind.

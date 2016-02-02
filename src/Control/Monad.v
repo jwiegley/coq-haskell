@@ -197,11 +197,11 @@ Class Monad_DistributesLaws `{Monad_Distributes M N} :=
   m_monad_laws :> MonadLaws M;
   n_applicative_laws :> ApplicativeLaws N;
 
-  prod_law_1 : forall A B (f : A -> B),
+  prod_fmap_fmap : forall A B (f : A -> B),
     prod M N B \o fmap[N] (fmap[M \o N] f) = fmap[M \o N] f \o prod M N A;
-  prod_law_2 : forall A, prod M N A \o pure[N] = @id (M (N A));
-  prod_law_3 : forall A, prod M N A \o fmap[N] (pure[M \o N]) = pure[M];
-  prod_law_4 : forall A,
+  prod_pure : forall A, prod M N A \o pure[N] = @id (M (N A));
+  prod_fmap_pure : forall A, prod M N A \o fmap[N] (pure[M \o N]) = pure[M];
+  prod_fmap_join_fmap_prod : forall A,
     prod M N A \o fmap[N] (join[M] \o fmap[M] (prod M N A))
       = join[M] \o fmap[M] (prod M N A) \o prod M N (M (N A))
 }.
@@ -221,7 +221,7 @@ Obligation 1. (* monad_law_1 *)
   repeat (rewrite <- comp_assoc).
   repeat (rewrite fmap_comp).
   repeat (rewrite comp_assoc).
-  rewrite <- prod_law_4.
+  rewrite <- prod_fmap_join_fmap_prod.
   reflexivity.
 Qed.
 Obligation 2. (* monad_law_2 *)
@@ -230,14 +230,14 @@ Obligation 2. (* monad_law_2 *)
   repeat (rewrite <- comp_assoc).
   repeat (rewrite fmap_comp).
   repeat f_equal.
-  pose proof (@prod_law_3 M _ N _ _ _ a).
+  pose proof (@prod_fmap_pure M _ N _ _ _ a).
   simpl in H3.
   rewrite H3.
   reflexivity.
 Qed.
 Obligation 3. (* monad_law_3 *)
   intros.
-  rewrite <- prod_law_2.
+  rewrite <- prod_pure.
   rewrite <- comp_id_left.
   rewrite <- (@join_pure M _ _ (N a)).
   rewrite <- comp_assoc.
@@ -256,7 +256,7 @@ Obligation 4. (* monad_law_4 *)
   rewrite <- join_fmap_fmap.
   rewrite <- comp_assoc.
   rewrite fmap_comp.
-  pose proof (@prod_law_1 M _ N _ _ _ a).
+  pose proof (@prod_fmap_fmap M _ N _ _ _ a).
   simpl in H3.
   rewrite <- H3.
   rewrite <- fmap_comp.
