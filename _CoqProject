@@ -7,6 +7,7 @@ src/Control/Lens.v
 src/Control/Monad.v
 src/Control/Monad/Cont.v
 src/Control/Monad/Free.v
+src/Control/Monad/Freer.v
 src/Control/Monad/Indexed.v
 src/Control/Monad/Morph.v
 src/Control/Monad/State.v
