@@ -1,105 +1,67 @@
 Require Import
   Hask.Control.Monad
-  Hask.Control.Monad.Free
   Coq.Lists.List.
 
 Generalizable All Variables.
 
 Import ListNotations.
 
-Definition Effects := list (Type -> Type).
+Definition Effect := (Type -> Type) -> Type.
 
-Fixpoint nth_maybe {A} (n : nat) (l : list A) : option A :=
-  match n with
-  | 0   => match l with [] => None | x :: _ => Some x end
-  | S m => match l with [] => None | _ :: t => nth_maybe m t end
-  end.
+Inductive Effects (m : Type -> Type) : list Effect -> Type :=
+  | EmptyE : Effects m []
+  | ConsE effects : forall effect : Effect,
+      effect m -> Effects m effects -> Effects m (effect :: effects).
 
-Lemma nth_maybe_empty : forall A n, nth_maybe n [] = @None A.
-Proof. intros; destruct n; auto. Qed.
+Arguments ConsE : default implicits.
 
-Class Handles (f : Type -> Type) `(r : Effects) := {
-  handles_index  : nat;
-  handles_effect : nth_maybe handles_index r = Some f
+Infix ".:" := ConsE (at level 100).
+
+Class Handles (fs : list Effect) (effect : Effect) := {
+  getEffect : forall m, Effects m fs -> effect m
 }.
 
-Arguments Handles f r.
-
-Program Instance Handles_hd `(fs : Effects) : Handles f (f :: fs).
-Obligation 1. apply 0. Defined.
-
-Program Instance Handles_tl `(_ : Handles f fs) : Handles f (x :: fs).
-Obligation 1. apply (S handles_index). Defined.
-Obligation 2. apply handles_effect. Defined.
-
-Definition Handles_inv_cons f g `(gs : Effects)
-  (H : Handles f (g :: gs)) : (f = g) + Handles f gs.
+Instance Handles_hd {fs : list Effect}  {f : Effect} :
+  Handles (f :: fs) f.
 Proof.
-  destruct H.
-  destruct handles_index0.
-    left.
-    inversion handles_effect0.
-    reflexivity.
-  right.
-  econstructor.
-  apply handles_effect0.
-Defined.
-
-Inductive Union (r : Effects) (a : Type) :=
-  Inj : forall `{Functor f} `{Handles f r}, f a -> Union r a.
-
-Arguments Inj {r a f _ _} _.
-
-Instance Union_Functor `(r : Effects) : Functor (Union r) := {
-  fmap := fun _ _ f x => match x with Inj _ _ _ x => Inj (fmap f x) end
-}.
-
-Lemma Union_empty_contra : forall x, Union [] x -> False.
-Proof.
-  intros.
+  constructor; intros.
   inversion X.
-  inversion H0.
-  rewrite nth_maybe_empty in handles_effect0.
-  discriminate.
-Qed.
-
-Program Definition Union_inv_sing `(u : Union [f] a) : f a :=
-  match u with Inj f F H v => _ end.
-Obligation 1.
-  inversion H.
-  destruct handles_index0.
-    inversion handles_effect0.
-    assumption.
-  simpl in handles_effect0.
-  rewrite nth_maybe_empty in handles_effect0.
-  discriminate.
+  exact X0.
 Defined.
 
-Inductive sum' (A B : Type) : Type :=
-  | inl' : A -> sum' A B
-  | inr' : B -> sum' A B.
-
-Definition Union_inv_cons `(fs : Effects)
-  `(u : Union (f :: fs) a) : sum' (f a) (Union fs a).
+Instance Handles_tl `{_ : Handles fs f} : Handles (x :: fs) f.
 Proof.
-  destruct u.
-  apply Handles_inv_cons in H0.
-  inversion H0.
-    subst; left.
-    assumption.
-  right.
-  econstructor.
-  apply H.
-  apply H1.
-  apply f1.
+  constructor; intros.
+  inversion H.
+  apply getEffect0.
+  inversion X.
+  exact X1.
 Defined.
 
-Definition Eff `(r : Effects) := Free (Union r).
+Definition TFree `(xs : list Effect) a :=
+  forall `{Monad m}, Effects m xs -> m a.
 
-(*
-Definition univ_check `{r : Effects} : Free (Union r) (Free (Union r) nat) :=
-  pure[Free (Union r)] (pure[Free (Union r)] 10).
-*)
+Definition Eff := TFree.
+
+Definition liftF `{Handles effects effect}
+           `(getOp : forall m, effect m -> m a) : Eff effects a :=
+  fun m H effects => getOp m (getEffect m effects).
+
+Definition interpret `{H : Monad m} `(interpreter : Effects m effects)
+  `(program : Eff effects a) : m a := program m H interpreter.
+
+Instance TFree_Functor `(xs : list Effect) : Functor (TFree xs) := {
+  fmap := fun A B f run => fun m H xs => fmap f (run m H xs)
+}.
+
+Instance TFree_Applicative `(xs : list Effect) : Applicative (TFree xs) := {
+  pure := fun _ x => fun m H xs => pure x;
+  ap   := fun A B runf runx => fun m H xs => runf m H xs <*> runx m H xs
+}.
+
+Instance TFree_Monad `(xs : list Effect) : Monad (TFree xs) := {
+  join := fun A run => fun m H xs => run m H xs >>= fun f => f m H xs
+}.
 
 Definition runPure `(c : Eff [] a) : a :=
   match c with
