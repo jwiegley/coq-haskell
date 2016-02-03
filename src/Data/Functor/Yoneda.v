@@ -4,6 +4,7 @@ Require Import Hask.Control.Monad.
 Require Import Hask.Control.Iso.
 
 Generalizable All Variables.
+Set Asymmetric Patterns.
 
 Definition Yoneda (f : Type -> Type) (a : Type) :=
   forall r : Type, (a -> r) -> f r.

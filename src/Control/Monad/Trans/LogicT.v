@@ -2,6 +2,8 @@ Require Import Hask.Prelude.
 Require Import Hask.Control.Iso.
 Require Import Hask.Control.Monad.
 
+Set Asymmetric Patterns.
+
 Inductive LogicT (M : Type -> Type) `{Monad M} (A : Type) :=
   LogicT_ : forall {R : Type}, ((A -> M R -> M R) -> M R -> M R) -> LogicT M A.
 

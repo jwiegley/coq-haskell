@@ -81,7 +81,7 @@ Separate Extraction
   (* olast *)
   Maybe_choose
   Maybe_map
-  Monoid
+  Monoid.Monoid
   mempty
   mappend
   (* partition *)

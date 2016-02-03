@@ -3,6 +3,7 @@ Require Export Hask.Data.Either.
 Require Export Hask.Data.Maybe.
 Require Export Hask.Data.Tuple.
 Require Export Hask.Data.Functor.
+Require Export Omega.
 
 Generalizable All Variables.
 Set Implicit Arguments.

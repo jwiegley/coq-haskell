@@ -2,6 +2,7 @@ Require Import Hask.Prelude.
 Require Import Hask.Control.Monad.
 
 Generalizable All Variables.
+Set Asymmetric Patterns.
 
 Definition FreeT (f m : Type -> Type) (a : Type) :=
   forall r, (a -> m r) -> (forall x, (x -> m r) -> f x -> m r) -> m r.

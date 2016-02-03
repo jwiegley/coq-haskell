@@ -2,6 +2,7 @@ Require Import Hask.Prelude.
 Require Import Hask.Control.Monad.
 
 Generalizable All Variables.
+Set Asymmetric Patterns.
 
 Inductive Free (f : Type -> Type) (a : Type) :=
   | Pure : a -> Free f a
