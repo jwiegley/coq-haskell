@@ -161,3 +161,8 @@ Instance Compose_Alternative
 { empty  := fun A => @empty F _ (G A)
 ; choose := fun A => @choose F _ (G A) (* jww (2016-01-28): correct? *)
 }.
+
+Instance Impl_Applicative {A} : Applicative (fun B => A -> B) := {
+  pure := fun _ x => fun xs => x;
+  ap   := fun A B runf runx => fun xs => runf xs (runx xs)
+}.

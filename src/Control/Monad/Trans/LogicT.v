@@ -1,5 +1,5 @@
 Require Import Hask.Prelude.
-Require Import Hask.Control.Iso.
+(* Require Import Hask.Control.Iso. *)
 Require Import Hask.Control.Monad.
 
 Set Asymmetric Patterns.
@@ -29,12 +29,12 @@ Definition toLogicT (M : Type -> Type) `{Monad M} (A : Type)
    treatment of "compatible" monads.  I'm not yet certain what part it plays
    here.
 *)
-Instance LogicT_Restricted_Isomorphism (M : Type -> Type) `{Monad M} (A : Type)
-  (J2 : forall A B (f : M A -> M B), join \o fmap f = f \o join)
-  : LogicT' M A ≅ LogicT M A :=
-{ iso_to   := toLogicT M A
-; iso_from := fromLogicT M A
-}.
+(* Instance LogicT_Restricted_Isomorphism (M : Type -> Type) `{Monad M} (A : Type) *)
+(*   (J2 : forall A B (f : M A -> M B), join \o fmap f = f \o join) *)
+(*   : LogicT' M A ≅ LogicT M A := *)
+(* { iso_to   := toLogicT M A *)
+(* ; iso_from := fromLogicT M A *)
+(* }. *)
 (* jww (2015-06-17): NYI
 Proof.
   intros.

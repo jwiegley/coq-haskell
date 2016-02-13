@@ -63,16 +63,17 @@ Definition Free_bind `(k : a -> Free f b) : Free f a -> Free f b :=
     end in
   go x0.
 
-Program Instance Free_Functor `{Functor f} : Functor (Free f) := {
+Global Program Instance Free_Functor `{Functor f} : Functor (Free f) := {
   fmap := fun _ _ k => Free_bind (Pure \o k)
 }.
 
-Program Instance Free_Applicative `{Functor f} : Applicative (Free f) := {
+Global Program Instance Free_Applicative `{Functor f} :
+  Applicative (Free f) := {
   pure := fun _ => Pure;
   ap   := fun _ _ mf mx => Free_bind (flip fmap mx) mf
 }.
 
-Program Instance Free_Monad `{Functor f} : Monad (Free f) := {
+Global Program Instance Free_Monad `{Functor f} : Monad (Free f) := {
   join := fun _ => Free_bind id
 }.
 

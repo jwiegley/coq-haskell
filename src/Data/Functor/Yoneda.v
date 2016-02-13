@@ -1,7 +1,8 @@
 Require Import Hask.Prelude.
 Require Import Hask.Ltac.
+Require Import Hask.Data.Functor.Identity.
+Require Import Hask.Data.Functor.Kan.
 Require Import Hask.Control.Monad.
-Require Import Hask.Control.Iso.
 
 Generalizable All Variables.
 Set Asymmetric Patterns.
@@ -9,10 +10,10 @@ Set Asymmetric Patterns.
 Definition Yoneda (f : Type -> Type) (a : Type) :=
   forall r : Type, (a -> r) -> f r.
 
-Instance Yoneda_lemma `{Functor f} : forall a, Yoneda f a ≅ f a := {
-  iso_to   := fun x => x _ id;
-  iso_from := fun x _ k => fmap k x
-}.
+(* Instance Yoneda_lemma `{Functor f} : forall a, Yoneda f a ≅ f a := { *)
+(*   iso_to   := fun x => x _ id; *)
+(*   iso_from := fun x _ k => fmap k x *)
+(* }. *)
 
 Instance Yoneda_Functor {f : Type -> Type} : Functor (Yoneda f) := {
   fmap := fun _ _ g k _ h => k _ (h \o g)
@@ -21,7 +22,7 @@ Instance Yoneda_Functor {f : Type -> Type} : Functor (Yoneda f) := {
 Instance Yoneda_Applicative `{Applicative f} :
   Applicative (Yoneda f) := {
   pure := fun _ x => fun _ k => pure (k x);
-  ap   := fun a b g x => fun _ k => g _ (comp k) <*> iso_to x
+  ap   := fun a b g x => fun _ k => g _ (comp k) <*> x _ id
 }.
 
 Definition Yoneda_join `{Monad m} `(k : Yoneda m (Yoneda m a)) : Yoneda m a :=
@@ -35,28 +36,35 @@ Module YonedaLaws.
 
 Require Import FunctionalExtensionality.
 
-Include IsomorphismLaws.
+(* Include IsomorphismLaws. *)
 Include MonadLaws.
 
 (* Parametricity theorem. *)
-Axiom fmap_cps : forall `{Functor f} a b c (k : forall r, (a -> r) -> f r)
+Corollary Yoneda_parametricity : forall `{Functor f} a b c (k : Yoneda f a)
   (g : b -> c) (h : a -> b), fmap g (k _ h) = k _ (g \o h).
+Proof.
+  intros.
+  pose proof (@Ran_parametricity Identity _ f _ a b c).
+  simpl in H0.
+  unfold id in H0.
+  apply H0.
+Qed.
 
-Program Instance Yoneda_lemma `{FunctorLaws f} :
-  forall a, @IsomorphismLaws (Yoneda f a) (f a) (Yoneda_lemma a).
-Obligation 1.
-  extensionality x.
-  simpl.
-  extensionality r.
-  extensionality g.
-  apply fmap_cps.
-Qed.
-Obligation 2.
-  extensionality x.
-  unfold comp.
-  rewrite fmap_id.
-  reflexivity.
-Qed.
+(* Program Instance Yoneda_lemma `{FunctorLaws f} : *)
+(*   forall a, @IsomorphismLaws (Yoneda f a) (f a) (Yoneda_lemma a). *)
+(* Obligation 1. *)
+(*   extensionality x. *)
+(*   simpl. *)
+(*   extensionality r. *)
+(*   extensionality g. *)
+(*   apply Yoneda_parametricity. *)
+(* Qed. *)
+(* Obligation 2. *)
+(*   extensionality x. *)
+(*   unfold comp. *)
+(*   rewrite fmap_id. *)
+(*   reflexivity. *)
+(* Qed. *)
 
 Program Instance Yoneda_FunctorLaws {f : Type -> Type} : FunctorLaws (Yoneda f).
 
@@ -68,14 +76,14 @@ Obligation 1.
   extensionality k0.
   rewrite ap_fmap, <- fmap_comp, fmap_id.
   unfold comp, id.
-  apply fmap_cps.
+  apply Yoneda_parametricity.
 Qed.
 Obligation 2.
   extensionality r.
   extensionality k.
   rewrite <- ap_comp; f_equal.
   repeat rewrite ap_fmap; f_equal.
-  repeat rewrite fmap_cps; f_equal.
+  repeat rewrite Yoneda_parametricity; f_equal.
 Qed.
 Obligation 3.
   extensionality r.
@@ -92,7 +100,7 @@ Obligation 4.
   rewrite ap_fmap, <- fmap_comp, ap_interchange.
   unfold comp.
   rewrite ap_fmap.
-  repeat rewrite fmap_cps.
+  repeat rewrite Yoneda_parametricity.
   f_equal.
 Qed.
 Obligation 5.
@@ -101,7 +109,7 @@ Obligation 5.
   extensionality g.
   rewrite ap_fmap, <- fmap_comp_x.
   unfold comp.
-  repeat rewrite fmap_cps.
+  repeat rewrite Yoneda_parametricity.
   f_equal.
 Qed.
 
@@ -112,7 +120,7 @@ Obligation 1.
   extensionality r.
   extensionality h.
   simpl.
-  rewrite <- join_fmap_join_x, fmap_cps.
+  rewrite <- join_fmap_join_x, Yoneda_parametricity.
   reflexivity.
 Qed.
 Obligation 2.
@@ -122,7 +130,7 @@ Obligation 2.
   extensionality h.
   unfold comp.
   replace (fun x : a => pure[m] (h x)) with (pure[m] \o h).
-    rewrite <- fmap_cps.
+    rewrite <- Yoneda_parametricity.
     rewrite join_fmap_pure_x.
     reflexivity.
   reflexivity.

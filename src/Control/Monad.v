@@ -264,3 +264,7 @@ Obligation 4. (* monad_law_4 *)
 Qed.
 
 End MonadLaws.
+
+Instance Impl_Monad {A} : Monad (fun B => A -> B) := {
+  join := fun A run => fun xs => run xs xs
+}.

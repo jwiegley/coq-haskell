@@ -1,5 +1,7 @@
 Require Import Hask.Prelude.
 Require Import Hask.Control.Monad.
+Require Import Hask.Data.Functor.Identity.
+Require Import Hask.Data.Functor.Yoneda.
 
 Definition Cont (R A : Type) : Type := (A -> R) -> R.
 
@@ -76,3 +78,13 @@ Proof.
     f_equal.
 Defined.
 *)
+
+Lemma Cont_parametricity :
+  forall A B C (f : B -> C) (g : A -> B) (k : forall r, Cont r A),
+    f (k B g) = k C (f \o g).
+Proof.
+  intros.
+  Import YonedaLaws.
+  pose proof (@Yoneda_parametricity Identity _ _ _ _ k f).
+  apply H.
+Qed.

@@ -1,8 +1,9 @@
 Require Import Hask.Ltac.
-Require Import Hask.Control.Iso.
+(* Require Import Hask.Control.Iso. *)
 
 Generalizable All Variables.
 
+(*
 Instance LTuple_Isomorphism {A} : (unit * A) ≅ A :=
 { iso_to   := @snd unit A
 ; iso_from := pair tt
@@ -22,6 +23,7 @@ Obligation 1. (* iso_to *)
   intros. extensionality x. destruct x. compute. destruct u. reflexivity.
 Defined.
 *)
+*)
 
 Definition tuple_swap_a_bc_to_ab_c {A B C} (x : A * (B * C)) : A * B * C :=
   match x with (a, (b, c)) => ((a, b), c) end.
@@ -35,6 +37,7 @@ Definition left_triple {A B C} (x : A) (y : B) (z : C) : A * B * C :=
 Definition right_triple {A B C} (x : A) (y : B) (z : C) : A * (B * C) :=
   (x, (y, z)).
 
+(*
 Instance Tuple_Assoc {A B C} : (A * B * C) ≅ (A * (B * C)) :=
 { iso_to   := tuple_swap_ab_c_to_a_bc
 ; iso_from := tuple_swap_a_bc_to_ab_c
@@ -60,6 +63,7 @@ Obligation 2. (* iso_from *)
   unfold tuple_swap_a_bc_to_ab_c, tuple_swap_ab_c_to_a_bc.
   reflexivity.
 Defined.
+*)
 *)
 
 Definition first `(f : a -> b) `(x : a * z) : b * z :=

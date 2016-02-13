@@ -42,28 +42,68 @@ Proof.
   exact X1.
 Defined.
 
-Definition TFree `(xs : list Effect) m a :=
-  Effects m xs -> m a.
+Axiom IO : Type -> Type.
+Axiom IO_Functor : Functor IO.
+Axiom IO_Applicative : Applicative IO.
+Axiom IO_Monad : Monad IO.
+
+Definition Kleisli m (A B : Type) := A -> m B.
+
+Arguments Kleisli m A B.
+
+Definition TFree `(xs : list Effect) a :=
+  Kleisli IO (Effects IO xs) a.
 
 Definition Eff := TFree.
 
-Definition liftF `{Handles effects effect} `{Monad m}
-  `(getOp : effect m -> m a) : Eff effects m a :=
-  fun effects => getOp (getEffect m effects).
+Arguments Eff xs a.
 
-Definition interpret `{H : Monad m} `(interpreter : Effects m effects)
-  `(program : Eff effects m a) : m a := program interpreter.
+Definition liftF `{Handles effects effect}
+  `(getOp : effect IO -> IO a) : Eff effects a :=
+  fun effects => getOp (getEffect IO effects).
 
-Instance TFree_Functor `(xs : list Effect) `{Monad m} : Functor (TFree xs m) := {
+Definition interpret `(interpreter : Effects IO effects)
+  `(program : Eff effects a) : IO a := program interpreter.
+
+Instance Impl_Functor {A} : Functor (fun B => A -> B) := {
+  fmap := fun A B f run => fun xs => f (run xs)
+}.
+
+Instance Impl_Applicative {A} : Applicative (fun B => A -> B) := {
+  pure := fun _ x => fun xs => x;
+  ap   := fun A B runf runx => fun xs => runf xs (runx xs)
+}.
+
+Instance Impl_Monad {A} : Monad (fun B => A -> B) := {
+  join := fun A run => fun xs => run xs xs
+}.
+
+Instance Kleisli_Functor `{Monad m} {A} : Functor (Kleisli m A) :=
+  Compose_Functor.
+
+Instance Kleisli_Applicative `{Applicative m} : Applicative (Kleisli m A) :=
+  fun _ => @Compose_Applicative _ _ Impl_Applicative _.
+
+Program Instance Kleisli_Monad_Distributes `{Monad m} {A} :
+  @Monad_Distributes _ (@Impl_Monad A) m _ := {
+  prod := _
+}.
+Obligation 1.
+  exact (join (fmap (fun k => k X0) X)).
+Defined.
+
+(* Instance Kleisli_Monad `{Monad m} {A} : Monad (Kleisli m A) := Compose_Monad. *)
+
+Instance TFree_Functor `(xs : list Effect) : Functor (TFree xs) := {
   fmap := fun A B f run => fun xs => fmap f (run xs)
 }.
 
-Instance TFree_Applicative `(xs : list Effect) `{Monad m} : Applicative (TFree xs m) := {
+Instance TFree_Applicative `(xs : list Effect) : Applicative (TFree xs) := {
   pure := fun _ x => fun xs => pure x;
   ap   := fun A B runf runx => fun xs => runf xs <*> runx xs
 }.
 
-Instance TFree_Monad `(xs : list Effect) `{Monad m} : Monad (TFree xs m) := {
+Instance TFree_Monad `(xs : list Effect) : Monad (TFree xs) := {
   join := fun A run => fun xs => run xs >>= fun f => f xs
 }.
 

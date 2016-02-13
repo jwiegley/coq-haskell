@@ -2,9 +2,9 @@ Require Import Hask.Control.Monad.
 
 Generalizable All Variables.
 
-Notation Either := sum.
-Notation Left := inl.
-Notation Right := inr.
+Notation Either := sum (only parsing).
+Notation Left   := inl (only parsing).
+Notation Right  := inr (only parsing).
 
 Definition isLeft  `(x : a + b) : bool := if x then true else false.
 Definition isRight `(x : a + b) : bool := if x then false else true.

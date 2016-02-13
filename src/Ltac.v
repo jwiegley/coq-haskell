@@ -44,6 +44,8 @@ Ltac uncompose k :=
   rewrite <- (uncompose k);
   repeat (rewrite <- comp_assoc).
 
+Definition const {A B : Type} (x : A) : B -> A := fun _ => x.
+
 (*
 Ltac breakup :=
   repeat match goal with

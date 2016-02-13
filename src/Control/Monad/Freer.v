@@ -150,3 +150,69 @@ Proof.
 *)
 
 End FreeLaws.
+
+(*
+Fixpoint to_free `(v : Free.Free f a) : Freer.Free f a :=
+  match v with
+  | Free.Pure x => fun _ p _ => p x
+  | Free.Join r k x => fun _ p j => j _ (fun r => to_free (k r) p j) x
+  end.
+
+Definition from_free `(v : Freer.Free f a) : Free.Free f a :=
+  v _ Pure (@Join f a).
+
+Lemma from_to_free : forall `(x : Free.Free f a), from_free (to_free x) = x.
+Proof.
+  intros.
+  unfold from_free.
+  induction x; simpl.
+    reflexivity.
+  f_equal.
+  extensionality r.
+  rewrite H.
+  reflexivity.
+Qed.
+
+Lemma free_ind :
+  forall `{Functor f} {A} (P : Freer.Free f A -> Prop)
+         (Hpure : forall (k : A), P (Pure k))
+         (Hjoin : forall x (v : f x), P x -> P x)
+         (x : Free f A), P x.
+Proof.
+  intros.
+  destruct (x (Free.Free f A) Pure (@Join f A)).
+  apply Hpure.
+    apply Hpure.
+  apply Hjoin.
+Qed.
+
+Lemma from_free_inj : forall `(x : Freer.Free f a) y,
+  from_free x = from_free y -> x = y.
+Proof.
+Admitted.
+
+Lemma to_from_free : forall `(x : Freer.Free f a), to_free (from_free x) = x.
+Proof.
+  intros.
+  change (from_free (to_free (from_free x)) = from_free x).
+  replace x with (from_free x).
+  rewrite <- from_to_free.
+  unfold to_free.
+
+Lemma inside_out : forall (f : Free IO unit) x,
+    f (IO_ unit) x
+      (fun t k (v : IO t) =>
+         match v with
+         | PutStrLn s z => IOBind_ (putStrLn_ s) (k z)
+         | Monitor  s z => IOBind_ (putStrLn_ s) (k z)
+         end) =
+    IOBind_ (x tt) (f (IO_ unit) IOReturn_
+      (fun t k (v : IO t) =>
+         match v with
+         | PutStrLn s z => IOBind_ (putStrLn_ s) (k z)
+         | Monitor  s z => IOBind_ (putStrLn_ s) (k z)
+         end)).
+Proof.
+  intros.
+  compute.
+*)

@@ -67,3 +67,7 @@ Obligation 2. (* fmap_comp *)
 Qed.
 
 End FunctorLaws.
+
+Instance Impl_Functor {A} : Functor (fun B => A -> B) := {
+  fmap := fun A B f run => fun xs => f (run xs)
+}.
