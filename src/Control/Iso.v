@@ -4,9 +4,10 @@ Require Import Hask.Control.Applicative.
 Require Import Hask.Control.Monad.
 Require Import Hask.Control.Monad.Cont.
 Require Import Hask.Control.Monad.State.
-Require Import Data.Functor.Identity.
-Require Import Data.Functor.Kan.
-Require Import Data.Functor.Yoneda.
+Require Import Hask.Data.Functor.Identity.
+Require Import Hask.Data.Functor.Kan.
+Require Import Hask.Data.Functor.Yoneda.
+Require Import Hask.Control.Lens.
 Require Import Coq.Classes.Morphisms.
 Require Import Coq.Setoids.Setoid.
 Require Import Coq.Init.Datatypes.
@@ -493,23 +494,6 @@ Proof.
   destruct p; trivial.
 Qed.
 
-Theorem exp_add_more_iso : forall a b c d,
-  (d -> (a + b) -> c) -> c ≅ (d -> a -> c) -> (d -> b -> c) -> c.
-Proof.
-  intros.
-  unfold isomorphic.
-  exists (fun k l r => k (fun d p => match p with
-                                     | inl x => l d x
-                                     | inr x => r d x
-                                     end)).
-  exists (fun k p => k (fun d a => p d (inl a)) (fun d a => p d (inr a))).
-  extensionalize A B C.
-  f_equal.
-  extensionality d0.
-  extensionality p.
-  destruct p; trivial.
-Qed.
-
 Theorem mul_exp_iso : forall a b c, a -> (b * c) ≅ (a -> b) * (a -> c).
 (* (b * c)^a = b^a * c^a *)
 Proof.
@@ -521,9 +505,17 @@ Qed.
 Hint Rewrite mul_exp_iso : isos.
 
 Corollary exp_mul_iso : forall a b c, (a * b) -> c ≅ a -> b -> c.
-(* c^(a * b) = c^(b^a) *)
+(* c^(a * b) = (c^b)^a *)
 Proof. intros; rewrite curry_adj, exp_exp_sym_iso; reflexivity. Qed.
 Hint Rewrite exp_mul_iso : isos.
+
+Corollary exp_add_more_iso : forall a b c d,
+  (d -> (a + b) -> c) -> c ≅ (d -> a -> c) -> (d -> b -> c) -> c.
+Proof.
+  intros.
+  rewrite <- exp_mul_iso, mul_add_iso, exp_add_iso, !exp_mul_iso.
+  reflexivity.
+Qed.
 
 (** Multiplication by a constant *)
 
@@ -625,7 +617,7 @@ Hint Rewrite exp_plus_iso : isos.
 
 (** Lists *)
 
-Theorem list_exp_iso : forall a, one + (a * list a) ≅ list a.
+Theorem list_cons_iso : forall a, one + (a * list a) ≅ list a.
 Proof.
   intros.
   exists (fun p => match p with
@@ -638,7 +630,51 @@ Proof.
                    end).
   extensionalize A B C.
 Qed.
-Hint Rewrite list_exp_iso : isos.
+Hint Rewrite list_cons_iso : isos.
+
+Lemma iso_impl : @subrelation Prop isomorphic Basics.impl.
+Proof.
+  unfold subrelation, predicate_implication, pointwise_lifting.
+  intros A B.
+  unfold Basics.impl.
+  intros H x.
+  do 2 destruct H.
+  exact (x0 x).
+Qed.
+
+Definition exp_to_list {a n} (l : exp n a) : list a.
+Proof.
+  induction n; simpl; intros.
+    exact nil.
+  destruct n.
+    exact (cons l nil).
+  destruct l.
+  exact (cons a0 (IHn e)).
+Defined.
+
+Definition list_to_exp {a} (l : list a) : exp (length l) a.
+Proof.
+  induction l; simpl; auto.
+    constructor.
+  destruct (length l).
+    exact a0.
+  exact (a0, IHl).
+Defined.
+
+Theorem list_exp_iso : forall a : Type, { n : nat & exp n a } ≅ list a.
+Proof.
+  intros.
+  exists (fun p : { n : nat & exp n a } =>
+            match p with
+            | existT _ xs => exp_to_list xs
+            end).
+  exists (fun l => existT _ (length l) (list_to_exp l)).
+  unfold comp, id.
+  split.
+    extensionality l.
+    induction l; trivial.
+    simpl.
+Abort.
 
 (** Identity *)
 
@@ -709,14 +745,10 @@ Qed.
 Theorem Maybe_Either_iso : forall a, Either unit a ≅ Maybe a.
 Proof.
   intros.
-  exists (fun p => match p with
-                   | inl x => Nothing
-                   | inr x => Just x
-                   end).
-  exists (fun p => match p with
-                   | Nothing => inl tt
-                   | Just x  => inr x
-                   end).
+  exists (fun p => match p with | inl x => Nothing
+                                | inr x => Just x end).
+  exists (fun p => match p with | Nothing => inl tt
+                                | Just x  => inr x end).
   extensionalize A B C.
 Qed.
 
@@ -748,7 +780,7 @@ Proof.
   extensionality j.
   extensionality p.
   destruct p; trivial.
-Abort.                          (* requires further parametricity *)
+Abort.
 
 Require Import Hask.Control.Monad.Free.
 
@@ -772,4 +804,26 @@ Proof.
   (*          end in *)
   (*      go p). *)
   (* extensionalize A B C. *)
+Abort.
+
+(** Lenses *)
+
+Lemma Lens_pair_iso : forall (s t a b : Type),
+  Lens s t a b ≅ (s -> a) * (s -> b -> t).
+Proof.
+  intros.
+  unfold Lens.
+  rewrite <- mul_exp_iso.
+  exists (fun (k : forall f : Type -> Type, Functor f
+                     -> (a -> f b) -> s -> f t) s =>
+            (k (Const a) _ id s,
+             fun b => k Identity _ (const b) s)).
+  exists (fun (k : s -> a * (b -> t))
+              (f : Type -> Type) (H : Functor f) g s =>
+            match k s with
+              (a, h) => @fmap f H b t h (g a)
+            end).
+  extensionalize A B C.
+  extensionality h.
+  extensionality x.
 Abort.
