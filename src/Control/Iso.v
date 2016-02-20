@@ -517,6 +517,21 @@ Proof.
   reflexivity.
 Qed.
 
+Lemma f_exp_iso : forall a b c, (b ≅ c) -> (a -> b ≅ a -> c).
+Proof.
+  intros.
+  rewrite H.
+  reflexivity.
+Qed.
+
+Lemma f_exp_dep_iso : forall a b c,
+  (b ≅ c) -> ((forall x : a, b) ≅ (forall x : a, c)).
+Proof.
+  intros.
+  rewrite H.
+  reflexivity.
+Qed.
+
 (** Multiplication by a constant *)
 
 Fixpoint mul (n : nat) (a : Type) : Type :=
@@ -808,22 +823,135 @@ Abort.
 
 (** Lenses *)
 
+Axiom Lens_parametricity :
+  forall `{Functor f} `{Functor g} (eta : forall a, f a -> g a)
+         `(c : a -> f b) `(lens : Lens s t a b),
+    eta t ∘ lens f H c = lens g H0 (eta b ∘ c).
+
+Definition IStore a b t := (a * (b -> t))%type.
+
+Instance IStore_Functor {a b} : Functor (IStore a b).
+Admitted.
+
+Instance IStore_FunctorLaws {a b} : FunctorLaws (IStore a b).
+Admitted.
+
+Import MonadLaws.
+
+Definition Nat (f g : Type -> Type) := forall x, f x -> g x.
+
+Infix "⟹" := Nat (at level 100).
+
+Lemma IStore_Yoneda_iso : forall `{FunctorLaws f} a b,
+  (IStore a b ⟹ f) ≅ a -> f b.
+Proof.
+  intros.
+  unfold IStore.
+  pose proof (@Yoneda_iso f H H0 b).
+  unfold Yoneda in H1.
+  rewrite <- H1.
+  assert ((a -> forall r : Type, (b -> r) -> f r) ≅
+          (forall r : Type, a -> (b -> r) -> f r)).
+    exists (fun k r a g => k a r g).
+    exists (fun k a r g => k r a g).
+    extensionalize A B C.
+  rewrite H2.
+  apply iso_ext; intros.
+  rewrite exp_mul_iso.
+  reflexivity.
+Qed.
+
+Lemma IStore_fun_iso : forall s t a b,
+  (IStore s t ⟹ IStore a b) ≅ (s -> (Basics.arrow t ⟹ IStore a b)).
+Proof.
+  intros.
+  unfold Basics.arrow, Nat.
+  rewrite exp_exp_sym_dep_iso.
+  apply iso_ext; intros.
+  unfold IStore.
+  rewrite exp_mul_iso.
+  reflexivity.
+Qed.
+
+Axiom some_kind_of_parametricity :
+  forall f g h x (k : forall f, (forall r : Type, g r -> f r) -> f x)
+         (m : h ⟹ f) (n : g ⟹ h),
+  m x (k _ n) = k _ (fun r => m r ∘ n r).
+
+Lemma Yoneda_embedding_iso : forall k h : Type -> Type,
+  (forall f : Type -> Type, ((k ⟹ f) -> (h ⟹ f))) ≅ (h ⟹ k).
+Proof.
+  intros.
+  assert ((forall f : Type -> Type,
+             (forall x : Type, k x -> f x) -> forall x : Type, h x -> f x) ≅
+          forall x : Type, h x -> (forall f : Type -> Type,
+             (forall x : Type, k x -> f x) -> f x)).
+    exists (fun k x h f g => k f g x h).
+    exists (fun k f g x h => k x h f g).
+    extensionalize A B C.
+  rewrite H; clear H.
+  apply iso_ext; intros.
+  apply f_exp_iso.
+  exists (fun (h : forall f : Type -> Type,
+                     (forall x0 : Type, k x0 -> f x0) -> f x) =>
+            h k (fun _ => id)).
+  exists (fun z f g => g x z).
+  split.
+    extensionality h0.
+    reflexivity.
+  unfold comp.
+  extensionality x0.
+  extensionality f.
+  extensionality g.
+  pose proof (@some_kind_of_parametricity f _ _ _ x0 g).
+  rewrite H.
+  unfold id.
+  f_equal.
+Abort.
+
+Lemma IStore_IStore_iso : forall s t a b,
+  (forall `{Functor f}, (IStore a b ⟹ f) -> (IStore s t ⟹ f))
+    ≅ (IStore s t ⟹ IStore a b).
+Proof.
+Abort.
+
+Lemma Lens_IStore_iso : forall s t a b,
+  Lens s t a b ≅ (IStore s t ⟹ IStore a b).
+Proof.
+Abort.
+
 Lemma Lens_pair_iso : forall (s t a b : Type),
   Lens s t a b ≅ (s -> a) * (s -> b -> t).
 Proof.
   intros.
   unfold Lens.
   rewrite <- mul_exp_iso.
-  exists (fun (k : forall f : Type -> Type, Functor f
-                     -> (a -> f b) -> s -> f t) s =>
-            (k (Const a) _ id s,
-             fun b => k Identity _ (const b) s)).
-  exists (fun (k : s -> a * (b -> t))
-              (f : Type -> Type) (H : Functor f) g s =>
-            match k s with
-              (a, h) => @fmap f H b t h (g a)
-            end).
-  extensionalize A B C.
-  extensionality h.
-  extensionality x.
+  pose proof (@IStore_Yoneda_iso
+                (fun t => (a * (b -> t))%type) _ _ s t).
+  simpl in H.
+  rewrite <- H.
+  unfold IStore.
+  assert ((forall f : Type -> Type, Functor f -> (a -> f b) -> s -> f t)
+          ≅ (s -> forall f : Type -> Type, Functor f -> (a -> f b) -> f t)).
+    exists (fun k s f H g => k f H g s).
+    exists (fun k f H g s => k s f H g).
+    extensionalize A B C.
+  rewrite H; clear H.
+  exists (fun (k : Lens s t a b) s =>
+            (@k (Const a) _ id s,
+             fun b => @k Identity _ (const b) s)).
+  exists (fun (k : s -> a * (b -> t)) =>
+            fun `{Functor f} g s =>
+              match k s with (a, h) => fmap[f] h (g a) end).
+  unfold comp, id. simpl.
+  split.
+    extensionality k.
+    extensionality u.
+    destruct (k u).
+    f_equal.
+  extensionality l.
+  extensionality f.
+  extensionality H.
+  extensionality g.
+  extensionality u.
 Abort.

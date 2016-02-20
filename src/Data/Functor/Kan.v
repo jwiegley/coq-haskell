@@ -12,6 +12,6 @@ Definition Ran (f g : Type -> Type) (a : Type) :=
   forall r, (a -> f r) -> g r.
 
 Axiom Ran_parametricity :
-  forall `{Functor f} `{Functor g}
-         a b c (k : Ran f g a) (g : b -> c) (h : a -> f b),
+  forall a b c `{Functor f} `{Functor g}
+         (k : Ran f g a) (g : b -> c) (h : a -> f b),
     fmap g (k _ h) = k _ (fmap g \o h).

@@ -44,7 +44,7 @@ Corollary Yoneda_parametricity : forall `{Functor f} a b c (k : Yoneda f a)
   (g : b -> c) (h : a -> b), fmap g (k _ h) = k _ (g \o h).
 Proof.
   intros.
-  pose proof (@Ran_parametricity Identity _ f _ a b c).
+  pose proof (@Ran_parametricity a b c Identity _ f _).
   simpl in H0.
   unfold id in H0.
   apply H0.
