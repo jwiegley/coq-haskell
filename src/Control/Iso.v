@@ -137,6 +137,22 @@ Proof.
   reflexivity.
 Qed.
 
+Class Isomorphism (X Y : Type) := {
+  to       : X -> Y;
+  from     : Y -> X;
+  iso_to   : to ∘ from = id;
+  iso_from : from ∘ to = id
+}.
+
+Theorem Isomorphism_is_iso : forall A B, Isomorphism A B -> (A ≅ B).
+Proof.
+  intros.
+  destruct X.
+  exists to0.
+  exists from0.
+  auto.
+Qed.
+
 (** Adjoint Functors *)
 
 Definition adjoint (f g : Type -> Type) : Prop :=
