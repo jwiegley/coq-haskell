@@ -1116,3 +1116,258 @@ Qed.
 
 End ListLaws.
 *)
+
+Require Import
+  Coq.Relations.Relations
+  Coq.Reals.ROrderedType.
+
+Require Export Coq.Lists.List.
+
+Import ListNotations.
+
+Fixpoint insert {a} (P : a -> a -> bool) (z : a) (l : list a) : list a :=
+  match l with
+  | x :: xs => if P x z
+               then x :: insert P z xs
+               else z :: x :: xs
+  | _ => [z]
+  end.
+Arguments insert {a} P z l : simpl never.
+
+Fixpoint sortBy {a} (p : a -> a -> bool) (l : list a) : list a :=
+  match l with
+  | [] => nil
+  | x :: xs => insert p x (sortBy p xs)
+  end.
+
+Require Import Coq.Sorting.Sorted.
+Require Import Coq.Sorting.Permutation.
+Require Import Coq.Setoids.Setoid.
+Require Import Coq.Classes.Morphisms.
+Require Import Coq.Classes.RelationClasses.
+Require Import FunctionalExtensionality.
+
+Add Parametric Relation {A} : (list A) (@Permutation A)
+  reflexivity proved by  (@Permutation_refl A)
+  symmetry proved by     (@Permutation_sym A)
+  transitivity proved by (@Permutation_trans A)
+    as Permutation_parametric.
+
+Add Parametric Morphism {A} : (@insert A)
+  with signature
+  ((@eq A ==> @eq A ==> @eq bool)
+     ==> @eq A
+     ==> @Permutation A
+     ==> @Permutation A)
+  as Permutation_insert_mor.
+Proof.
+  intros R1 R2 HR x xs ys H.
+  generalize dependent R1.
+  generalize dependent x.
+  induction H; subst;
+  unfold insert; simpl; intros; fold @insert.
+  - constructor; trivial.
+  - rewrite (HR _ _ eq_refl _ _ eq_refl).
+    destruct (R2 x x0); simpl.
+      constructor.
+      apply IHPermutation; trivial.
+    constructor; constructor.
+    exact H.
+  - rewrite !(HR _ _ eq_refl _ _ eq_refl).
+    destruct (R2 x x0);
+    destruct (R2 y x0); simpl.
+    + rewrite perm_swap.
+      constructor.
+      constructor.
+      induction l; simpl;
+      unfold insert; simpl; intros; fold @insert.
+        constructor; constructor.
+      rewrite (HR _ _ eq_refl _ _ eq_refl).
+      destruct (R2 a x0); simpl.
+        constructor.
+        exact IHl.
+      reflexivity.
+    + symmetry.
+      rewrite perm_swap.
+      constructor.
+      rewrite perm_swap.
+      reflexivity.
+    + rewrite perm_swap.
+      constructor.
+      rewrite perm_swap.
+      reflexivity.
+    + constructor.
+      rewrite perm_swap.
+      reflexivity.
+  - rewrite IHPermutation1.
+      apply IHPermutation2.
+      intros x0 y0 Heq0 x1 y1 Heq1.
+      congruence.
+    exact HR.
+Qed.
+
+Add Parametric Morphism {A} : (@Forall A)
+  with signature
+  ((@eq A ==> @eq Prop)
+     ==> @Permutation A
+     ==> iff)
+  as Permutation_Forall_mor.
+Proof.
+  intros P1 P2 HP xs ys H.
+  split; intros.
+  - apply Forall_impl with (P:=P1).
+      intros z H1.
+      rewrite (HP z z eq_refl) in H1.
+      assumption.
+    induction H; simpl; trivial.
+    + constructor.
+        inversion H0; subst; trivial.
+      apply IHPermutation.
+      inversion H0; trivial.
+    + inversion H0; subst.
+      inversion H3; subst.
+      intuition.
+    + intuition.
+  - apply List.Forall_impl with (P:=P2).
+      intros z H2.
+      rewrite (HP z z eq_refl).
+      assumption.
+    induction H; simpl; trivial.
+    + constructor.
+        inversion H0; subst; trivial.
+      apply IHPermutation.
+      inversion H0; trivial.
+    + inversion H0; subst.
+      inversion H3; subst.
+      intuition.
+    + intuition.
+Qed.
+
+Lemma StronglySorted_impl :
+  forall (A : Type) (P Q : A -> A -> Prop),
+    (forall a b : A, P a b -> Q a b) ->
+      forall l : list A, StronglySorted P l -> StronglySorted Q l.
+Proof.
+  intros.
+  induction l; simpl.
+    constructor.
+  constructor.
+    apply IHl.
+    inversion H0; assumption.
+  inversion H0; subst.
+  apply Forall_impl with (P:=P a).
+    apply H.
+  assumption.
+Qed.
+
+Lemma Permutation_insert : forall A (a : A) R xs ys,
+  Permutation xs ys -> Permutation (insert R a xs) (a :: ys).
+Proof.
+  intros.
+  rewrite H; clear H.
+  induction ys; intros; simpl.
+    constructor; trivial.
+  unfold insert.
+  destruct (R a0 a) eqn:Heqe;
+  fold@insert.
+    rewrite perm_swap.
+    constructor.
+    exact IHys.
+  reflexivity.
+Qed.
+
+Lemma Permutation_sortBy : forall A (a : A) (R : A -> A -> bool) xs,
+  Permutation (sortBy R xs) xs.
+Proof.
+  induction xs; intros; simpl.
+    constructor.
+  apply Permutation_insert.
+  exact IHxs.
+Qed.
+
+Lemma Permutation_Forall : forall A (P : A -> Prop) (xs ys : list A),
+  Permutation xs ys
+    -> List.Forall P xs
+    -> List.Forall P ys.
+Proof.
+  intros.
+  rewrite <- H.
+  assumption.
+Qed.
+
+Lemma Forall_insert : forall a (R : a -> a -> Prop) (Q : a -> a -> bool) x xs y,
+  Q x y = true
+    -> (forall a b, R a b <-> Q a b = true)
+    -> List.Forall (R x) xs
+    -> List.Forall (R x) (insert Q y xs).
+Proof.
+  intros.
+  apply Permutation_Forall with (xs:=y :: xs).
+    symmetry.
+    apply Permutation_insert.
+    reflexivity.
+  constructor; trivial.
+  apply H0.
+  assumption.
+Qed.
+
+Lemma Forall_ordered : forall a (R : a -> a -> Prop) `{Transitive _ R} x y xs,
+  R x y -> List.Forall (R y) xs -> List.Forall (R x) xs.
+Proof.
+  intros a R H x y xs H1 H2.
+  assert (forall a, R y a -> R x a).
+    intros z H3.
+    transitivity y; trivial.
+  apply List.Forall_impl with (P:=R y).
+  intros.
+    apply H0.
+    assumption.
+  assumption.
+Qed.
+
+Lemma StronglySorted_insert :
+  forall a (R : a -> a -> Prop) (Q : a -> a -> bool)
+         `{Transitive _ R} x xs,
+    (forall y, Q y x = false -> Q x y = true)
+      -> (forall a b, R a b <-> Q a b = true)
+      -> StronglySorted R xs
+      -> StronglySorted R (insert Q x xs).
+Proof.
+  intros a R Q H x xs H1 H2 H3.
+  generalize dependent x.
+  induction xs as [|y ys IHys]; intros; simpl.
+    unfold insert.
+    constructor; constructor.
+  unfold insert.
+  destruct (Q y x) eqn:E;
+  fold @insert.
+    constructor.
+      apply IHys; trivial.
+      inversion H3; trivial.
+    apply Forall_insert; trivial.
+    inversion H3; trivial.
+  constructor; trivial.
+  constructor.
+    apply H2; trivial.
+    inversion H3.
+    apply H1 in E.
+    assumption.
+  apply H1 in E.
+  apply H2 in E.
+  apply (@Forall_ordered a R H x y ys E).
+  inversion H3.
+  assumption.
+Qed.
+
+Lemma sortBy_sorted : forall a (R : a -> a -> Prop) (Q : a -> a -> bool)
+                             `{Transitive _ R} xs,
+  (forall x y, Q y x = false -> Q x y = true)
+    -> (forall a b, R a b <-> Q a b = true)
+    -> StronglySorted R (sortBy Q xs).
+Proof.
+  intros a R Q H xs H1 H2.
+  induction xs as [|x xs IHxs]; simpl.
+    constructor.
+  apply StronglySorted_insert; trivial.
+  exact (H1 x).
+Qed.
