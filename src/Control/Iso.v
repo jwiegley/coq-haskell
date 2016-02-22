@@ -144,10 +144,10 @@ Class Isomorphism (X Y : Type) := {
   iso_from : from ∘ to = id
 }.
 
-Theorem Isomorphism_is_iso : forall A B, Isomorphism A B -> (A ≅ B).
+Theorem Isomorphism_is_iso : forall `{Isomorphism A B}, (A ≅ B).
 Proof.
   intros.
-  destruct X.
+  destruct H.
   exists to0.
   exists from0.
   auto.
@@ -854,7 +854,7 @@ Admitted.
 
 Import MonadLaws.
 
-Definition Nat (f g : Type -> Type) := forall x, f x -> g x.
+Definition Nat (f g : Type -> Type) := forall x : Type, f x -> g x.
 
 Infix "⟹" := Nat (at level 100).
 
@@ -915,13 +915,12 @@ Proof.
   split.
     extensionality h0.
     reflexivity.
-  unfold comp.
+  unfold comp, id.
   extensionality x0.
   extensionality f.
   extensionality g.
   pose proof (@some_kind_of_parametricity f _ _ _ x0 g).
   rewrite H.
-  unfold id.
   f_equal.
 Abort.
 
