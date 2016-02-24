@@ -510,6 +510,7 @@ Proof.
   extensionality p.
   destruct p; trivial.
 Qed.
+Hint Rewrite exp_add_iso : isos.
 
 Theorem mul_exp_iso : forall a b c, a -> (b * c) ≅ (a -> b) * (a -> c).
 (* (b * c)^a = b^a * c^a *)
@@ -1196,3 +1197,82 @@ Proof.
               end)).
 Qed.
 *)
+
+(* Algebras and final encodings *)
+
+Lemma finenc_zero : zero ≅ (forall r, r).
+Proof.
+  intros.
+  exists (False_rect _).
+  exists (fun f => f False).
+  extensionalize A B C.
+  destruct (A False).
+Qed.
+
+Axiom id_parametricity : forall (f : forall r, r -> r), f = @id.
+
+Lemma finenc_one : one ≅ (forall r, r -> r).
+Proof.
+  intros.
+  exists (fun u r => id).
+  exists (fun _ => tt).
+  extensionalize A B C.
+  rewrite (@id_parametricity A).
+  reflexivity.
+Admitted.               (* jww (2016-02-23): universe inconsistency! *)
+
+Lemma finenc_a : forall a,
+  a ≅ (forall r, (a -> r) -> r).
+Proof.
+  intros.
+  rewrite <- (Cont_iso a).
+  apply iso_ext; intros.
+  unfold Cont.
+  reflexivity.
+Qed.
+
+Lemma finenc_a_plus_b : forall a b,
+  a + b ≅ (forall r, (a -> r) -> (b -> r) -> r).
+Proof.
+  intros.
+  rewrite <- (Cont_iso (a + b)).
+  apply iso_ext; intros.
+  unfold Cont.
+  rewrite exp_add_iso.
+  reflexivity.
+Qed.
+
+Lemma finenc_a_times_b : forall a b,
+  a * b ≅ (forall r, (a -> b -> r) -> r).
+Proof.
+  intros.
+  rewrite <- (Cont_iso (a * b)).
+  apply iso_ext; intros.
+  unfold Cont.
+  rewrite exp_mul_iso.
+  reflexivity.
+Qed.
+
+Program Instance List_Alg_Functor : Functor (fun r => one + a * r)%type := {
+  fmap := fun _ _ f x =>
+            match x with
+            | inl tt => inl tt
+            | inr (a, r) => inr (a, f r)
+            end
+}.
+
+Program Instance List_Alg_FunctorLaws : FunctorLaws (fun r => one + a * r)%type.
+Obligation 1. extensionalize A B C. Qed.
+Obligation 2. extensionalize A B C. Qed.
+
+Lemma finenc_list : forall a,
+  Fix (fun r => one + (a * r))%type ≅ (forall r, r -> (a -> r -> r) -> r).
+Proof.
+  intros.
+  unfold Fix.
+  apply iso_ext; intros.
+  rewrite (@Coyoneda_alg_iso (fun r => one + a * r)%type).
+  autorewrite with isos.
+    reflexivity.
+  exact List_Alg_FunctorLaws.
+Qed.
