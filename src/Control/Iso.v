@@ -4,6 +4,7 @@ Require Import Hask.Control.Applicative.
 Require Import Hask.Control.Monad.
 Require Import Hask.Control.Monad.Cont.
 Require Import Hask.Control.Monad.State.
+Require Import Hask.Data.Functor.Contravariant.
 Require Import Hask.Data.Functor.Identity.
 Require Import Hask.Data.Functor.Kan.
 Require Import Hask.Data.Functor.Yoneda.
@@ -525,6 +526,37 @@ Corollary exp_mul_iso : forall a b c, (a * b) -> c ≅ a -> b -> c.
 Proof. intros; rewrite curry_adj, exp_exp_sym_iso; reflexivity. Qed.
 Hint Rewrite exp_mul_iso : isos.
 
+Lemma exp_ex_iso : forall A (P : A -> Prop) (r : Prop),
+  (exists x : A, P x) -> r ≅ (forall x : A, P x -> r).
+Proof.
+  intros.
+  exists (fun p x H => p (ex_intro _ x H)).
+  exists (fun (k : forall x : A, P x -> r) p =>
+            match p with ex_intro x H => k x H end).
+  extensionalize A B C.
+Qed.
+Hint Rewrite exp_ex_iso : isos.
+
+Lemma exp_sig_iso : forall A (P : A -> Prop) r,
+  { x : A | P x } -> r ≅ (forall x : A, P x -> r).
+Proof.
+  intros.
+  exists (fun p x H => p (exist _ x H)).
+  exists (fun k p => match p with exist x H => k x H end).
+  extensionalize A B C.
+Qed.
+Hint Rewrite exp_sig_iso : isos.
+
+Lemma exp_sigT_iso : forall A (P : A -> Type) r,
+  { x : A & P x } -> r ≅ (forall x : A, P x -> r).
+Proof.
+  intros.
+  exists (fun p x H => p (existT _ x H)).
+  exists (fun k p => match p with existT x H => k x H end).
+  extensionalize A B C.
+Qed.
+Hint Rewrite exp_sigT_iso : isos.
+
 Corollary exp_add_more_iso : forall a b c d,
   (d -> (a + b) -> c) -> c ≅ (d -> a -> c) -> (d -> b -> c) -> c.
 Proof.
@@ -734,9 +766,28 @@ Proof.
   extensionalize A B C.
     rewrite fmap_id0; trivial.
   Import YonedaLaws.
-  apply Yoneda_parametricity.
+  exact (Yoneda_parametricity _ _ _ _ _ _).
 Qed.
 Hint Resolve Yoneda_iso : isos.
+
+(* Given a pair (y -> a, f y), and a function g : y -> x, then the pair
+    (id, fmap g c) is informationally equivalent to the pair (g, c). *)
+Axiom Coyoneda_parametricity : forall `{Functor f} x y (g : y -> x) (c : f y),
+  EqdepFacts.eq_dep Type (fun r : Type => ((r -> x) * f r)%type)
+    x (id, fmap g c) y (g, c).
+
+Lemma Coyoneda_iso : forall `{FunctorLaws f} x,
+  { r : Type & ((r -> x) * f r)%type } ≅ f x.
+Proof.
+  intros.
+  exists (fun p => match p with existT e (x, H) => fmap x H end).
+  exists (fun v : f x => existT _ x (id, v)).
+  extensionalize A B C.
+    rewrite fmap_id0; trivial.
+  apply EqdepFacts.eq_dep_eq_sigT.
+  exact (Coyoneda_parametricity _ _ _ _).
+Qed.
+Hint Resolve Coyoneda_iso : isos.
 
 (** Cont *)
 
@@ -970,3 +1021,178 @@ Proof.
   extensionality g.
   extensionality u.
 Abort.
+
+(** Church encodings *)
+
+(* See ../Data/Functor/Kan.v for Lan, Lan_final, and Lan_final_parametricity *)
+
+Lemma Lan_alg_iso : forall f g a,
+  Lan f g a -> a ≅ forall x, (f x -> a) -> g x -> a.
+Proof.
+  intros.
+  unfold Lan.
+  rewrite exp_sigT_iso.
+  apply iso_ext; intros.
+  rewrite exp_mul_iso.
+  reflexivity.
+Qed.
+
+Corollary Lan_id_f_iso : forall `{FunctorLaws f} a, Lan id f a ≅ f a.
+Proof. exact @Coyoneda_iso. Qed.
+
+Lemma Coyoneda_alg_iso : forall `{FunctorLaws f} x,
+  (forall r : Type, (r -> x) -> f r -> x) ≅ f x -> x.
+Proof.
+  intros.
+  rewrite <- Lan_alg_iso, Lan_id_f_iso.
+  reflexivity.
+Qed.
+
+Inductive Foo (a b : Type) :=
+  | mkFoo : a -> b -> Foo a b
+  | mkBar : a -> a -> Foo a b -> Foo a b
+  | mkBaz : Foo a b.
+
+Lemma Foo_Algebra : forall a b,
+  Foo a b ≅ (a * b) + (a * a * Foo a b) + unit.
+Proof.
+  intros.
+  exists (fun f => match f with
+                   | mkFoo a b     => inl (inl (a, b))
+                   | mkBar a1 a2 r => inl (inr (a1, a2, r))
+                   | mkBaz         => inr tt
+                   end).
+  exists (fun p => match p with
+                   | inl (inl (a, b))      => mkFoo _ _ a b
+                   | inl (inr (a1, a2, r)) => mkBar _ _ a1 a2 r
+                   | inr tt                => mkBaz _ _
+                   end).
+  extensionalize A B C.
+Qed.
+
+Inductive FooF (a b r : Type) :=
+  | mkFooF : a -> b -> FooF a b r
+  | mkBarF : a -> a -> r -> FooF a b r
+  | mkBazF : FooF a b r.
+
+(*
+Definition wrap_FooF {a b} (x : FooF a b (Fix (FooF a b))) : Fix (FooF a b) :=
+  fun r k => k (Fix (FooF a b)) (fun z => z r k) x.
+*)
+
+Instance FooF_Functor (a b : Type) : Functor (FooF a b) := {
+  fmap := fun _ _ f x =>
+            match x with
+            | mkFooF a b => mkFooF _ _ _ a b
+            | mkBarF a b v => mkBarF _ _ _ a b (f v)
+            | mkBazF => mkBazF _ _ _
+            end
+}.
+
+Program Instance FooF_FunctorLaws (a b : Type) : FunctorLaws (FooF a b).
+Obligation 1. extensionalize A B C. Qed.
+Obligation 2. extensionalize A B C. Qed.
+
+Lemma FooF_Algebra : forall a b r,
+  FooF a b r ≅ (a * b) + (a * a * r) + unit.
+Proof.
+  intros.
+  exists (fun f => match f with
+                   | mkFooF a b     => inl (inl (a, b))
+                   | mkBarF a1 a2 r => inl (inr (a1, a2, r))
+                   | mkBazF         => inr tt
+                   end).
+  exists (fun p => match p with
+                   | inl (inl (a, b))      => mkFooF _ _ _ a b
+                   | inl (inr (a1, a2, r)) => mkBarF _ _ _ a1 a2 r
+                   | inr tt                => mkBazF _ _ _
+                   end).
+  extensionalize A B C.
+Qed.
+
+Definition Foo_to_FooF (a b : Type) (x : Foo a b) : Fix (FooF a b) :=
+  fun r k =>
+    k r id (let fix go x :=
+                match x with
+                | mkFoo a b   => mkFooF _ _ _ a b
+                | mkBar x y v => mkBarF _ _ _ x y (k r id (go v))
+                | mkBaz       => mkBazF _ _ _
+                end in
+            go x).
+
+Definition FooF_to_Foo (a b : Type) (x : Fix (FooF a b)) : Foo a b :=
+  x (Foo a b) (fun x k f =>
+                 match fmap[FooF a b] k f with
+                 | mkFooF a b   => mkFoo _ _ a b
+                 | mkBarF a b v => mkBar _ _ a b v
+                 | mkBazF       => mkBaz _ _
+                 end).
+
+Lemma FooF_Foo_eq : forall a b x,
+  FooF_to_Foo a b (Foo_to_FooF a b x) = x.
+Proof.
+  intros.
+  induction x; simpl; auto.
+  unfold Foo_to_FooF, FooF_to_Foo; simpl.
+  f_equal.
+  destruct x; auto.
+Qed.
+
+Lemma Foo_FooF_eq : forall a b x,
+  Foo_to_FooF a b (FooF_to_Foo a b x) = x.
+Proof.
+  intros.
+  extensionality r.
+  extensionality h.
+Admitted.
+
+Lemma Foo_Fix_FooF : forall a b,
+  Foo a b ≅ Fix (FooF a b).
+Proof.
+  intros.
+  exists (Foo_to_FooF a b).
+  exists (FooF_to_Foo a b).
+  unfold comp.
+  split; extensionality x.
+    exact (Foo_FooF_eq a b x).
+  exact (FooF_Foo_eq a b x).
+Qed.
+
+Lemma Church_Foo : forall a b,
+  Foo a b ≅ (forall r, (a -> b -> r) -> (a -> a -> r -> r) -> r -> r).
+Proof.
+  intros.
+  rewrite Foo_Fix_FooF; unfold Fix.
+  apply iso_ext; intros.
+  rewrite Coyoneda_alg_iso,
+          FooF_Algebra,
+          exp_add_iso,
+          exp_one_iso,
+          exp_exp_sym_iso,
+          exp_add_iso,
+          !exp_mul_iso,
+          exp_exp_sym_iso.
+  apply f_exp_iso.
+  rewrite exp_exp_sym_iso.
+  reflexivity.
+Qed.
+
+(*
+Lemma Lan_final_iso : forall f g a,
+  Lan f g a ≅ Lan_final f g a.
+Proof.
+  intros.
+  exists (fun p r k => match p with existT e (h, x) => k e h x end).
+  exists (fun (k : forall r : Type,
+                     (forall x : Type, (f x -> a) -> g x -> r) -> r) =>
+            k (Lan f g a) (fun e h x => existT _ e (h, x))).
+  extensionalize k r h.
+  apply (Lan_final_parametricity
+           a _ r _ _ k
+           (fun e n x => existT _ e (n, x))
+           (fun x : Lan f g a =>
+              match x with
+                existT e (n, x) => h e n x
+              end)).
+Qed.
+*)
