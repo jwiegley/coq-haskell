@@ -178,6 +178,10 @@ Definition representable (f : Type -> Type) : Prop :=
 
 (** Sums (coproducts, type addition) *)
 
+Lemma f_comp {A B C} (f : B -> C) (g : A -> B) (z : A) :
+  f (g z) = (f ∘ g) z.
+Proof. reflexivity. Qed.
+
 Add Parametric Morphism : sum
   with signature (isomorphic ==> isomorphic ==> isomorphic)
     as sum_isomorphism.
@@ -196,19 +200,11 @@ Proof.
                    | inl y  => inl (to_x y)
                    | inr y0 => inr (to_x0 y0)
                    end).
-  extensionalize A B C.
-  - replace (from_x (to_x y1)) with ((from_x ∘ to_x) y1); trivial.
-    rewrite H1.
-    reflexivity.
-  - replace (from_x0 (to_x0 y1)) with ((from_x0 ∘ to_x0) y1); trivial.
-    rewrite H.
-    reflexivity.
-  - replace (to_x (from_x x1)) with ((to_x ∘ from_x) x1); trivial.
-    rewrite H2.
-    reflexivity.
-  - replace (to_x0 (from_x0 x1)) with ((to_x0 ∘ from_x0) x1); trivial.
-    rewrite H3.
-    reflexivity.
+  extensionalize A B C;
+  [ rewrite (f_comp from_x), H1
+  | rewrite (f_comp from_x0), H
+  | rewrite (f_comp to_x), H2
+  | rewrite (f_comp to_x0), H3 ]; trivial.
 Qed.
 
 Theorem add_zero_iso : forall a, a + zero ≅ a.
@@ -283,17 +279,11 @@ Proof.
   exists (fun p => match p with
                      (y, y0)  => (to_x y, to_x0 y0)
                    end).
-  extensionalize A B C.
-  - replace (from_x (to_x y1)) with ((from_x ∘ to_x) y1); trivial.
-    rewrite H1.
-    replace (from_x0 (to_x0 y2)) with ((from_x0 ∘ to_x0) y2); trivial.
-    rewrite H.
-    reflexivity.
-  - replace (to_x (from_x x1)) with ((to_x ∘ from_x) x1); trivial.
-    rewrite H2.
-    replace (to_x0 (from_x0 x2)) with ((to_x0 ∘ from_x0) x2); trivial.
-    rewrite H3.
-    reflexivity.
+  extensionalize A B C;
+  [ rewrite (f_comp from_x), H1;
+    rewrite (f_comp from_x0), H
+  | rewrite (f_comp to_x), H2;
+    rewrite (f_comp to_x0), H3 ]; trivial.
 Qed.
 
 Theorem mul_zero_iso : forall a, a * zero ≅ zero.
@@ -941,45 +931,41 @@ Proof.
   reflexivity.
 Qed.
 
-Axiom some_kind_of_parametricity :
-  forall f g h x (k : forall f, (forall r : Type, g r -> f r) -> f x)
-         (m : h ⟹ f) (n : g ⟹ h),
-  m x (k _ n) = k _ (fun r => m r ∘ n r).
-
-Lemma Yoneda_embedding_iso : forall k h : Type -> Type,
-  (forall f : Type -> Type, ((k ⟹ f) -> (h ⟹ f))) ≅ (h ⟹ k).
+Lemma CoYoneda_embedding_iso : forall a b : Type,
+  (forall x : Type, (a -> x) -> (b -> x)) ≅ (b -> a).
 Proof.
   intros.
-  assert ((forall f : Type -> Type,
-             (forall x : Type, k x -> f x) -> forall x : Type, h x -> f x) ≅
-          forall x : Type, h x -> (forall f : Type -> Type,
-             (forall x : Type, k x -> f x) -> f x)).
-    exists (fun k x h f g => k f g x h).
-    exists (fun k f g x h => k x h f g).
-    extensionalize A B C.
-  rewrite H; clear H.
+  rewrite <- (Cont_iso a).
+  rewrite exp_exp_sym_dep_iso.
   apply iso_ext; intros.
-  apply f_exp_iso.
-  exists (fun (h : forall f : Type -> Type,
-                     (forall x0 : Type, k x0 -> f x0) -> f x) =>
-            h k (fun _ => id)).
-  exists (fun z f g => g x z).
-  split.
-    extensionality h0.
-    reflexivity.
-  unfold comp, id.
+  rewrite exp_exp_sym_iso.
+  reflexivity.
+Qed.
+
+Axiom Yoneda_embedding_parametricity :
+  forall `(k : forall x : Type, (x -> a) -> x -> b)
+         `(C : x -> a) (x0 : x),
+  k a id (C x0) = k x C x0.
+
+Lemma Yoneda_embedding_iso : forall a b : Type,
+  (forall x : Type, (x -> a) -> (x -> b)) ≅ (a -> b).
+Proof.
+  intros.
+  unfold isomorphic.
+  exists (fun (f : forall x : Type, (x -> a) -> x -> b) => f _ id).
+  exists (fun (f : a -> b) x k x0 => f (k x0)).
+  extensionalize A B C.
   extensionality x0.
-  extensionality f.
-  extensionality g.
-  pose proof (@some_kind_of_parametricity f _ _ _ x0 g).
-  rewrite H.
-  f_equal.
-Abort.
+  apply Yoneda_embedding_parametricity.
+Qed.
 
 Lemma IStore_IStore_iso : forall s t a b,
   (forall `{Functor f}, (IStore a b ⟹ f) -> (IStore s t ⟹ f))
     ≅ (IStore s t ⟹ IStore a b).
 Proof.
+  intros.
+  rewrite IStore_Yoneda_iso.
+  unfold IStore, Nat.
 Abort.
 
 Lemma Lens_IStore_iso : forall s t a b,
