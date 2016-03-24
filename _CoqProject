@@ -16,6 +16,7 @@ src/Control/Monad/Trans/Either.v
 src/Control/Monad/Trans/Free.v
 src/Control/Monad/Trans/LogicT.v
 src/Control/Monad/Trans/State.v
+src/Control/Monad/Trans/Reader.v
 src/Crush.v
 src/Data/Either.v
 src/Data/Functor.v
@@ -23,6 +24,7 @@ src/Data/Functor/Const.v
 src/Data/Functor/Container.v
 src/Data/Functor/Contravariant.v
 src/Data/Functor/Identity.v
+src/Data/Functor/Kan.v
 src/Data/Functor/Yoneda.v
 src/Data/IntMap.v
 src/Data/IntSet.v

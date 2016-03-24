@@ -5,3 +5,4 @@
 *.glob
 /Makefile.coq
 /extract
+/Makefile.bak
