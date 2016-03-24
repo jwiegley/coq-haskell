@@ -21,6 +21,10 @@ Instance Compose_Functor `{Functor F} `{Functor G} : Functor (F \o G) :=
 { fmap := fun A B => @fmap F _ (G A) (G B) \o @fmap G _ A B
 }.
 
+Instance Impl_Functor {A} : Functor (fun B => A -> B) := {
+  fmap := fun A B f run => fun xs => f (run xs)
+}.
+
 Module FunctorLaws.
 
 Require Import FunctionalExtensionality.
@@ -53,7 +57,7 @@ Corollary fmap_compose  `{Functor F} `{Functor G} : forall {X Y} (f : X -> Y),
   @fmap F _ (G X) (G Y) (@fmap G _ X Y f) = @fmap (F \o G) _ X Y f.
 Proof. reflexivity. Qed.
 
-Program Instance FunctorLaws_Compose `{FunctorLaws F} `{FunctorLaws G} :
+Program Instance Compose_FunctorLaws `{FunctorLaws F} `{FunctorLaws G} :
   FunctorLaws (F \o G).
 Obligation 1. (* fmap_id *)
   extensionality x.
@@ -66,8 +70,6 @@ Obligation 2. (* fmap_comp *)
   reflexivity.
 Qed.
 
-End FunctorLaws.
+Program Instance Impl_FunctorLaws {A} : FunctorLaws (fun B => A -> B).
 
-Instance Impl_Functor {A} : Functor (fun B => A -> B) := {
-  fmap := fun A B f run => fun xs => f (run xs)
-}.
+End FunctorLaws.

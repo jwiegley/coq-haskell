@@ -134,6 +134,17 @@ Instance Compose_Monad `{Monad_Distributes M N}
 ; join := fun A => join[M] \o fmap[M] (prod M N A)
 }.
 
+
+Instance Impl_Monad {A} : Monad (fun B => A -> B) := {
+  join := fun A run => fun xs => run xs xs
+}.
+
+Program Instance Impl_Monad_Distributes `{Monad N} :
+  @Monad_Distributes (fun B => A -> B) Impl_Monad N is_applicative.
+Obligation 1.
+  exact (X >>= fun f => f X0).
+Defined.
+
 Module MonadLaws.
 
 Include ApplicativeLaws.
@@ -206,7 +217,7 @@ Class Monad_DistributesLaws `{Monad_Distributes M N} :=
       = join[M] \o fmap[M] (prod M N A) \o prod M N (M (N A))
 }.
 
-Program Instance MonadLaws_Compose `{Monad_DistributesLaws M N} :
+Program Instance Compose_MonadLaws `{Monad_DistributesLaws M N} :
   MonadLaws (M \o N).
 Obligation 1. (* monad_law_1 *)
   intros.
@@ -263,8 +274,44 @@ Obligation 4. (* monad_law_4 *)
   reflexivity.
 Qed.
 
-End MonadLaws.
+Program Instance Impl_MonadLaws : MonadLaws (fun B => A -> B).
 
-Instance Impl_Monad {A} : Monad (fun B => A -> B) := {
-  join := fun A run => fun xs => run xs xs
-}.
+Require Import FunctionalExtensionality.
+
+Program Instance Impl_Monad_DistributesLaws `{MonadLaws N} :
+  @Monad_DistributesLaws (fun B => A -> B) Impl_Monad N is_applicative
+                         Impl_Monad_Distributes.
+Obligation 1.
+  unfold Impl_Monad_Distributes_obligation_1, comp, bind, id.
+  extensionality x.
+  extensionality x0.
+  simpl.
+  rewrite <- join_fmap_fmap_x, !fmap_comp_x.
+  reflexivity.
+Qed.
+Obligation 2.
+  unfold Impl_Monad_Distributes_obligation_1, comp, bind, id.
+  extensionality x.
+  extensionality x0.
+  simpl.
+  rewrite fmap_pure_x, join_pure_x.
+  reflexivity.
+Qed.
+Obligation 3.
+  unfold Impl_Monad_Distributes_obligation_1, comp, bind, id.
+  extensionality x.
+  extensionality x0.
+  simpl.
+  rewrite fmap_comp_x, join_fmap_pure_x.
+  reflexivity.
+Qed.
+Obligation 4.
+  unfold Impl_Monad_Distributes_obligation_1, comp, bind, id.
+  extensionality x.
+  extensionality x0.
+  simpl.
+  rewrite <- join_fmap_fmap_x, <- join_fmap_join_x, !fmap_comp_x.
+  reflexivity.
+Qed.
+
+End MonadLaws.

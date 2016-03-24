@@ -40,6 +40,11 @@ Instance Compose_Applicative (F : Type -> Type) (G : Type -> Type)
 ; ap   := fun A B => ap \o fmap (@ap G _ A B)
 }.
 
+Instance Impl_Applicative {A} : Applicative (fun B => A -> B) := {
+  pure := fun _ x => fun _ => x;
+  ap   := fun _ _ runf runx => fun xs => runf xs (runx xs)
+}.
+
 Module ApplicativeLaws.
 
 Include FunctorLaws.
@@ -62,7 +67,7 @@ Class ApplicativeLaws (f : Type -> Type) `{Applicative f} := {
 }.
 
 Corollary fmap_pure `{ApplicativeLaws m} : forall (a b : Type) (f : a -> b),
-  fmap f \o pure = pure \o f.
+  fmap[m] f \o pure = pure \o f.
 Proof.
   intros a b f.
   extensionality x.
@@ -72,7 +77,7 @@ Proof.
 Qed.
 
 Corollary fmap_pure_x `{ApplicativeLaws m} : forall (a b : Type) (f : a -> b) x,
-  fmap f (pure x) = pure (f x).
+  fmap[m] f (pure x) = pure (f x).
 Proof.
   intros.
   replace (pure[m] (f x)) with ((pure[m] \o f) x).
@@ -81,7 +86,7 @@ Proof.
   reflexivity.
 Qed.
 
-Program Instance ApplicativeLaws_Compose
+Program Instance Compose_ApplicativeLaws
   `{ApplicativeLaws F} `{ApplicativeLaws G} : ApplicativeLaws (F \o G).
 Obligation 1. (* app_identity *)
   extensionality e.
@@ -133,6 +138,8 @@ Obligation 5. (* ap_fmap *)
   reflexivity.
 Qed.
 
+Program Instance Impl_ApplicativeLaws {A} : ApplicativeLaws (fun B => A -> B).
+
 End ApplicativeLaws.
 
 Reserved Notation "f <|> g" (at level 28, left associativity).
@@ -160,9 +167,4 @@ Instance Compose_Alternative
   `{Alternative F} `{Alternative G} : Alternative (F \o G)  :=
 { empty  := fun A => @empty F _ (G A)
 ; choose := fun A => @choose F _ (G A) (* jww (2016-01-28): correct? *)
-}.
-
-Instance Impl_Applicative {A} : Applicative (fun B => A -> B) := {
-  pure := fun _ x => fun xs => x;
-  ap   := fun A B runf runx => fun xs => runf xs (runx xs)
 }.
