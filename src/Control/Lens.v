@@ -16,18 +16,18 @@ Definition Getter s a :=
 
 Definition Getting r s a := (a -> Const r a) -> s -> Const r s.
 
-Notation "x &+ f" := (f x) (at level 71, only parsing).
+Notation "x &+ f" := (f x) (at level 41, only parsing).
 
 Definition set `(l : Lens s t a b) (x : b) : s -> t :=
   runIdentityF \o l _ _ (fun _ => Id _ x).
-Notation "l .~ x" := (set l x) (at level 70).
+Notation "l .~ x" := (set l x) (at level 40).
 
 Definition over `(l : Lens s t a b) (f : a -> b) : s -> t :=
   runIdentityF \o l _ _ (fun x => Id _ (f x)).
-Notation "l %~ f" := (over l f) (at level 70).
+Notation "l %~ f" := (over l f) (at level 40).
 
 Definition view `(f : Getting a s a) : s -> a := f id.
-Notation "x ^_ l" := (view l x) (at level 70).
+Notation "x ^_ l" := (view l x) (at level 40).
 
 Definition stepdownl' `(l : Lens' s a) : Getting a s a := l _ _.
 Coercion stepdownl' : Lens' >-> Getting.
@@ -35,7 +35,7 @@ Coercion stepdownl' : Lens' >-> Getting.
 Definition stepdowng `(l : Getter s a) : Getting a s a := l _ _ _.
 Coercion stepdowng : Getter >-> Getting.
 
-Notation "f \o+ g" := (fun x y => f x y \o g x y) (at level 71, only parsing).
+Notation "f \o+ g" := (fun x y => f x y \o g x y) (at level 41, only parsing).
 
 Definition _1 {a b : Type} : Lens' (a * b) a :=
   fun _ _ f s => match s with (x, y) => fmap (fun z => (z, y)) (f x) end.
@@ -53,17 +53,17 @@ Definition use `(l : Getting a s a) `{Monad m} : StateT s m a :=
 Definition plusStateT `(l : Lens' s nat) (n : nat) `{Monad m} :
   StateT s m unit := modifyT (l %~ plus n).
 
-Notation "l += n" := (plusStateT l n) (at level 71).
+Notation "l += n" := (plusStateT l n) (at level 41).
 
 Definition modifyStateT `(l : Lens' s a) (x : a) `{Monad m} :
   StateT s m unit := modifyT (l .~ x).
 
-Notation "l .= x" := (modifyStateT l x) (at level 71).
+Notation "l .= x" := (modifyStateT l x) (at level 41).
 
 Definition applyStateT `(l : Lens' s a) (f : a -> a) `{Monad m} :
   StateT s m unit := modifyT (l %~ f).
 
-Notation "l %= f" := (applyStateT l f) (at level 71).
+Notation "l %= f" := (applyStateT l f) (at level 41).
 
 Module LensLaws.
 
