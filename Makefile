@@ -16,7 +16,7 @@ all: $(VOFILES) extract/Hask/Prelude0.hs
 
 %.vo: %.v Makefile.coq
 	$(MAKE) -f Makefile.coq OPT=$(COQFLAGS)
-	@$(MAKE)
+	@$(MAKE) extract/Hask/Prelude0.hs
 
 extract/Hask/Prelude0.hs: src/Prelude.vo
 	@if [ ! -d extract ]; then rm -f extract; fi
@@ -53,6 +53,6 @@ Makefile.coq: _CoqProject
 
 clean: Makefile.coq
 	$(MAKE) -f Makefile.coq clean
-	rm -f Makefile.coq Setup extract/*
+	rm -fr Makefile.coq Setup extract/*
 	rm -fr dist .coq-native
 	rm -fr .hdevtools.sock *.glob *.d *.vo
