@@ -2,7 +2,6 @@
 src/Control/Applicative.v
 src/Control/Category.v
 src/Control/Comonad.v
-src/Control/Iso.v
 src/Control/Lens.v
 src/Control/Monad.v
 src/Control/Monad/Cont.v
