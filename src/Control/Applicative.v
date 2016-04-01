@@ -86,55 +86,66 @@ Proof.
   reflexivity.
 Qed.
 
+Ltac apply_applicative_laws :=
+  repeat
+    match goal with
+    | [ |- context[fmap[?F] id] ] =>
+      rewrite fmap_id
+    | [ |- context[fmap[?F] _ (fmap[?F] _ _)] ] =>
+      rewrite fmap_comp_x
+
+    | [ |- context[fmap[?F] _ (pure[?F] _)] ] =>
+      rewrite fmap_pure_x
+    | [ |- context[ap[?F] (pure[?F] id) _] ] =>
+      rewrite ap_id
+    | [ |- context[ap[?F] (pure[?F] _) _] ] =>
+      rewrite ap_fmap
+    | [ |- context[ap[?F] (pure[?F] _)] ] =>
+      rewrite ap_fmap
+    | [ |- context[ap[?F] (pure[?F] _) (pure[?F] _)] ] =>
+      rewrite ap_homo
+    | [ |- context[_ <*> pure[?F] _] ] =>
+      rewrite ap_interchange
+
+    | [ |- context[fmap[?F] id] ] =>
+      setoid_rewrite fmap_id
+    | [ |- context[fmap[?F] _ (fmap[?F] _ _)] ] =>
+      setoid_rewrite fmap_comp_x
+
+    | [ |- context[fmap[?F] _ (pure[?F] _)] ] =>
+      setoid_rewrite fmap_pure_x
+    | [ |- context[ap[?F] (pure[?F] id) _] ] =>
+      setoid_rewrite ap_id
+    | [ |- context[ap[?F] (pure[?F] _) _] ] =>
+      setoid_rewrite ap_fmap
+    | [ |- context[ap[?F] (pure[?F] _)] ] =>
+      setoid_rewrite ap_fmap
+    | [ |- context[ap[?F] (pure[?F] _) (pure[?F] _)] ] =>
+      setoid_rewrite ap_homo
+    | [ |- context[_ <*> pure[?F] _] ] =>
+      setoid_rewrite ap_interchange
+    end; auto.
+
+Require Import Coq.Setoids.Setoid.
+
+Local Obligation Tactic := intros; simpl; apply_applicative_laws.
+
 Program Instance Compose_ApplicativeLaws
   `{ApplicativeLaws F} `{ApplicativeLaws G} : ApplicativeLaws (F \o G).
-Obligation 1. (* app_identity *)
-  extensionality e.
-  rewrite <- ap_fmap, ap_homo, ap_id, ap_fmap, fmap_id.
-  reflexivity.
-Qed.
 Obligation 2. (* ap_composition *)
   (* Discharge w *)
-  rewrite <- ap_comp.
-  f_equal.
+  rewrite <- ap_comp; f_equal.
   (* Discharge v *)
-  (* -[X in _ <*> _ <*> X v]ap_fmap *)
-  rewrite <- ap_fmap, <- ap_comp.
+  rewrite <- !ap_fmap, <- ap_comp.
   symmetry.
-  rewrite <- ap_fmap, <- ap_fmap, <- ap_comp.
-  f_equal.
+  rewrite <- ap_comp; f_equal.
   (* Discharge u *)
-  rewrite fmap_pure_x, ap_homo.
-  repeat rewrite ap_fmap.
-  repeat rewrite fmap_comp_x.
-  rewrite ap_interchange, ap_fmap, fmap_comp_x.
+  apply_applicative_laws.
   f_equal.
-  (* Discharge compose *)
-  extensionality u'.
-  extensionality v'.
-  rewrite <- ap_fmap.
-  extensionality w'.
-  rewrite ap_comp.
-  reflexivity.
-Qed.
-Obligation 3. (* ap_homo *)
-  rewrite <- ap_fmap.
-  repeat rewrite ap_homo.
-  reflexivity.
-Qed.
-Obligation 4. (* ap_interchange *)
-  repeat rewrite <- ap_fmap.
-  rewrite ap_interchange, ap_homo.
-  repeat rewrite ap_fmap.
-  rewrite fmap_comp_x.
-  f_equal.
-  extensionality e.
-  rewrite ap_interchange, ap_fmap.
-  reflexivity.
-Qed.
-Obligation 5. (* ap_fmap *)
+  extensionality y.
   extensionality x.
-  rewrite <- ap_fmap, ap_homo, ap_fmap, ap_fmap.
+  extensionality x0.
+  rewrite <- ap_comp, ap_fmap.
   reflexivity.
 Qed.
 
