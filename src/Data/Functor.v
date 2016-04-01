@@ -28,6 +28,21 @@ Instance Impl_Functor {A} : Functor (fun B => A -> B) := {
 Module FunctorLaws.
 
 Require Import FunctionalExtensionality.
+Require Import Coq.Classes.Morphisms.
+Require Import Coq.Setoids.Setoid.
+
+(* Functors preserve extensional equality for the applied function.
+   This is needed to perform setoid rewriting within the function
+   passed to a functor. *)
+Add Parametric Morphism {A B} `{Functor F} : (@fmap F _ A B)
+  with signature (pointwise_relation _ eq ==> eq ==> eq)
+    as mul_isomorphism.
+Proof.
+  intros.
+  f_equal.
+  extensionality e.
+  apply H0.
+Qed.
 
 Class FunctorLaws (f : Type -> Type) `{Functor f} := {
   fmap_id   : forall a : Type, fmap (@id a) = id;
