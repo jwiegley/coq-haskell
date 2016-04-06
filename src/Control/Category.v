@@ -9,13 +9,22 @@
 
 (** %\chapter{Category}% *)
 
-Require Import Hask.Prelude.
+Require Import Hask.Ltac.
 Require Import Hask.Crush.
 Require Import Coq.Unicode.Utf8.
 Require Import FunctionalExtensionality.
+Require Export Coq.Classes.Morphisms.
+Export Coq.Classes.Morphisms.ProperNotations.
+Require Export Coq.Classes.SetoidClass.
 
-Axiom propositional_extensionality : forall P : Prop, P -> P = True.
-Axiom proof_irrelevance : forall (P : Prop) (u v : P), u = v.
+Generalizable All Variables.
+
+Open Scope signature.
+
+Require Import Coq.Classes.SetoidClass.
+Definition setoidType `(x : Setoid A) := A.
+
+(* Coercion setoidType : Setoid >-> Sortclass. *)
 
 (* Set Universe Polymorphism. *)
 Generalizable All Variables.
@@ -31,79 +40,53 @@ At its heart we have the [Category].  Every category is characterized by
 its objects, and the morphisms (also called arrows) between those
 objects. *)
 
-(* begin hide *)
-Reserved Notation "a ~> b" (at level 70, right associativity).
+Class Arrows (A : Type) : Type := {
+  (* These require Coq 8.5 and universe polymorphism. *)
+  (* uhom := Type : Type; *)
+  (* Hom  : A → A → uhom where "a ~> b" := (Hom a b); *)
+  Hom : A -> A -> Type
+}.
+Infix "~>" := Hom (at level 70, right associativity).
+
+Coercion Hom : Arrows >-> Funclass.
+
+Instance Opp_Arrows `{Arr : Arrows X} : @Arrows X := {
+  Hom := fun A B => @Hom X Arr B A
+}.
+
+Instance Fun_Arrows : @Arrows Type := {
+  Hom := fun A B => A -> B
+}.
+
 Reserved Notation "f ∘ g" (at level 40, left associativity).
 Reserved Notation "C ^op" (at level 90).
 (* end hide *)
 
-Class Category := {
-    ob   : Type;
-    (* These require Coq 8.5 and universe polymorphism. *)
-    (* uhom := Type : Type; *)
-    (* hom  : ob → ob → uhom where "a ~> b" := (hom a b); *)
-    hom  : ob → ob → Type where "a ~> b" := (hom a b);
-(**
+Class Category (Obj : Type) `{Arr : Arrows Obj} := {
+  arrows_setoid :> forall x y, Setoid (x ~> y);
 
-It is important to note that objects and arrows have no inherent meaning: The
-notion of a category requires only that they exist, and that they be
-well-behaved.  Since all we can know about objects is that they exist, they
-serve only to differentiate morphisms.  Conversely, morphisms are how we
-characterize objects. *)
+  id : ∀ {A}, A ~> A;
+  comp : ∀ {A B C}, (B ~> C) → (A ~> B) → (A ~> C)
+    where "f ∘ g" := (comp f g);
 
-(** * Morphisms
+  right_id : ∀ A B (f : A ~> B), f ∘ id == f;
+  left_id : ∀ A B (f : A ~> B), id ∘ f == f;
 
-In this formalization, as in many textbooks, morphisms are called [hom], for
-"homomorphism" (algebraic structure-preserving maps).  Each morphism
-represents the set of all morphism having that type, so they are also called
-"hom-sets".
-
-Since categories may have other categories as objects, we require that the
-type of [hom] be larger than the type of its arguments.  This is the purpose
-of the [uhom] type, allowing us to make use of Coq's support for universe
-polymorphism.
-
-*)
-
-    c_id : ∀ {A}, A ~> A;
-    c_comp : ∀ {A B C}, (B ~> C) → (A ~> B) → (A ~> C)
-      where "f ∘ g" := (c_comp f g);
-(**
-
-If [ob] and [hom] are the nouns of category theory, [id] and [compose] are its
-fundamental verbs.  Using only these notions we can reason about concepts such
-as _idempotency_, _involution_, _section_ and _retraction_, _equalizers_ and
-_co-equalizers_, and more.  Before we may do so, however, we must constrain
-identity and composition under three laws:
-
-*)
-
-    c_right_id : ∀ A B (f : A ~> B), f ∘ c_id = f;
-    c_left_id : ∀ A B (f : A ~> B), c_id ∘ f = f;
-    c_comp_assoc : ∀ A B C D (f : C ~> D) (g : B ~> C) (h : A ~> B),
-        f ∘ (g ∘ h) = (f ∘ g) ∘ h
+  comp_proper :> ∀ a b c,
+    Proper (equiv ==> equiv ==> equiv) (@comp a b c);
+  comp_assoc : ∀ A B C D (f : C ~> D) (g : B ~> C) (h : A ~> B),
+    f ∘ (g ∘ h) == (f ∘ g) ∘ h
 }.
 
-(**
+Infix "~{ C }~>" := (@Hom _ C) (at level 100) : category_scope.
+Infix "∘"        := comp (at level 40, left associativity) : category_scope.
 
-Note the difference between the arrow used for function types in Coq, such as
-[A → B], and for morphisms in a category [A ~> B].  If the category must be
-indicated, it is stated in the arrow: [A ~{C}~> B]. *)
-
-(* begin hide *)
-(* Using a [Category] in a context requiring a [Type] will do what is expected
-   using this coercion. *)
-Coercion ob : Category >-> Sortclass.
-(* Coercion hom : Category >-> Funclass. *)
-
-Infix "~>"       := hom : category_scope.
-Infix "~{ C }~>" := (@hom C) (at level 100) : category_scope.
-Infix "∘"        := c_comp (at level 40, left associativity) : category_scope.
-
-Notation "ob/ C" := (@ob C) (at level 1) : category_scope.
-Notation "id/ X" := (@c_id _ X) (at level 1) : category_scope.
+Notation "id/ X" := (@id _ _ _ X) (at level 1) : category_scope.
 
 Open Scope category_scope.
+
+(*
+Axiom proof_irrelevance : forall (P : Prop) (u v : P), u = v.
 
 Lemma cat_irrelevance `(C : Category) `(D : Category)
   : ∀ (m n : ∀ {A}, A ~> A)
@@ -133,9 +116,10 @@ Proof.
   apply proof_irrelevance.
   apply proof_irrelevance.
 Qed.
+*)
 
-Hint Extern 1 => apply c_left_id.
-Hint Extern 1 => apply c_right_id.
+Hint Extern 1 => apply left_id.
+Hint Extern 1 => apply right_id.
 
 Hint Extern 4 (?A = ?A) => reflexivity.
 Hint Extern 7 (?X = ?Z) =>
@@ -143,63 +127,35 @@ Hint Extern 7 (?X = ?Z) =>
     [H : ?X = ?Y, H' : ?Y = ?Z |- ?X = ?Z] => transitivity Y
   end.
 
-(* end hide *)
-
-(**
-
-We may now extend our discourse about functions, using only the few terms
-we've defined so far:
-
-*)
-
-(* begin hide *)
 Section Morphisms.
-Context `{C : Category}.
-(* end hide *)
 
-Definition Idempotent `(f : X ~> X) := f ∘ f = f.
-Definition Involutive `(f : X ~> X) := f ∘ f = c_id.
+Context `{Category C}.
 
-(**
+Definition Idempotent `(f : X ~> X) := f ∘ f == f.
+Definition Involutive `(f : X ~> X) := f ∘ f == id.
 
-We can also define relationships between two functions:
-
-*)
-
-Definition Section'   `(f : X ~> Y) := { g : Y ~> X & g ∘ f = c_id }.
-Definition Retraction `(f : X ~> Y) := { g : Y ~> X & f ∘ g = c_id }.
+Definition Section'   `(f : X ~> Y) := { g : Y ~> X & g ∘ f == id }.
+Definition Retraction `(f : X ~> Y) := { g : Y ~> X & f ∘ g == id }.
 
 Class SplitIdempotent {X Y : C} := {
-    split_idem_retract := Y;
+  split_idem_retract := Y;
 
-    split_idem       : X ~> X;
-    split_idem_r     : X ~> split_idem_retract;
-    split_idem_s     : split_idem_retract ~> X;
-    split_idem_law_1 : split_idem_s ∘ split_idem_r = split_idem;
-    split_idem_law_2 : split_idem_r ∘ split_idem_s = id/Y
+  split_idem       : X ~> X;
+  split_idem_r     : X ~> split_idem_retract;
+  split_idem_s     : split_idem_retract ~> X;
+  split_idem_law_1 : split_idem_s ∘ split_idem_r == split_idem;
+  split_idem_law_2 : split_idem_r ∘ split_idem_s == id
 }.
 
-(**
-
-A Σ-type (sigma type) is used to convey [Section'] and [Retraction] to make
-the witness available to proofs.  The definition could be expressed with an
-existential quantifier (∃), but it would not convey which [g] was chosen.
-
-*)
-
-Definition Epic  `(f : X ~> Y) := ∀ {Z} (g1 g2 : Y ~> Z), g1 ∘ f = g2 ∘ f → g1 = g2.
-Definition Monic `(f : X ~> Y) := ∀ {Z} (g1 g2 : Z ~> X), f ∘ g1 = f ∘ g2 → g1 = g2.
+Definition Epic  `(f : X ~> Y) := ∀ {Z} (g1 g2 : Y ~> Z),
+  g1 ∘ f == g2 ∘ f → g1 == g2.
+Definition Monic `(f : X ~> Y) := ∀ {Z} (g1 g2 : Z ~> X),
+  f ∘ g1 == f ∘ g2 → g1 == g2.
 
 Definition Bimorphic `(f : X ~> Y) := Epic f ∧ Monic f.
 Definition SplitEpi  `(f : X ~> Y) := Retraction f.
 Definition SplitMono `(f : X ~> Y) := Section' f.
 
-(**
-
-The only morphism we've seen so far is [id], but we can trivially prove it is
-both _idempotent_ and _involutive_. *)
-
-(* begin hide *)
 Hint Unfold Idempotent.
 Hint Unfold Involutive.
 Hint Unfold Section'.
@@ -209,34 +165,30 @@ Hint Unfold Monic.
 Hint Unfold Bimorphic.
 Hint Unfold SplitEpi.
 Hint Unfold SplitMono.
-(* end hide *)
 
-Lemma id_idempotent : ∀ X, Idempotent (c_id (A := X)).
+Lemma id_idempotent : ∀ X, Idempotent (id (A := X)).
 Proof. auto. Qed.
 
-Lemma id_involutive : ∀ X, Involutive (c_id (A := X)).
+Lemma id_involutive : ∀ X, Involutive (id (A := X)).
 Proof. auto. Qed.
 
-(**
-
-We can also prove some relationships among these definitions. *)
-
-(* begin hide *)
 Section Lemmas.
+
 Variables X Y : C.
 Variable f : X ~> Y.
-(* end hide *)
 
 Lemma retractions_are_epic : Retraction f → Epic f.
 Proof.
   autounfold.
   intros.
   destruct X0.
-  rewrite <- c_right_id.
+  rewrite <- right_id.
   symmetry.
-  rewrite <- c_right_id.
+  rewrite <- right_id.
   rewrite <- e.
-  repeat (rewrite c_comp_assoc); try f_equal; auto.
+  repeat (rewrite comp_assoc); try f_equiv; auto.
+  symmetry.
+  exact H0.
 Qed.
 
 Lemma sections_are_monic : Section' f → Monic f.
@@ -244,34 +196,34 @@ Proof.
   autounfold.
   intros.
   destruct X0.
-  rewrite <- c_left_id.
+  rewrite <- left_id.
   symmetry.
-  rewrite <- c_left_id.
+  rewrite <- left_id.
   rewrite <- e.
-  repeat (rewrite <- c_comp_assoc); try f_equal; auto.
+  repeat (rewrite <- comp_assoc); try f_equiv; auto.
+  symmetry.
+  exact H0.
 Qed.
 
-(* begin hide *)
 End Lemmas.
 End Morphisms.
-(* end hide *)
 
-Definition epi_compose `{C : Category} {X Y Z : C}
-  `(ef : @Epic C Y Z f) `(eg : @Epic C X Y g) : Epic (f ∘ g).
+Definition epi_compose `{Category C} {X Y Z : C}
+  `(ef : @Epic C _ _ Y Z f) `(eg : @Epic C _ _ X Y g) : Epic (f ∘ g).
 Proof.
   unfold Epic in *. intros.
   apply ef.
   apply eg.
-  repeat (rewrite <- c_comp_assoc); auto.
+  repeat (rewrite <- comp_assoc); auto.
 Qed.
 
-Definition monic_compose `{C : Category} {X Y Z : C}
-  `(ef : @Monic C Y Z f) `(eg : @Monic C X Y g) : Monic (f ∘ g).
+Definition monicompose `{Category C} {X Y Z : C}
+  `(ef : @Monic C _ _ Y Z f) `(eg : @Monic C _ _ X Y g) : Monic (f ∘ g).
 Proof.
   unfold Monic in *. intros.
   apply eg.
   apply ef.
-  repeat (rewrite c_comp_assoc); auto.
+  repeat (rewrite comp_assoc); auto.
 Qed.
 
 (** * Isomorphism
@@ -283,15 +235,15 @@ both directions:
 
 *)
 
-Class Isomorphism `{C : Category} (X Y : C) := {
+Class Isomorphism `{Category C} (X Y : C) := {
   to       : X ~> Y;
   from     : Y ~> X;
-  iso_to   : to ∘ from = id/Y;
-  iso_from : from ∘ to = id/X
+  iso_to   : to ∘ from == id/Y;
+  iso_from : from ∘ to == id/X
 }.
 
-(* begin hide *)
-Lemma iso_irrelevance `(C : Category) {X Y : C}
+(*
+Lemma iso_irrelevance `(Category C) {X Y : C}
   : ∀ (f g : X ~> Y) (k h : Y ~> X) tl tl' fl fl',
   @f = @g →
   @k = @h →
@@ -310,31 +262,9 @@ Proof.
   apply proof_irrelevance.
   apply proof_irrelevance.
 Qed.
-(* end hide *)
-
-(**
-
-Typically isomorphisms are characterized by this pair of functions, but they
-can also be expressed as an equivalence between objects using the notation [A
-≅ B].  A double-tilde is used to express the same notion of equivalence
-between value terms [a = b].
-
 *)
 
-Notation "X {≅} Y" :=
-  (Isomorphism X Y) (at level 70, right associativity) : category_scope.
-Notation "x {≡} y" :=
-  (to x = y ∧ from y = x) (at level 70, right associativity).
-
-(**
-
-[id] witnesses the isomorphism between any object and itself.  Isomorphisms
-are likewise symmetric and transitivity, making them parametric relations.
-This will allows us to use them in proof rewriting as though they were
-equalities.
-
-*)
-
+(*
 Program Instance iso_identity `{C : Category} (X : C) : X {≅} X := {
     to   := id/X;
     from := id/X
@@ -358,19 +288,19 @@ Program Instance iso_compose `{C : Category} {X Y Z : C}
 Obligation 1.
   destruct iso_a.
   destruct iso_b. simpl.
-  rewrite <- c_comp_assoc.
-  rewrite (c_comp_assoc _ _ _ _ to1).
+  rewrite <- comp_assoc.
+  rewrite (comp_assoc _ _ _ _ to1).
   rewrite iso_to1.
-  rewrite c_left_id.
+  rewrite left_id.
   assumption.
 Qed.
 Obligation 2.
   destruct iso_a.
   destruct iso_b. simpl.
-  rewrite <- c_comp_assoc.
-  rewrite (c_comp_assoc _ _ _ _ from0).
+  rewrite <- comp_assoc.
+  rewrite (comp_assoc _ _ _ _ from0).
   rewrite iso_from0.
-  rewrite c_left_id.
+  rewrite left_id.
   assumption.
 Qed.
 (* end hide *)
@@ -420,49 +350,36 @@ Add Parametric Relation `(C : Category) (a b : C) : (a ≅ b) (@iso_equiv C a b)
     split; crush.
 Defined.
 *)
-
-(**
-
-A [Groupoid] is a [Category] where every morphism has an inverse, and is
-therefore an isomorphism.
-
 *)
 
-Program Instance Groupoid `(C : Category) : Category := {
-    ob      := @ob C;
-    hom     := @Isomorphism C;
-    c_id    := @iso_identity C
+(*
+Program Instance Groupoid `(Category C) : Category C := {
+    hom   := @Isomorphism C;
+    id    := @iso_identity C
 }.
-(* begin hide *)
 Obligation 1.
   unfold iso_compose, iso_identity.
   destruct f. simpl in *.
   apply iso_irrelevance.
-  apply c_right_id.
-  apply c_left_id.
+  apply right_id.
+  apply left_id.
 Qed.
 Obligation 2.
   unfold iso_compose, iso_identity.
   destruct f. simpl in *.
   apply iso_irrelevance.
-  apply c_left_id.
-  apply c_right_id.
+  apply left_id.
+  apply right_id.
 Qed.
 Obligation 3.
   unfold iso_compose.
   destruct f. destruct g. destruct h.
   simpl; apply iso_irrelevance;
-  rewrite c_comp_assoc; reflexivity.
+  rewrite comp_assoc; reflexivity.
 Qed.
-(* end hide *)
-
-(**
-
-A function which is both a retraction and monic, or a section and epic, bears
-an isomorphism with its respective witness.
-
 *)
 
+(*
 Program Instance Monic_Retraction_Iso `{C : Category}
   `(f : X ~{C}~> Y) (r : Retraction f) (m : Monic f) : X {≅} Y := {
   to   := f;
@@ -478,13 +395,13 @@ Obligation 2.
   autounfold in *.
   destruct r.
   simpl.
-  specialize (m X (x ∘ f) c_id).
+  specialize (m X (x ∘ f) id).
   apply m.
-  rewrite c_comp_assoc.
+  rewrite comp_assoc.
   rewrite e.
   auto.
-  rewrite c_left_id.
-  rewrite c_right_id.
+  rewrite left_id.
+  rewrite right_id.
   reflexivity.
 Qed.
 (* end hide *)
@@ -499,18 +416,18 @@ Obligation 1.
   autounfold in *.
   destruct s.
   simpl.
-  specialize (e Y (f ∘ x) c_id).
+  specialize (e Y (f ∘ x) id).
   apply e.
-  rewrite <- c_comp_assoc.
+  rewrite <- comp_assoc.
   rewrite e0.
-  rewrite c_left_id.
-  rewrite c_right_id.
+  rewrite left_id.
+  rewrite right_id.
   reflexivity.
 Qed.
 Obligation 2.
   autounfold in *.
   destruct s.
-  specialize (e Y (f ∘ x) c_id).
+  specialize (e Y (f ∘ x) id).
   auto.
 Qed.
 
@@ -549,45 +466,87 @@ Proof.
   exists f.
   crush.
 Qed.
-
-(** * Sets
-
-[Sets] is our first real category: the category of Coq types and functions.
-The objects of this category are all the Coq types (including [Set], [Prop]
-and [Type]), and its morphisms are functions from [Type] to [Type].  [id]
-simply returns whatever object is passed, and [compose] is regular composition
-between functions.  Proving it is a category in Coq is automatic.
-
-Note that in many textbooks this category (or one similar to it) is called
-just [Set], but since that name conflicts with types of the same name in Coq,
-the plural is used instead.
-
 *)
 
-Program Instance Sets : Category := {
-    ob     := Type;
-    hom    := fun X Y => X → Y;
-    c_id   := fun _ x => x;
-    c_comp := fun _ _ _ f g x => f (g x)
+Inductive Objects := obj {
+  carrier   :> Type;
+  is_setoid :> Setoid carrier
 }.
-(**
 
-Within the category of [Sets] we can prove that monic functions are injective,
-and epic functions are surjective.  This is not necessarily true in other
-categories.
+Arguments is_setoid {o}.
 
-*)
+Record SetoidMorphism `{Setoid A} `{Setoid B} := {
+  morph :> A -> B;
+  proper_morph :> Proper (equiv ==> equiv) morph
+}.
 
+Program Instance Arrows_Setoid : Arrows Objects := {
+  Hom := fun A B => @SetoidMorphism (carrier A) is_setoid
+                                    (carrier B) is_setoid
+}.
+
+Program Instance Arr_Setoid : forall {A B : Objects}, Setoid (A ~> B) := {
+  equiv := fun f g => forall x, @equiv B is_setoid (f x) (g x)
+}.
+Obligation 1.
+  constructor;
+  repeat intro;
+  [ reflexivity
+  | symmetry
+  | transitivity (y x0) ];
+  eauto.
+Qed.
+
+Program Instance Coq : Category Objects (Arr:=Arrows_Setoid) := {
+  id   := fun A : Objects =>
+            {| morph := fun x => x
+             ; proper_morph := fun _ _ H => H |};
+  comp := fun (A B C : Objects) (g : B ~> C) (f : A ~> B) =>
+            {| morph := fun x => morph g (morph f x)
+             ; proper_morph := fun x y H =>
+                 proper_morph g (f x) (f y) (proper_morph f x y H) |}
+}.
+Next Obligation. reflexivity. Qed.
+Next Obligation. reflexivity. Qed.
+Next Obligation.
+  intros ?? Hf ?? Hg x.
+  simpl.
+  rewrite Hf.
+  apply proper_morph.
+  exact (Hg x).
+Qed.
+Next Obligation. reflexivity. Qed.
+
+(*
 Notation "X ≅Sets Y" :=
   (@Isomorphism Sets X Y) (at level 70, right associativity) : category_scope.
+*)
 
-Definition Injective `(f : X → Y) := ∀ x y, f x = f y → x = y.
+Definition objType `{Category C} := C.
+Arguments objType {C Arr} H.
 
-Lemma injectivity_is_monic `(f : X → Y) : Injective f ↔ Monic f.
+Definition arrType `{@Category C Arr} := Arr.
+Arguments arrType {C Arr} H.
+
+Coercion objType : Category >-> Sortclass.
+Coercion arrType : Category >-> Arrows.
+
+Section InjSurj.
+
+Variable X : Coq.
+Variable Y : Coq.
+Context `{Setoid X}.
+Context `{Setoid Y}.
+Variable f : X ~> Y.
+
+Definition Injective:= ∀ x y, f x == f y → x == y.
+
+(*
+Lemma injectivity_is_monic : Injective ↔ Monic f.
 Proof.
   unfold Monic, Injective.
   split; intros; simpl in *.
-  - extensionality z.
+  - intro z.
     apply H. apply (equal_f H0).
   - pose (fun (_ : unit) => x) as const_x.
     pose (fun (_ : unit) => y) as const_y.
@@ -599,19 +558,23 @@ Proof.
     + extensionality tt. assumption.
     + constructor.
 Qed.
+*)
 
-Definition Surjective `(f : X → Y) := ∀ y, ∃ x, f x = y.
+Definition Surjective := ∀ y, ∃ x, f x = y.
 
-Lemma surjectivity_is_epic `(f : X → Y) : Surjective f ↔ Epic f.
+Axiom propositional_extensionality : forall P : Prop, P -> P = True.
+
+(*
+Lemma surjectivity_is_epic : Surjective ↔ Epic f.
 Proof.
   unfold Epic, Surjective.
   split; intros; simpl in *.
-  - extensionality y.
-    specialize (H y).
-    destruct H.
-    rewrite <- H.
-    apply (equal_f H0).
-  - specialize H with (Z := Prop).
+  - intro y.
+    specialize (H1 y).
+    destruct H1.
+    rewrite <- H1.
+    apply H2.
+  - specialize (H1 Prop).
     specialize H with (g1 := fun y0 => ∃ x0, f x0 = y0).
     specialize H with (g2 := fun y  => True).
     eapply equal_f in H.
@@ -620,43 +583,48 @@ Proof.
     apply propositional_extensionality.
     exists x. reflexivity.
 Qed.
-
-(** * Dual Category
-
-The opposite, or dual, of a category is expressed [C^op].  It has the same
-objects as its parent, but the direction of all morphisms is flipped.  Doing
-this twice should result in the same category, making it an involutive
-operation.
-
 *)
 
-Program Instance Opposite `(C : Category) : Category := {
-    ob     := @ob C;
-    hom    := fun x y => @hom C y x;
-    c_id   := @c_id C;
-    c_comp := fun _ _ _ f g => g ∘ f
+End InjSurj.
+
+Program Instance Opposite `{Category C} :
+  Category C (Arr:=@Opp_Arrows C Arr) := {
+  id   := fun X : C => @id C Arr H X;
+  comp := fun (X Y Z : C) (g : Y ~> Z) (f : X ~> Y) =>
+            @comp C Arr H Z Y X f g
 }.
-Obligation 3. rewrite c_comp_assoc. auto. Defined.
+Next Obligation. apply arrows_setoid. Defined.
+Next Obligation.
+  intros f f' Hf g g' Hg.
+  rewrite Hf, Hg.
+  reflexivity.
+Defined.
+Next Obligation.
+  rewrite comp_assoc.
+  reflexivity.
+Defined.
 
 (* begin hide *)
-Notation "C ^op" := (Opposite C) (at level 90) : category_scope.
+Notation "C ^op" := (@Opposite _ _ C) (at level 90) : category_scope.
 (* end hide *)
 
-Lemma op_involutive (C : Category) : (C^op)^op = C.
+Lemma Opp_Arrows_inv `{@Category C Arr} :
+  Arr = @Opp_Arrows C (@Opp_Arrows C Arr).
 Proof.
-  unfold Opposite.
-  unfold Opposite_obligation_1.
-  unfold Opposite_obligation_2.
-  unfold Opposite_obligation_3.
-  simpl. destruct C. simpl.
-  apply f_equal3; repeat (extensionality e; simpl; crush).
-  extensionality b.
-  extensionality c.
-  extensionality d.
-  extensionality f.
-  extensionality g.
-  extensionality h. crush.
-Qed.
+  unfold Opp_Arrows. simpl.
+  destruct Arr; simpl.
+  f_equal.
+Defined.
+
+Import EqNotations.
+
+Require Import Coq.Program.Equality.
+
+Lemma op_involutive `{H : Category C} : (H^op)^op = rew Opp_Arrows_inv in H.
+Proof.
+  unfold eq_rect.
+  destruct H. simpl.
+Admitted.
 
 (**
 
@@ -665,7 +633,7 @@ mapping to its corresponding morphism in the dual category.
 
 *)
 
-Definition op `{C : Category} : ∀ {X Y}, (X ~{C^op}~> Y) → (Y ~{C}~> X).
+Definition op `{C : Category} : ∀ {X Y : C}, (X ~{C^op}~> Y) → (Y ~{C}~> X).
 Proof. auto. Defined.
 
 Definition unop `{C : Category} : ∀ {X Y}, (Y ~{C}~> X) → (X ~{C^op}~> Y).

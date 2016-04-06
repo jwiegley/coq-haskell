@@ -1,31 +1,82 @@
 Require Import Hask.Ltac.
+Require Import Hask.Control.Category.
 
 Generalizable All Variables.
 
-Class Functor (f : Type -> Type) : Type := {
-  fmap : forall {a b : Type}, (a -> b) -> f a -> f b
+Section Functor.
+
+Context `{Category C}.
+Context `{Category D}.
+
+Class Functor : Type := {
+  fobj : C -> D;
+  fmap : forall {a b : C}, (a ~> b) -> fobj a ~> fobj b;
+  fmap_proper :> forall {a b : C} , Proper (equiv ==> equiv) (@fmap a b)
 }.
 
-Arguments fmap {f _ a b} g x.
+End Functor.
+
+Arguments fobj {_ _ _ _ _ _ _} _.
+Arguments fmap {_ _ _ _ _ _ _ a b} _.
+
+Coercion fobj : Functor >-> Funclass.
 
 Infix "<$>" := fmap (at level 28, left associativity, only parsing).
 Infix "<$[ M ]>" :=
-  (@fmap M _ _ _) (at level 28, left associativity, only parsing).
+  (@fmap _ _ _ _ _ _ M _ _) (at level 28, left associativity, only parsing).
 Notation "x <&> f" :=
   (fmap f x) (at level 28, left associativity, only parsing).
 
-Notation "fmap[ M ]" := (@fmap M _ _ _) (at level 9).
-Notation "fmap[ M N ]" := (@fmap (fun X => M (N X)) _ _ _) (at level 9).
+Notation "fobj[ M ]" := (@fobj _ _ _ _ _ _ M) (at level 9).
+Notation "fmap[ M ]" := (@fmap _ _ _ _ _ _ M _ _) (at level 9).
+Notation "fmap[ M N ]" :=
+  (@fmap _ _ _ _ _ _ (fun X => M (N X)) _ _) (at level 9).
 Notation "fmap[ M N O ]" :=
-  (@fmap (fun X => M (N (O X))) _ _ _) (at level 9).
+  (@fmap _ _ _ _ _ _ (fun X => M (N (O X))) _ _) (at level 9).
 
-Instance Compose_Functor `{Functor F} `{Functor G} : Functor (F \o G) :=
-{ fmap := fun A B => @fmap F _ (G A) (G B) \o @fmap G _ A B
-}.
+Notation "C ⟶ D" :=
+  (@Functor C _ _ D _ _) (at level 90, right associativity).
 
-Instance Impl_Functor {A} : Functor (fun B => A -> B) := {
-  fmap := fun A B f run => fun xs => f (run xs)
+Program Instance Compose_Functor `{Category C} `{Category D} `{Category E}
+  `{F : D ⟶ E} `{G : C ⟶ D} : C ⟶ E :=
+{ fobj := F \o G;
+  fmap := fun _ _ => fmap[F] \o fmap[G]
 }.
+Obligation 1.
+  intros f f' Hf.
+  unfold Ltac.comp.
+  rewrite Hf.
+  reflexivity.
+Defined.
+
+Program Instance Impl_Functor (A : Objects) : Coq ⟶ Coq := {
+  fobj := fun B : Objects =>
+            {| carrier   := @SetoidMorphism A is_setoid B is_setoid
+             ; is_setoid := @Arr_Setoid A B |};
+  fmap := fun X Y (f : X ~> Y) =>
+            {| morph := fun x =>
+                 {| morph := morph f \o morph x
+                  ; proper_morph := _ |}
+             ; proper_morph := _ |}
+}.
+Next Obligation.
+  intros ?? H.
+  unfold Ltac.comp.
+  apply proper_morph.
+  apply proper_morph.
+  exact H.
+Defined.
+Next Obligation.
+  intros ?? H.
+  simpl; intros.
+  apply proper_morph.
+  apply H.
+Defined.
+Next Obligation.
+  intros ?? H.
+  simpl; intros.
+  apply H.
+Defined.
 
 Module FunctorLaws.
 
