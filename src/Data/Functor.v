@@ -9,6 +9,8 @@ Class Functor (f : Type -> Type) : Type := {
 Arguments fmap {f _ a b} g x.
 
 Infix "<$>" := fmap (at level 28, left associativity, only parsing).
+Infix "<$[ M ]>" :=
+  (@fmap M _ _ _) (at level 28, left associativity, only parsing).
 Notation "x <&> f" :=
   (fmap f x) (at level 28, left associativity, only parsing).
 
