@@ -41,7 +41,7 @@ Notation "X <- A ; B" := (A >>= (fun X => B))%monad
   (at level 81, right associativity, only parsing) : monad_scope.
 
 Notation "A ;; B" := (A >>= (fun _ => B))%monad
-  (at level 42, right associativity, only parsing) : monad_scope.
+  (at level 81, right associativity, only parsing) : monad_scope.
 
 Open Scope monad_scope.
 
