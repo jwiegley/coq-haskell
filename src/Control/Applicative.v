@@ -25,6 +25,10 @@ Notation "ap[ M N ]" := (@ap (fun X => M (N X)) _ _ _) (at level 9).
 Notation "ap[ M N O ]" := (@ap (fun X => M (N (O X))) _ _ _) (at level 9).
 
 Infix "<*>" := ap (at level 28, left associativity).
+Notation "x <**> f" := (ap f x) (at level 28, left associativity).
+Notation "x <**[ M ]> f" := (@ap M _ _ _ f x) (at level 28, left associativity).
+Infix "<*[ M ]>" :=
+  (@ap M _ _ _) (at level 28, left associativity, only parsing).
 
 (* Notation "[| f x y .. z |]" := (.. (f <$> x <*> y) .. <*> z) *)
 (*     (at level 9, left associativity, f at level 9, *)
