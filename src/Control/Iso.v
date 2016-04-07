@@ -888,17 +888,29 @@ Axiom Lens_parametricity :
 
 Definition IStore a b t := (a * (b -> t))%type.
 
-Instance IStore_Functor {a b} : Functor (IStore a b).
-Admitted.
+Instance IStore_Functor {a b} : Functor (IStore a b) := {
+  fmap := fun _ _ f x => match x with
+                           (a, k) => (a, fun b => f (k b))
+                         end
+}.
 
-Instance IStore_FunctorLaws {a b} : FunctorLaws (IStore a b).
-Admitted.
-
-Import MonadLaws.
+Program Instance IStore_FunctorLaws {a b} : FunctorLaws (IStore a b).
+Obligation 1.
+  extensionality p.
+  destruct p.
+  reflexivity.
+Qed.
+Obligation 2.
+  extensionality p.
+  destruct p.
+  reflexivity.
+Qed.
 
 Definition Nat (f g : Type -> Type) := forall x : Type, f x -> g x.
 
 Infix "⟹" := Nat (at level 100).
+
+Import MonadLaws.
 
 Lemma IStore_Yoneda_iso : forall `{FunctorLaws f} a b,
   (IStore a b ⟹ f) ≅ a -> f b.
