@@ -10,7 +10,7 @@ Context `{Category D}.
 
 Class Functor : Type := {
   fobj : C -> D;
-  fmap : forall {a b : C}, (a ~> b) -> fobj a ~> fobj b;
+  fmap : forall {a b : C}, (a ~> b) -> (fobj a ~> fobj b);
   fmap_proper :> forall {a b : C} , Proper (equiv ==> equiv) (@fmap a b)
 }.
 
@@ -49,7 +49,52 @@ Obligation 1.
   reflexivity.
 Defined.
 
-Program Instance Impl_Functor (A : Objects) : Coq ⟶ Coq := {
+(* Mapping from any Coq Type to a Coq function (Type -> Type). This means that
+   fmap maps Coq function to functions between functions, and we can't prove
+   that fmap respects hom-set equivalences unless we know about equivalences
+   between such functions. *)
+Program Instance Impl_FunctorDirect (A : Type) : Coq ⟶ Coq := {
+  fobj := fun B : Type => A -> B;
+  fmap := fun X Y (f : X -> Y) (x : A -> X) (a : A) => f (x a)
+}.
+Next Obligation.
+  intros ?? H x.
+  Require Import FunctionalExtensionality.
+  extensionality a0.
+  rewrite H.
+  reflexivity.
+Qed.
+
+Program Instance Extensional_Equivalence {A B : Type} :
+  Equivalence (fun f g : A -> B => forall x : A, f x = g x).
+Next Obligation.
+  intros x y z H1 H2 a.
+  transitivity (y a); [ apply H1 | apply H2 ].
+Defined.
+
+(* The problem with Impl_FunctorDirect can be solved if we instead map Coq
+   types to a category whose objects (Coq functions, in this case) are setoids
+   (just as our hom-sets were), so now we can easily state that the hom-set
+   equivalences will be mapped to the object (function) equivalences. *)
+Program Instance Impl_Functor (A : Type) : Coq ⟶ SetoidCoq := {
+  fobj := fun B : Type =>
+            {| carrier   := A -> B
+             ; is_setoid := {| equiv := fun f g => forall x, f x = g x
+                             ; setoid_equiv := Extensional_Equivalence |} |};
+  fmap := fun X Y (f : X -> Y) =>
+            {| morph := fun x a => f (x a)
+             ; proper_morph := _ |}
+}.
+Next Obligation.
+  intros ?? H ?; rewrite H; reflexivity.
+Defined.
+Next Obligation.
+  intros ?? H ??; simpl; rewrite H; reflexivity.
+Defined.
+
+(* Or we can go whole hog and just say that some setoid is mapped to a
+   category of setoids of functions. This gets very verbose, however. *)
+Program Instance Impl_SetoidFunctor (A : Objects) : SetoidCoq ⟶ SetoidCoq := {
   fobj := fun B : Objects =>
             {| carrier   := @SetoidMorphism A is_setoid B is_setoid
              ; is_setoid := @Arr_Setoid A B |};
@@ -84,25 +129,18 @@ Require Import FunctionalExtensionality.
 Require Import Coq.Classes.Morphisms.
 Require Import Coq.Setoids.Setoid.
 
-(* Functors preserve extensional equality for the applied function.
-   This is needed to perform setoid rewriting within the function
-   passed to a functor. *)
-Add Parametric Morphism {A B} `{Functor F} : (@fmap F _ A B)
-  with signature (pointwise_relation _ eq ==> eq ==> eq)
-    as mul_isomorphism.
-Proof.
-  intros.
-  f_equal.
-  extensionality e.
-  apply H0.
-Qed.
+Section FunctorLaws.
 
-Class FunctorLaws (f : Type -> Type) `{Functor f} := {
-  fmap_id   : forall a : Type, fmap (@id a) = id;
-  fmap_comp : forall (a b c : Type) (f : b -> c) (g : a -> b),
-    fmap f \o fmap g = fmap (f \o g)
+Context `{Category C}.
+Context `{Category D}.
+
+Class FunctorLaws `{F : C ⟶ D} := {
+  fmap_id   : forall a : C, fmap[F] id/a == id;
+  fmap_comp : forall (a b c : C) (f : b ~> c) (g : a ~> b),
+    fmap f ∘ fmap g == fmap[F] (f ∘ g)
 }.
 
+(*
 Corollary fmap_id_x `{FunctorLaws f} : forall (a : Type) x, fmap (@id a) x = x.
 Proof.
   intros.
@@ -120,24 +158,24 @@ Proof.
     reflexivity.
   reflexivity.
 Qed.
+*)
 
+(*
 Corollary fmap_compose  `{Functor F} `{Functor G} : forall {X Y} (f : X -> Y),
   @fmap F _ (G X) (G Y) (@fmap G _ X Y f) = @fmap (F \o G) _ X Y f.
 Proof. reflexivity. Qed.
+*)
 
-Program Instance Compose_FunctorLaws `{FunctorLaws F} `{FunctorLaws G} :
-  FunctorLaws (F \o G).
-Obligation 1. (* fmap_id *)
-  extensionality x.
-  do 2 rewrite fmap_id.
-  reflexivity.
-Qed.
-Obligation 2. (* fmap_comp *)
-  extensionality x.
-  do 2 rewrite fmap_comp.
-  reflexivity.
-Qed.
+End FunctorLaws.
 
-Program Instance Impl_FunctorLaws {A} : FunctorLaws (fun B => A -> B).
+Program Instance Compose_FunctorLaws
+  `{Category C} `{Category D} `{Category E}
+  `{@FunctorLaws D _ _ E _ _ F} `{@FunctorLaws C _ _ D _ _ G} :
+  @FunctorLaws C _ _ E _ _ (@Compose_Functor _ _ _ _ _ _ _ _ _ F G).
+Obligation 1. do 2 rewrite fmap_id;   reflexivity. Qed.
+Obligation 2. do 2 rewrite fmap_comp; reflexivity. Qed.
+
+Program Instance Impl_FunctorLaws {A : Type} :
+  @FunctorLaws Coq _ _ SetoidCoq _ _ (Impl_Functor A).
 
 End FunctorLaws.

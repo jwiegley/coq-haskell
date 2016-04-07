@@ -1,18 +1,51 @@
 Require Export Hask.Ltac.
+Require Export Hask.Control.Category.
 Require Export Hask.Data.Functor.
-Require Export Hask.Data.Functor.Const.
 
 Generalizable All Variables.
 
 Reserved Notation "f <*> g" (at level 28, left associativity).
 
-Class Applicative (f : Type -> Type) := {
-  is_functor :> Functor f;
+Section Applicative.
 
-  pure : forall a : Type, a -> f a;
-  ap   : forall a b : Type, f (a -> b) -> f a -> f b
+(* Class Cartesian `{Category C} := { *)
+(*   product : forall a b : C, C *)
+(* }. *)
+(* Arguments Cartesian {_ Arr} H. *)
+
+Notation "x × y" := (x * y)%type (at level 30).
+
+(* Class Closed `{Category C} := { *)
+(*   exponent : forall a b : C, C *)
+(* }. *)
+(* Arguments Closed {_ Arr} H. *)
+
+(* Class Monoidal `{Category C} := { *)
+(*   tensor_product  : C × C ⟶ C; *)
+(*   identity_object : C *)
+(* }. *)
+
+Context `{Category C}.
+
+Inductive product (A B : Set) : Set :=  paired : A -> B -> product A B.
+
+Set Printing All.
+Print prod.
+Check @Functor (product (C^op) C) _ _ Coq _ _.
+
+Instance Hom_Functor : C^op × C ⟶ Coq.
+
+Context `{Category D}.
+
+Class Applicative := {
+  is_functor :> C ⟶ D;
+
+  pure : forall a : C, a -> fobj[is_functor] a;
+  ap   : forall a b : C, fobj[is_functor] (a ~> b) ~> (fobj a ~> fobj b)
     where "f <*> g" := (ap f g)
 }.
+
+End Applicative.
 
 Arguments pure {f _ _} _.
 Arguments ap   {f _ _ _} _ x.

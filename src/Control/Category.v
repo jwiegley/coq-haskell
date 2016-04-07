@@ -21,11 +21,6 @@ Generalizable All Variables.
 
 Open Scope signature.
 
-Require Import Coq.Classes.SetoidClass.
-Definition setoidType `(x : Setoid A) := A.
-
-(* Coercion setoidType : Setoid >-> Sortclass. *)
-
 (* Set Universe Polymorphism. *)
 Generalizable All Variables.
 
@@ -468,6 +463,24 @@ Proof.
 Qed.
 *)
 
+Program Instance Coq : Category Type (Arr:=Fun_Arrows) := {
+  id   := fun _ x => x;
+  comp := fun _ _ _ f g x => f (g x)
+}.
+Next Obligation.
+  (* Equivalence of arrows in the hom-setoids for this category is given by
+     functional extensionality. *)
+  refine {| equiv := fun f g => forall x, f x = g x |}.
+  constructor; repeat intro.
+  - reflexivity.
+  - symmetry; apply H.
+  - transitivity (y0 x1); [ apply H | apply H0 ].
+Defined.
+Next Obligation.
+  intros f f' Hf g g' Hg x.
+  rewrite Hf, Hg; reflexivity.
+Qed.
+
 Inductive Objects := obj {
   carrier   :> Type;
   is_setoid :> Setoid carrier
@@ -497,7 +510,7 @@ Obligation 1.
   eauto.
 Qed.
 
-Program Instance Coq : Category Objects (Arr:=Arrows_Setoid) := {
+Program Instance SetoidCoq : Category Objects (Arr:=Arrows_Setoid) := {
   id   := fun A : Objects =>
             {| morph := fun x => x
              ; proper_morph := fun _ _ H => H |};
@@ -605,7 +618,7 @@ Next Obligation.
 Defined.
 
 (* begin hide *)
-Notation "C ^op" := (@Opposite _ _ C) (at level 90) : category_scope.
+Notation "C ^op" := (@Opposite C _ _) (at level 90) : category_scope.
 (* end hide *)
 
 Lemma Opp_Arrows_inv `{@Category C Arr} :
