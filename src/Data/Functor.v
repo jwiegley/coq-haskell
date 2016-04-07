@@ -179,3 +179,70 @@ Program Instance Impl_FunctorLaws {A : Type} :
   @FunctorLaws Coq _ _ SetoidCoq _ _ (Impl_Functor A).
 
 End FunctorLaws.
+
+Section Natural.
+
+Context `{Category C}.
+Context `{Category D}.
+
+Class Natural `{F : C ⟶ D} `{G : C ⟶ D} :=
+{ transport  : forall {X}, fobj[F] X ~> fobj[G] X
+; naturality : forall {X Y} (f : X ~> Y),
+    fmap[G] f ∘ transport == transport ∘ fmap[F] f
+}.
+
+Notation "transport/ N" := (@transport _ _ N) (at level 44).
+Notation "F ⟾ G" := (@Natural F G) (at level 90, right associativity).
+
+(* Natural transformations can be applied directly to functorial values to
+   perform the functor mapping they imply. *)
+Coercion transport : Natural >-> Funclass.
+
+Instance Functor_Arrows : @Arrows (C ⟶ D) := {
+  Hom := fun (f g : C ⟶ D) => f ⟾ g
+}.
+
+Program Instance Natural_Setoid `{F : C ⟶ D} `{G : C ⟶ D} : Setoid (F ⟾ G) := {
+  equiv := fun (f g : F ⟾ G) => forall x, f x == g x
+}.
+Obligation 1.
+  constructor; repeat intro.
+  - reflexivity.
+  - symmetry. apply H1.
+  - transitivity (y x0). apply H1. apply H2.
+Qed.
+
+Program Instance Nat : @Category (C ⟶ D) Functor_Arrows := {
+  id   := fun A => {| transport := fun _ => id |};
+  comp := fun F G H A1 A2 =>
+            {| transport := fun x =>
+                 @transport G H A1 x ∘ @transport F G A2 x |}
+}.
+Next Obligation.
+  rewrite right_id, left_id;
+  reflexivity.
+Defined.
+Next Obligation.
+  rewrite comp_assoc, naturality, <- comp_assoc, naturality, comp_assoc;
+  reflexivity.
+Defined.
+Next Obligation.
+  intros ?? H1 ?? H2 x; simpl.
+  rewrite H1, H2; reflexivity.
+Defined.
+Next Obligation.
+  apply comp_assoc.
+Qed.
+
+End Natural.
+
+Notation "transport/ N" := (@transport _ _ _ _ _ _ _ _ N) (at level 44).
+Notation "F ⟾ G" :=
+  (@Natural _ _ _ _ _ _ F G) (at level 90, right associativity).
+
+Notation "[ C , D ]" := (Nat C _ _ D _ _) (at level 90, right associativity).
+
+Program Instance Id_Functor `{Category C} : C ⟶ C := {
+  fobj := fun A => A;
+  fmap := _
+}.

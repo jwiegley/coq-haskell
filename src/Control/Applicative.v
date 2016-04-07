@@ -6,56 +6,37 @@ Generalizable All Variables.
 
 Reserved Notation "f <*> g" (at level 28, left associativity).
 
+Class Closed `{Category C} := {
+  internal_hom : C -> C -> C
+}.
+
+Infix "⇒" := internal_hom (at level 28).
+
 Section Applicative.
-
-(* Class Cartesian `{Category C} := { *)
-(*   product : forall a b : C, C *)
-(* }. *)
-(* Arguments Cartesian {_ Arr} H. *)
-
-Notation "x × y" := (x * y)%type (at level 30).
-
-(* Class Closed `{Category C} := { *)
-(*   exponent : forall a b : C, C *)
-(* }. *)
-(* Arguments Closed {_ Arr} H. *)
-
-(* Class Monoidal `{Category C} := { *)
-(*   tensor_product  : C × C ⟶ C; *)
-(*   identity_object : C *)
-(* }. *)
 
 Context `{Category C}.
 
-Inductive product (A B : Set) : Set :=  paired : A -> B -> product A B.
+Class Applicative `{Closed C} := {
+  is_functor :> C ⟶ C;
 
-Set Printing All.
-Print prod.
-Check @Functor (product (C^op) C) _ _ Coq _ _.
-
-Instance Hom_Functor : C^op × C ⟶ Coq.
-
-Context `{Category D}.
-
-Class Applicative := {
-  is_functor :> C ⟶ D;
-
-  pure : forall a : C, a -> fobj[is_functor] a;
-  ap   : forall a b : C, fobj[is_functor] (a ~> b) ~> (fobj a ~> fobj b)
+  pure : forall x : C, x ~> fobj x;
+  ap   : forall a b : C, fobj (a ⇒ b) ~> (fobj a ⇒ fobj b)
     where "f <*> g" := (ap f g)
 }.
 
 End Applicative.
 
-Arguments pure {f _ _} _.
-Arguments ap   {f _ _ _} _ x.
+Coercion is_functor : Applicative >-> Functor.
 
-Notation "pure[ M ]" := (@pure M _ _) (at level 19, M at next level).
-Notation "pure[ M N ]" := (@pure (fun X => M (N X)) _ _) (at level 9).
+Arguments pure {_ _ _ _ _} _.
+Arguments ap   {_ _ _ _ _} _ _.
 
-Notation "ap[ M ]" := (@ap M _ _ _) (at level 9).
-Notation "ap[ M N ]" := (@ap (fun X => M (N X)) _ _ _) (at level 9).
-Notation "ap[ M N O ]" := (@ap (fun X => M (N (O X))) _ _ _) (at level 9).
+Notation "pure[ M ]" := (@pure _ _ _ _ M _) (at level 19, M at next level).
+Notation "pure[ M N ]" := (@pure _ _ _ _ (fun X => M (N X)) _) (at level 9).
+
+Notation "ap[ M ]" := (@ap _ _ _ _ M _ _) (at level 9).
+Notation "ap[ M N ]" := (@ap _ _ _ _ (fun X => M (N X)) _ _) (at level 9).
+Notation "ap[ M N O ]" := (@ap _ _ _ _ (fun X => M (N (O X))) _ _) (at level 9).
 
 Infix "<*>" := ap (at level 28, left associativity).
 
@@ -63,8 +44,9 @@ Infix "<*>" := ap (at level 28, left associativity).
 (*     (at level 9, left associativity, f at level 9, *)
 (*      x at level 9, y at level 9, z at level 9). *)
 
-Definition liftA2 `{Applicative m} {A B C : Type}
-  (f : A -> B -> C) (x : m A) (y : m B) : m C := ap (fmap f x) y.
+Definition liftA2 `{Category C} `{Closed C}
+  `{m : @Applicative C _ _ _} {X Y Z : C}
+  (f : X ~> Y ⇒ Z) (x : m X) (y : m Y) : m Z := ap (fmap f x) y.
 
 Instance Compose_Applicative (F : Type -> Type) (G : Type -> Type)
   `{Applicative F} `{Applicative G} : Applicative (F \o G)  :=
