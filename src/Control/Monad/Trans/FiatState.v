@@ -26,22 +26,11 @@ Definition putT  `{Applicative m} {s : Type} x   : StateT s m unit :=
 Definition modifyT `{Applicative m} {s : Type} (f : s -> s) : StateT s m unit :=
   fun i => pure (f i, tt).
 
-Program Instance StateT_Functor {s} `{Functor m} : Functor (StateT s m) := {
-  fmap := fun A B f (x : StateT s m A) => fun st =>
-    x st <&> second f
-}.
-
 Definition StateT_ap `{Monad m} {s : Type} {a b : Type}
   (f : StateT s m (a -> b)) (x : StateT s m a) : StateT s m b := fun st =>
   join (f st <&> fun z => match z with
     | (st', f') => x st' <&> second f'
     end).
-
-Program Instance StateT_Applicative `{Monad m} {s : Type} :
-  Applicative (StateT s m) := {
-  pure := fun _ x => fun st => pure (st, x);
-  ap   := @StateT_ap m _ s
-}.
 
 Definition StateT_join `{Monad m} {s a : Type} (x : StateT s m (StateT s m a)) :
   StateT s m a := fun s =>
@@ -50,20 +39,7 @@ Definition StateT_join `{Monad m} {s a : Type} (x : StateT s m (StateT s m a)) :
       (s', x') => x' s'
     end.
 
-Program Instance StateT_Monad `{Monad m} {s : Type} : Monad (StateT s m) := {
-  join := @StateT_join m _ s
-}.
-
-Instance StateT_MonadTrans {s} : MonadTrans (StateT s) :=
-{ lift := fun m _ _ A x s => fmap (fun k => (s, k)) x
-}.
-
-Definition liftStateT `{Monad m} `(x : State s a) : StateT s m a :=
-  st <- getT ;
-  let (a, st') := x st in
-  putT st' ;;
-  pure a.
-
+(*
 Module StateTLaws.
 
 Require Import FunctionalExtensionality.
@@ -205,3 +181,66 @@ Next Obligation. Admitted.
 (* Qed. *)
 
 End StateTLaws.
+*)
+
+Instance Tuple_Functor {S} : Functor (fun a => (S * a)%type) | 9 := {
+  fmap := fun _ _ f p => (fst p, f (snd p))
+}.
+
+Instance StateT_Functor `{Functor m} {S} : Functor (StateT S m) :=
+  @Compose_Functor _ Impl_Functor
+    _ (@Compose_Functor m _ _ (@Tuple_Functor S)).
+
+Instance StateT_Applicative `{Monad m} {S} : Applicative (StateT S m) := {
+  pure := fun _ x => fun s => pure (s, x);
+  ap := @StateT_ap _ _ _
+}.
+
+Instance StateT_Monad `{Monad m} {S} : Monad (StateT S m) := {
+  join := @StateT_join _ _ _
+}.
+
+Module StateTLaws.
+
+Import MonadLaws.
+Require Import FunctionalExtensionality.
+
+Program Instance Tuple_FunctorLaws {S} : FunctorLaws (fun a => (S * a)%type).
+Obligation 1.
+  extensionality p.
+  destruct p; reflexivity.
+Qed.
+
+Program Instance StateT_FunctorLaws `{FunctorLaws m} {S} :
+  FunctorLaws (StateT S m) :=
+  @Compose_FunctorLaws _ Impl_Functor Impl_FunctorLaws
+    _ _ (@Compose_FunctorLaws m _ _ _ _ (@Tuple_FunctorLaws S)).
+
+(*
+Program Instance StateT_ApplicativeLaws `{MonadLaws m} {S} :
+  ApplicativeLaws (StateT S m).
+Obligation 1.
+  extensionality x.
+  extensionality st.
+  unfold StateT_ap, StateT_join, id; simpl.
+  rewrite fmap_pure_x, join_pure_x.
+  unfold second; simpl.
+  setoid_rewrite fst_snd.
+  setoid_rewrite <- surjective_pairing.
+  rewrite fmap_id.
+  reflexivity.
+Qed.
+Obligation 2.
+Abort.
+
+Program Instance StateT_MonadLaws `{MonadLaws m} {S} :
+  MonadLaws (StateT S m).
+*)
+
+End StateTLaws.
+
+Definition liftStateT `{Monad m} `(x : State s a) : StateT s m a :=
+  st <- getT ;
+  let (a, st') := x st in
+  putT st' ;;
+  pure a.
