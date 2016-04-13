@@ -18,6 +18,7 @@ src/Control/Monad/Trans/State.v
 src/Control/Monad/Trans/Reader.v
 src/Crush.v
 src/Data/Either.v
+src/Data/Eq.v
 src/Data/Functor.v
 src/Data/Functor/Const.v
 src/Data/Functor/Container.v
