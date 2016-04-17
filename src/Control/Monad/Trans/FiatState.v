@@ -1,8 +1,7 @@
-Require Import Hask.Prelude.
+(* Require Import Hask.Prelude. *)
 Require Import Hask.Ltac.
 Require Import Hask.Control.Monad.
-Require Import Hask.Control.Monad.State.
-Require Import Hask.Control.Monad.Trans.Class.
+(* Require Import Hask.Control.Monad.Trans.Class. *)
 
 Generalizable All Variables.
 Set Implicit Arguments.
@@ -27,10 +26,16 @@ Definition modifyT `{Applicative m} {s : Type} (f : s -> s) : StateT s m unit :=
   fun i => pure (f i, tt).
 
 Definition StateT_ap `{Monad m} {s : Type} {a b : Type}
-  (f : StateT s m (a -> b)) (x : StateT s m a) : StateT s m b := fun st =>
-  join (f st <&> fun z => match z with
-    | (st', f') => x st' <&> second f'
-    end).
+  (mf : StateT s m (a -> b)) (mx : StateT s m a) : StateT s m b := fun st =>
+  p <- mf st;
+  match p with
+    (st', f) =>
+      p <- mx st';
+      match p with
+        (st'', x) =>
+          pure (st'', f x)
+      end
+  end.
 
 Definition StateT_join `{Monad m} {s a : Type} (x : StateT s m (StateT s m a)) :
   StateT s m a := fun s =>
@@ -183,13 +188,17 @@ Next Obligation. Admitted.
 End StateTLaws.
 *)
 
-Instance Tuple_Functor {S} : Functor (fun a => (S * a)%type) | 9 := {
-  fmap := fun _ _ f p => (fst p, f (snd p))
-}.
+(* Instance Tuple_Functor {S} : Functor (fun a => (S * a)%type) | 9 := { *)
+(*   fmap := fun _ _ f p => (fst p, f (snd p)) *)
+(* }. *)
 
-Instance StateT_Functor `{Functor m} {S} : Functor (StateT S m) :=
-  @Compose_Functor _ Impl_Functor
-    _ (@Compose_Functor m _ _ (@Tuple_Functor S)).
+Instance StateT_Functor `{Functor m} {S} : Functor (StateT S m) := {
+  fmap := fun _ _ f x => fun s =>
+    x s <&> fun p =>
+              match p with
+                (s', a) => (s', f a)
+              end
+}.
 
 Instance StateT_Applicative `{Monad m} {S} : Applicative (StateT S m) := {
   pure := fun _ x => fun s => pure (s, x);
@@ -205,16 +214,16 @@ Module StateTLaws.
 Import MonadLaws.
 Require Import FunctionalExtensionality.
 
-Program Instance Tuple_FunctorLaws {S} : FunctorLaws (fun a => (S * a)%type).
-Obligation 1.
-  extensionality p.
-  destruct p; reflexivity.
-Qed.
+(* Program Instance Tuple_FunctorLaws {S} : FunctorLaws (fun a => (S * a)%type). *)
+(* Obligation 1. *)
+(*   extensionality p. *)
+(*   destruct p; reflexivity. *)
+(* Qed. *)
 
-Program Instance StateT_FunctorLaws `{FunctorLaws m} {S} :
-  FunctorLaws (StateT S m) :=
-  @Compose_FunctorLaws _ Impl_Functor Impl_FunctorLaws
-    _ _ (@Compose_FunctorLaws m _ _ _ _ (@Tuple_FunctorLaws S)).
+(* Program Instance StateT_FunctorLaws `{FunctorLaws m} {S} : *)
+(*   FunctorLaws (StateT S m) := *)
+(*   @Compose_FunctorLaws _ Impl_Functor Impl_FunctorLaws *)
+(*     _ _ (@Compose_FunctorLaws m _ _ _ _ (@Tuple_FunctorLaws S)). *)
 
 (*
 Program Instance StateT_ApplicativeLaws `{MonadLaws m} {S} :
@@ -239,8 +248,12 @@ Program Instance StateT_MonadLaws `{MonadLaws m} {S} :
 
 End StateTLaws.
 
+(*
+Require Import Hask.Control.Monad.State.
+
 Definition liftStateT `{Monad m} `(x : State s a) : StateT s m a :=
   st <- getT ;
   let (a, st') := x st in
   putT st' ;;
   pure a.
+*)
