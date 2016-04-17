@@ -61,13 +61,13 @@ Fixpoint mapM `{Applicative m} {A B} (f : A -> m B) (l : list A) :
 Definition forM `{Applicative m} {A B} (l : list A) (f : A -> m B) :
   m (list B) := mapM f l.
 
-Fixpoint mapM_ `{Monad m} {A B} (f : A -> m B) (l : list A) : m unit :=
+Fixpoint mapM_ `{Applicative m} {A B} (f : A -> m B) (l : list A) : m unit :=
   match l with
   | nil => pure tt
-  | cons x xs => f x >> mapM_ f xs
+  | cons x xs => liftA2 (const id) (f x) (mapM_ f xs)
   end.
 
-Definition forM_ `{Monad m} {A B} (l : list A) (f : A -> m B) : m unit :=
+Definition forM_ `{Applicative m} {A B} (l : list A) (f : A -> m B) : m unit :=
   mapM_ f l.
 
 Definition foldM `{Monad m} {A : Type} {B : Type}
