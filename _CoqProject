@@ -15,6 +15,7 @@ src/Control/Monad/Trans/Either.v
 src/Control/Monad/Trans/Free.v
 src/Control/Monad/Trans/LogicT.v
 src/Control/Monad/Trans/State.v
+src/Control/Monad/Trans/FiatState.v
 src/Control/Monad/Trans/Reader.v
 src/Crush.v
 src/Data/Either.v
