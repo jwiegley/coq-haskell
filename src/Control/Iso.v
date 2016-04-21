@@ -26,11 +26,14 @@ Definition two  := bool.
 
 Require Import FunctionalExtensionality.
 
-Ltac extensionalize A B C :=
+Ltac extensionalize :=
   intuition;
   unfold comp, id; simpl;
+  let A := fresh "A" in
   try extensionality A;
+  let B := fresh "B" in
   try extensionality B;
+  let C := fresh "C" in
   try extensionality C;
   try destruct A;
   try destruct B;
@@ -103,7 +106,7 @@ Proof.
   unfold isomorphic.
   exists (fun k y => from_x0 (k (to_x y))).
   exists (fun k x => to_x0 (k (from_x x))).
-  extensionalize A B C.
+  extensionalize.
   - replace (from_x (to_x B)) with ((from_x ∘ to_x) B); trivial.
     rewrite H1.
     unfold id.
@@ -167,7 +170,7 @@ Proof.
   unfold adjoint; intros.
   exists (fun k a b => k (b, a)).
   exists (fun k p => k (snd p) (fst p)).
-  extensionalize A B C.
+  extensionalize.
 Qed.
 Arguments curry_adj {a _ _} /.
 
@@ -200,7 +203,7 @@ Proof.
                    | inl y  => inl (to_x y)
                    | inr y0 => inr (to_x0 y0)
                    end).
-  extensionalize A B C;
+  extensionalize;
   [ rewrite (f_comp from_x), H1
   | rewrite (f_comp from_x0), H
   | rewrite (f_comp to_x), H2
@@ -215,7 +218,7 @@ Proof.
                    | inr f => False_rect _ f
                    end).
   exists (fun a => inl a).
-  extensionalize A B C.
+  extensionalize.
 Qed.
 Hint Rewrite add_zero_iso : isos.
 
@@ -227,7 +230,7 @@ Proof.
                    | inr x => x
                    end).
   exists (fun a => inr a).
-  extensionalize A B C.
+  extensionalize.
 Qed.
 Hint Rewrite zero_add_iso : isos.
 
@@ -244,7 +247,7 @@ Proof.
                    | inr (inl x) => inl (inr x)
                    | inr (inr x) => inr x
                    end).
-  extensionalize A B C.
+  extensionalize.
 Qed.
 
 Theorem add_sym_iso : forall a b, a + b ≅ b + a.
@@ -258,7 +261,7 @@ Proof.
                    | inl x => inr x
                    | inr x => inl x
                    end).
-  extensionalize A B C.
+  extensionalize.
 Qed.
 
 (** Products (type multiplication) *)
@@ -279,7 +282,7 @@ Proof.
   exists (fun p => match p with
                      (y, y0)  => (to_x y, to_x0 y0)
                    end).
-  extensionalize A B C;
+  extensionalize;
   [ rewrite (f_comp from_x), H1;
     rewrite (f_comp from_x0), H
   | rewrite (f_comp to_x), H2;
@@ -291,7 +294,7 @@ Proof.
   intros.
   exists (fun p => snd p).
   exists (fun f => False_rect _ f).
-  extensionalize A B C.
+  extensionalize.
 Qed.
 Hint Rewrite mul_zero_iso : isos.
 
@@ -300,7 +303,7 @@ Proof.
   intros.
   exists (fun p => fst p).
   exists (fun f => False_rect _ f).
-  extensionalize A B C.
+  extensionalize.
 Qed.
 Hint Rewrite zero_mul_iso : isos.
 
@@ -309,7 +312,7 @@ Proof.
   intros;
   exists (fun p => fst p);
   exists (fun a => (a, tt));
-  extensionalize A B C.
+  extensionalize.
 Qed.
 Hint Rewrite mul_one_iso : isos.
 
@@ -318,7 +321,7 @@ Proof.
   intros;
   exists (fun p => snd p);
   exists (fun a => (tt, a));
-  extensionalize A B C.
+  extensionalize.
 Qed.
 Hint Rewrite one_mul_iso : isos.
 
@@ -330,7 +333,7 @@ Proof.
                    | inl x => (x, true)
                    | inr x => (x, false)
                    end).
-  extensionalize A B C.
+  extensionalize.
 Qed.
 Hint Rewrite mul_two_iso : isos.
 
@@ -342,7 +345,7 @@ Proof.
                    | inl x => (true, x)
                    | inr x => (false, x)
                    end).
-  extensionalize A B C.
+  extensionalize.
 Qed.
 Hint Rewrite two_mul_iso : isos.
 
@@ -351,7 +354,7 @@ Proof.
   intros;
   exists (fun p => match p with ((a, b), c) => (a, (b, c)) end);
   exists (fun p => match p with (a, (b, c)) => ((a, b), c) end).
-  extensionalize A B C.
+  extensionalize.
 Qed.
 
 Theorem mul_sym_iso : forall a b, a * b ≅ b * a.
@@ -359,7 +362,7 @@ Proof.
   intros;
   exists (fun p => match p with (a, b) => (b, a) end);
   exists (fun p => match p with (b, a) => (a, b) end).
-  extensionalize A B C.
+  extensionalize.
 Qed.
 
 (** Addition distributes over multiplication *)
@@ -375,7 +378,7 @@ Proof.
                    | inl (a, b) => (a, inl b)
                    | inr (a, c) => (a, inr c)
                    end).
-  extensionalize A B C.
+  extensionalize.
 Qed.
 Hint Rewrite mul_add_iso : isos.
 
@@ -390,7 +393,7 @@ Proof.
                    | inl (a, c) => (inl a, c)
                    | inr (b, c) => (inr b, c)
                    end).
-  extensionalize A B C.
+  extensionalize.
 Qed.
 Hint Rewrite add_mul_iso : isos.
 
@@ -410,7 +413,7 @@ Proof.
                    | inl (inr (x, y))       => (inr x, inl y)
                    | inr (x, y)             => (inr x, inr y)
                    end).
-  extensionalize A B C.
+  extensionalize.
 Qed.
 Hint Rewrite add_mul_add_iso : isos.
 
@@ -425,7 +428,7 @@ Proof.
                    | inl (a, b) => (inl a, b)
                    | inr b      => (inr tt, b)
                    end).
-  extensionalize A B C.
+  extensionalize.
 Qed.
 Hint Rewrite add_one_mul_iso : isos.
 
@@ -437,7 +440,7 @@ Proof.
   intros.
   exists (fun _ => tt).
   exists (fun _ f => False_rect _ f).
-  extensionalize A B C.
+  extensionalize.
 Qed.
 Hint Rewrite exp_zero_iso : isos.
 
@@ -447,7 +450,7 @@ Proof.
   intros.
   exists (fun k => k tt).
   exists (fun a _ => a).
-  extensionalize A B C.
+  extensionalize.
 Qed.
 Hint Rewrite exp_one_iso : isos.
 
@@ -457,7 +460,7 @@ Proof.
   intros.
   exists (fun _ => tt).
   exists (fun u _ => u).
-  extensionalize A B C.
+  extensionalize.
 Qed.
 Hint Rewrite one_exp_iso : isos.
 
@@ -466,7 +469,7 @@ Proof.
   intros.
   exists (fun k => (k true, k false)).
   exists (fun p (b : bool) => if b then fst p else snd p).
-  extensionalize A B C.
+  extensionalize.
 Qed.
 Hint Rewrite exp_two_iso : isos.
 
@@ -481,7 +484,7 @@ Proof.
   unfold isomorphic.
   exists (fun f b a => f a b).
   exists (fun f a b => f b a).
-  extensionalize A B C.
+  extensionalize.
 Qed.
 
 (** Exponentiation and multiplication distribute *)
@@ -495,7 +498,7 @@ Proof.
                                    | inr x => r x
                                    end)).
   exists (fun k p => k (fun a => p (inl a)) (fun a => p (inr a))).
-  extensionalize A B C.
+  extensionalize.
   f_equal.
   extensionality p.
   destruct p; trivial.
@@ -508,7 +511,7 @@ Proof.
   intros;
   exists (fun k => ((fun a => fst (k a)), (fun a => snd (k a)))).
   exists (fun p a => match p with (f, g) => (f a, g a) end).
-  extensionalize A B C.
+  extensionalize.
 Qed.
 Hint Rewrite mul_exp_iso : isos.
 
@@ -524,7 +527,7 @@ Proof.
   exists (fun p x H => p (ex_intro _ x H)).
   exists (fun (k : forall x : A, P x -> r) p =>
             match p with ex_intro x H => k x H end).
-  extensionalize A B C.
+  extensionalize.
 Qed.
 Hint Rewrite exp_ex_iso : isos.
 
@@ -534,7 +537,7 @@ Proof.
   intros.
   exists (fun p x H => p (exist _ x H)).
   exists (fun k p => match p with exist x H => k x H end).
-  extensionalize A B C.
+  extensionalize.
 Qed.
 Hint Rewrite exp_sig_iso : isos.
 
@@ -544,7 +547,7 @@ Proof.
   intros.
   exists (fun p x H => p (existT _ x H)).
   exists (fun k p => match p with existT x H => k x H end).
-  extensionalize A B C.
+  extensionalize.
 Qed.
 Hint Rewrite exp_sigT_iso : isos.
 
@@ -682,7 +685,7 @@ Proof.
                    | nil => inl tt
                    | cons x xs => inr (x, xs)
                    end).
-  extensionalize A B C.
+  extensionalize.
 Qed.
 Hint Rewrite list_cons_iso : isos.
 
@@ -742,7 +745,7 @@ Proof.
   exists unit.
   exists (fun k => k tt).
   exists (fun i u => i).
-  extensionalize A B C.
+  extensionalize.
 Qed.
 
 (** Yoneda *)
@@ -754,7 +757,7 @@ Proof.
   intros.
   exists (fun k => k _ id).
   exists (fun x _ f => fmap f x).
-  extensionalize A B C.
+  extensionalize.
     rewrite fmap_id0; trivial.
   Import YonedaLaws.
   exact (Yoneda_parametricity _ _ _ _ _ _).
@@ -773,7 +776,7 @@ Proof.
   intros.
   exists (fun p => match p with existT e (x, H) => fmap x H end).
   exists (fun v : f x => existT _ x (id, v)).
-  extensionalize A B C.
+  extensionalize.
     rewrite fmap_id0; trivial.
   apply EqdepFacts.eq_dep_eq_sigT.
   exact (Coyoneda_parametricity _ _ _ _).
@@ -787,8 +790,7 @@ Proof.
   intros.
   exists (fun k => k _ id).
   exists (fun x _ k => k x).
-  extensionalize A B C.
-  extensionality k.
+  extensionalize.
   apply Cont_parametricity.
 Qed.
 Hint Rewrite Cont_iso : isos.
@@ -822,7 +824,7 @@ Proof.
                                 | inr x => Just x end).
   exists (fun p => match p with | Nothing => inl tt
                                 | Just x  => inr x end).
-  extensionalize A B C.
+  extensionalize.
 Qed.
 
 Require Import Hask.Data.Functor.Fix.
@@ -847,7 +849,7 @@ Proof.
               (g : forall x0 : Type, (x0 -> x) -> a + f x0 -> x) =>
             k (fun x j f => g x j (inr f))
               (fun a => g False (False_rect _) (inl a))).
-  extensionalize A B C.
+  extensionalize.
   f_equal.
   extensionality x0.
   extensionality j.
@@ -876,7 +878,7 @@ Proof.
   (*          | Join t h x => k t (go ∘ h) (inr x) *)
   (*          end in *)
   (*      go p). *)
-  (* extensionalize A B C. *)
+  (* extensionalize. *)
 Abort.
 
 (** Lenses *)
@@ -924,7 +926,7 @@ Proof.
           (forall r : Type, a -> (b -> r) -> f r)).
     exists (fun k r a g => k a r g).
     exists (fun k a r g => k r a g).
-    extensionalize A B C.
+    extensionalize.
   rewrite H2.
   apply iso_ext; intros.
   rewrite exp_mul_iso.
@@ -966,7 +968,7 @@ Proof.
   unfold isomorphic.
   exists (fun (f : forall x : Type, (x -> a) -> x -> b) => f _ id).
   exists (fun (f : a -> b) x k x0 => f (k x0)).
-  extensionalize A B C.
+  extensionalize.
   extensionality x0.
   apply Yoneda_embedding_parametricity.
 Qed.
@@ -1000,7 +1002,7 @@ Proof.
           ≅ (s -> forall f : Type -> Type, Functor f -> (a -> f b) -> f t)).
     exists (fun k s f H g => k f H g s).
     exists (fun k f H g s => k s f H g).
-    extensionalize A B C.
+    extensionalize.
   rewrite H; clear H.
   exists (fun (k : Lens s t a b) s =>
             (@k (Const a) _ id s,
@@ -1066,7 +1068,7 @@ Proof.
                    | inl (inr (a1, a2, r)) => mkBar _ _ a1 a2 r
                    | inr tt                => mkBaz _ _
                    end).
-  extensionalize A B C.
+  extensionalize.
 Qed.
 
 Inductive FooF (a b r : Type) :=
@@ -1089,8 +1091,8 @@ Instance FooF_Functor (a b : Type) : Functor (FooF a b) := {
 }.
 
 Program Instance FooF_FunctorLaws (a b : Type) : FunctorLaws (FooF a b).
-Obligation 1. extensionalize A B C. Qed.
-Obligation 2. extensionalize A B C. Qed.
+Obligation 1. extensionalize. Qed.
+Obligation 2. extensionalize. Qed.
 
 Lemma FooF_Algebra : forall a b r,
   FooF a b r ≅ (a * b) + (a * a * r) + unit.
@@ -1106,7 +1108,7 @@ Proof.
                    | inl (inr (a1, a2, r)) => mkBarF _ _ _ a1 a2 r
                    | inr tt                => mkBazF _ _ _
                    end).
-  extensionalize A B C.
+  extensionalize.
 Qed.
 
 Definition Foo_to_FooF (a b : Type) (x : Foo a b) : Fix (FooF a b) :=
@@ -1203,7 +1205,7 @@ Proof.
   intros.
   exists (False_rect _).
   exists (fun f => f False).
-  extensionalize A B C.
+  extensionalize.
   destruct (A False).
 Qed.
 
@@ -1214,7 +1216,7 @@ Proof.
   intros.
   exists (fun u r => id).
   exists (fun _ => tt).
-  extensionalize A B C.
+  extensionalize.
   rewrite (@id_parametricity A).
   reflexivity.
 Admitted.               (* jww (2016-02-23): universe inconsistency! *)
@@ -1260,8 +1262,8 @@ Program Instance List_Alg_Functor : Functor (fun r => one + a * r)%type := {
 }.
 
 Program Instance List_Alg_FunctorLaws : FunctorLaws (fun r => one + a * r)%type.
-Obligation 1. extensionalize A B C. Qed.
-Obligation 2. extensionalize A B C. Qed.
+Obligation 1. extensionalize. Qed.
+Obligation 2. extensionalize. Qed.
 
 Lemma finenc_list : forall a,
   Fix (fun r => one + (a * r))%type ≅ (forall r, r -> (a -> r -> r) -> r).
