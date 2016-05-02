@@ -4,6 +4,7 @@ src/Control/Category.v
 src/Control/Comonad.v
 src/Control/Lens.v
 src/Control/Monad.v
+src/Control/Monad/Base.v
 src/Control/Monad/Cont.v
 src/Control/Monad/Free.v
 src/Control/Monad/Freer.v
@@ -11,6 +12,7 @@ src/Control/Monad/Indexed.v
 src/Control/Monad/Morph.v
 src/Control/Monad/State.v
 src/Control/Monad/Trans/Class.v
+src/Control/Monad/Trans/Control.v
 src/Control/Monad/Trans/Either.v
 src/Control/Monad/Trans/Free.v
 src/Control/Monad/Trans/LogicT.v

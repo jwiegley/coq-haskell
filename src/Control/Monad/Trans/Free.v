@@ -1,4 +1,3 @@
-Require Import Hask.Prelude.
 Require Import Hask.Control.Monad.
 
 Generalizable All Variables.
@@ -9,7 +8,7 @@ Definition FreeT (f m : Type -> Type) (a : Type) :=
 
 Definition iterT `{Functor f} `{Monad m}
   `(phi : f (m a) -> m a) (ft : FreeT f m a) : m a :=
-  ft _ pure $ fun _ h x => phi (fmap h x).
+  ft _ pure (fun _ h x => phi (fmap h x)).
 
 Inductive FreeF (f : Type -> Type) (a b : Type) :=
   | Pure : a -> FreeF f a b
@@ -29,7 +28,7 @@ Fixpoint iterTi `{Functor f} `{Monad m}
     y <- z ;
     match y with
       | Pure x => @pure m _ a x
-      | Free x => phi $ fmap (iterTi phi \o k) x
+      | Free x => phi (fmap (iterTi phi \o k) x)
     end
   end.
 
@@ -61,9 +60,9 @@ Program Instance FreeT_Applicative {f m} : Applicative (FreeT f m) := {
     fk _ (fun e => ak _ (fun d => b (e d)) fr) fr
 }.
 
-(* Program Instance FreeT_Monad {f m} : Monad (FreeT f m) := { *)
-(*   join := fun _ x => fun _ k h => x _ (fun y => y _ k h) h *)
-(* }. *)
+Program Instance FreeT_Monad {f m} : Monad (FreeT f m) := {
+  join := fun _ x => fun _ k h => x _ (fun y => y _ k h) h
+}.
 
 Module FreeTLaws.
 
@@ -72,7 +71,7 @@ Include MonadLaws.
 (* It's not always this easy. *)
 Program Instance FreeT_FunctorLaws     : FunctorLaws (FreeT f m).
 Program Instance FreeT_ApplicativeLaws : ApplicativeLaws (FreeT f m).
-(* Program Instance FreeT_MonadLaws       : MonadLaws (FreeT f m). *)
+Program Instance FreeT_MonadLaws       : MonadLaws (FreeT f m).
 
 End FreeTLaws.
 
