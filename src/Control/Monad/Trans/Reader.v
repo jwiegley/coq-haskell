@@ -2,6 +2,8 @@ Require Import Hask.Prelude.
 Require Import Hask.Control.Monad.
 Require Import Hask.Control.Monad.Trans.Class.
 Require Import Hask.Control.Monad.Morph.
+Require Import Hask.Control.Impl.
+Require Import Hask.Control.Compose.
 
 Generalizable All Variables.
 
@@ -31,6 +33,8 @@ Program Instance ReaderT_MFunctor {E} : MFunctor (ReaderT E) :=
 Module ReaderTLaws.
 
 Import MonadLaws.
+Import ComposeMonadLaws.
+Import ImplMonadLaws.
 
 Program Instance ReaderT_FunctorLaws `{FunctorLaws m} {E} :
   FunctorLaws (ReaderT E m) :=
@@ -42,7 +46,7 @@ Program Instance ReaderT_ApplicativeLaws `{ApplicativeLaws m} {E} :
 
 Program Instance ReaderT_MonadLaws `{MonadLaws m} {E} :
   MonadLaws (ReaderT E m) :=
-  @Compose_MonadLaws _ Impl_Monad m _ _ Impl_Monad_DistributesLaws.
+  @Compose_MonadLaws _ m Impl_Monad _ _ Impl_Monad_DistributesLaws.
 
 End ReaderTLaws.
 

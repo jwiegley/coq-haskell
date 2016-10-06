@@ -2,6 +2,8 @@
 src/Control/Applicative.v
 src/Control/Category.v
 src/Control/Comonad.v
+src/Control/Compose.v
+src/Control/Impl.v
 src/Control/Lens.v
 src/Control/Monad.v
 src/Control/Monad/Base.v

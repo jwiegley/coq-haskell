@@ -128,23 +128,6 @@ Class Monad_Distributes `{Monad M} `{Applicative N} :=
 
 Arguments prod M {_} N {_ Monad_Distributes} A _.
 
-Instance Compose_Monad `{Monad_Distributes M N}
-  : Monad (M \o N) :=
-{ is_applicative := Compose_Applicative M N
-; join := fun A => join[M] \o fmap[M] (prod M N A)
-}.
-
-
-Instance Impl_Monad {A} : Monad (fun B => A -> B) := {
-  join := fun A run => fun xs => run xs xs
-}.
-
-Program Instance Impl_Monad_Distributes `{Monad N} :
-  @Monad_Distributes (fun B => A -> B) Impl_Monad N is_applicative.
-Obligation 1.
-  exact (X >>= fun f => f X0).
-Defined.
-
 Module MonadLaws.
 
 Include ApplicativeLaws.
@@ -203,7 +186,7 @@ Qed.
    an operation [prod] and its accompanying four laws, it can be shown that M
    N is closed under composition.
 *)
-Class Monad_DistributesLaws `{Monad_Distributes M N} :=
+Class Monad_DistributesLaws `{Applicative (M \o N)} `{Monad_Distributes M N} :=
 {
   m_monad_laws :> MonadLaws M;
   n_applicative_laws :> ApplicativeLaws N;
@@ -216,102 +199,5 @@ Class Monad_DistributesLaws `{Monad_Distributes M N} :=
     prod M N A \o fmap[N] (join[M] \o fmap[M] (prod M N A))
       = join[M] \o fmap[M] (prod M N A) \o prod M N (M (N A))
 }.
-
-Program Instance Compose_MonadLaws `{Monad_DistributesLaws M N} :
-  MonadLaws (M \o N).
-Obligation 1. (* monad_law_1 *)
-  intros.
-  rewrite <- comp_assoc with (f := join[M]).
-  rewrite <- comp_assoc with (f := join[M]).
-  rewrite comp_assoc with (f := fmap[M] (prod M N a)).
-  rewrite <- join_fmap_fmap.
-  rewrite <- comp_assoc.
-  rewrite comp_assoc with (f := join[M]).
-  rewrite comp_assoc with (f := join[M]).
-  rewrite <- join_fmap_join.
-  repeat (rewrite <- comp_assoc).
-  repeat (rewrite fmap_comp).
-  repeat (rewrite comp_assoc).
-  rewrite <- prod_fmap_join_fmap_prod.
-  reflexivity.
-Qed.
-Obligation 2. (* monad_law_2 *)
-  intros.
-  rewrite <- join_fmap_pure.
-  repeat (rewrite <- comp_assoc).
-  repeat (rewrite fmap_comp).
-  repeat f_equal.
-  pose proof (@prod_fmap_pure M _ N _ _ _ a).
-  simpl in H3.
-  rewrite H3.
-  reflexivity.
-Qed.
-Obligation 3. (* monad_law_3 *)
-  intros.
-  rewrite <- prod_pure.
-  rewrite <- comp_id_left.
-  rewrite <- (@join_pure M _ _ (N a)).
-  rewrite <- comp_assoc.
-  rewrite <- comp_assoc.
-  f_equal.
-  rewrite comp_assoc.
-  rewrite comp_assoc.
-  f_equal.
-  rewrite <- fmap_pure.
-  reflexivity.
-Qed.
-Obligation 4. (* monad_law_4 *)
-  intros.
-  unfold comp at 2.
-  rewrite comp_assoc.
-  rewrite <- join_fmap_fmap.
-  rewrite <- comp_assoc.
-  rewrite fmap_comp.
-  pose proof (@prod_fmap_fmap M _ N _ _ _ a).
-  simpl in H3.
-  rewrite <- H3.
-  rewrite <- fmap_comp.
-  reflexivity.
-Qed.
-
-Program Instance Impl_MonadLaws : MonadLaws (fun B => A -> B).
-
-Require Import FunctionalExtensionality.
-
-Program Instance Impl_Monad_DistributesLaws `{MonadLaws N} :
-  @Monad_DistributesLaws (fun B => A -> B) Impl_Monad N is_applicative
-                         Impl_Monad_Distributes.
-Obligation 1.
-  unfold Impl_Monad_Distributes_obligation_1, comp, bind, id.
-  extensionality x.
-  extensionality x0.
-  simpl.
-  rewrite <- join_fmap_fmap_x, !fmap_comp_x.
-  reflexivity.
-Qed.
-Obligation 2.
-  unfold Impl_Monad_Distributes_obligation_1, comp, bind, id.
-  extensionality x.
-  extensionality x0.
-  simpl.
-  rewrite fmap_pure_x, join_pure_x.
-  reflexivity.
-Qed.
-Obligation 3.
-  unfold Impl_Monad_Distributes_obligation_1, comp, bind, id.
-  extensionality x.
-  extensionality x0.
-  simpl.
-  rewrite fmap_comp_x, join_fmap_pure_x.
-  reflexivity.
-Qed.
-Obligation 4.
-  unfold Impl_Monad_Distributes_obligation_1, comp, bind, id.
-  extensionality x.
-  extensionality x0.
-  simpl.
-  rewrite <- join_fmap_fmap_x, <- join_fmap_join_x, !fmap_comp_x.
-  reflexivity.
-Qed.
 
 End MonadLaws.

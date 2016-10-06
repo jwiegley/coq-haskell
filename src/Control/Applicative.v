@@ -37,17 +37,8 @@ Infix "<*[ M ]>" :=
 Definition liftA2 `{Applicative m} {A B C : Type}
   (f : A -> B -> C) (x : m A) (y : m B) : m C := ap (fmap f x) y.
 
-Instance Compose_Applicative (F : Type -> Type) (G : Type -> Type)
-  `{Applicative F} `{Applicative G} : Applicative (F \o G)  :=
-{ is_functor := Compose_Functor (F:=F) (G:=G)
-; pure := fun A   => @pure F _ (G A) \o @pure G _ A
-; ap   := fun A B => ap \o fmap (@ap G _ A B)
-}.
-
-Instance Impl_Applicative {A} : Applicative (fun B => A -> B) := {
-  pure := fun _ x => fun _ => x;
-  ap   := fun _ _ runf runx => fun xs => runf xs (runx xs)
-}.
+Infix "*>" := (liftA2 (const id)) (at level 28, left associativity).
+Infix "<*" := (liftA2 const) (at level 28, left associativity).
 
 Module ApplicativeLaws.
 
@@ -130,31 +121,6 @@ Ltac apply_applicative_laws :=
       setoid_rewrite ap_interchange
     end; auto.
 
-Require Import Coq.Setoids.Setoid.
-
-Local Obligation Tactic := intros; simpl; apply_applicative_laws.
-
-Program Instance Compose_ApplicativeLaws
-  `{ApplicativeLaws F} `{ApplicativeLaws G} : ApplicativeLaws (F \o G).
-Obligation 2. (* ap_composition *)
-  (* Discharge w *)
-  rewrite <- ap_comp; f_equal.
-  (* Discharge v *)
-  rewrite <- !ap_fmap, <- ap_comp.
-  symmetry.
-  rewrite <- ap_comp; f_equal.
-  (* Discharge u *)
-  apply_applicative_laws.
-  f_equal.
-  extensionality y.
-  extensionality x.
-  extensionality x0.
-  rewrite <- ap_comp, ap_fmap.
-  reflexivity.
-Qed.
-
-Program Instance Impl_ApplicativeLaws {A} : ApplicativeLaws (fun B => A -> B).
-
 End ApplicativeLaws.
 
 Reserved Notation "f <|> g" (at level 28, left associativity).
@@ -177,9 +143,3 @@ Notation "f <|> g" := (choose f g) (at level 28, left associativity).
 (*     empty := fun _ => []; *)
 (*     choose := app *)
 (* }. *)
-
-Instance Compose_Alternative
-  `{Alternative F} `{Alternative G} : Alternative (F \o G)  :=
-{ empty  := fun A => @empty F _ (G A)
-; choose := fun A => @choose F _ (G A) (* jww (2016-01-28): correct? *)
-}.
