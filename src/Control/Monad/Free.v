@@ -74,12 +74,7 @@ Global Program Instance Free_Applicative `{Functor f} :
 }.
 
 Global Program Instance Free_Monad `{Functor f} : Monad (Free f) := {
-  join := fun _ x =>
-            let fix go x :=
-                match x with
-                | Pure x => x
-                | Join _ k f => Join (go \o k) f
-                end in go x
+  join := fun _ => Free_bind id
 }.
 
 Module FreeLaws.
