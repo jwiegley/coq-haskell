@@ -10,6 +10,27 @@ Definition iterT `{Functor f} `{Monad m}
   `(phi : f (m a) -> m a) (ft : FreeT f m a) : m a :=
   ft _ pure (fun _ h x => phi (fmap h x)).
 
+(* iterTM :: (Functor f, Monad m, MonadTrans t, Monad (t m))
+          => (f (t m a) -> t m a) -> FreeT f m a -> t m a *)
+
+(* Tear down a free monad transformer using iteration over a transformer. *)
+
+(* hoistFreeT :: (Monad m, Functor f)
+               => (forall a. m a -> n a) -> FreeT f m b -> FreeT f n b *)
+
+(* Lift a monad homomorphism from m to n into a monad homomorphism from FreeT
+   f m to FreeT f n *)
+
+(* hoistFreeT :: (Monad m, Functor f) => (m ~> n) -> FreeT f m ~> FreeT f n *)
+
+(* transFreeT :: (Monad m, Functor g)
+              => (forall a. f a -> g a) -> FreeT f m b -> FreeT g m b *)
+
+(* Lift a natural transformation from f to g into a monad homomorphism from
+   FreeT f m to FreeT g m *)
+
+(* joinFreeT :: (Monad m, Traversable f) => FreeT f m a -> m (Free f a) *)
+
 Inductive FreeF (f : Type -> Type) (a b : Type) :=
   | Pure : a -> FreeF f a b
   | Free : f b -> FreeF f a b.
@@ -22,6 +43,12 @@ Inductive FreeTi (f m : Type -> Type) (a : Type) :=
 
 Arguments FT {f m a x} _ _.
 
+Definition liftF {f : Type -> Type} `{Monad m} {a : Type} (x : f a) :
+  FreeT f m a := fun _ k h => h a k x.
+
+Definition liftFM `{Monad m} {f} `(x : m a) : FreeT f m a :=
+  fun _ k _ => x >>= k.
+
 Fixpoint iterTi `{Functor f} `{Monad m}
   `(phi : f (m a) -> m a) (ft : FreeTi f m a) : m a :=
   match ft with FT s k z =>
@@ -31,6 +58,8 @@ Fixpoint iterTi `{Functor f} `{Monad m}
       | Free x => phi (fmap (iterTi phi \o k) x)
     end
   end.
+
+(* Definition retractT  (MonadTrans t, Monad (t m), Monad m) => FreeT (t m) m a -> t m a *)
 
 (* Definition wrap `{Functor f} `{Monad m} {a} : *)
 (*   f (FreeTi f m a) -> FreeTi f m a := FT id \o pure \o Free. *)
