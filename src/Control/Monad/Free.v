@@ -117,12 +117,11 @@ Obligation 4. reduce_free IHx. Qed.
 
 Theorem retract_liftF_id `{MonadLaws f} : forall a,
   retract \o liftF = @id (f a).
-Admitted.
-(* Proof. *)
-(*   move=> *. *)
-(*   rewrite /retract /liftF. *)
-(*   exact: join_fmap_pure. *)
-(* Qed. *)
+Proof.
+  intros.
+  unfold retract, liftF, comp.
+  apply join_fmap_pure.
+Qed.
 
 Theorem retract_distributes `{MonadLaws f} : forall a (x y : Free f a),
   retract (x >> y) = (retract x >> retract y).
