@@ -509,21 +509,23 @@ Definition catMaybes {a} (l : list (Maybe a)) : list a :=
     if mx is Just x
     then x :: rest
     else rest).
+*)
 
 Fixpoint mapAccumL {A X Y : Type} (f : A -> X -> (A * Y))
   (s : A) (v : list X) : A * list Y :=
   match v with
   | nil => (s, nil)
   | x :: xs =>
-    let: (s', y) := f s x in
-    let: (s'', ys) := mapAccumL f s' xs in
+    let (s', y) := f s x in
+    let (s'', ys) := mapAccumL f s' xs in
     (s'', y :: ys)
   end.
 
 Example ex_mapAccumL_1 :
-  mapAccumL (fun n x => (n.+1, x.+2)) 0 [1; 2; 3] == (3, [3; 4; 5]).
+  mapAccumL (fun n x => (n+1, x+2)) 0 [1; 2; 3] = (3, [3; 4; 5]).
 Proof. reflexivity. Qed.
 
+(*
 Definition getBy {a} (p : a -> bool) (xs : list a) : Maybe a :=
   (fun f => foldl f Nothing xs) (fun acc x =>
     match acc with
