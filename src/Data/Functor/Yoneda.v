@@ -47,8 +47,12 @@ Proof.
   pose proof (@Ran_parametricity a b c Identity _ f _).
   simpl in H0.
   unfold id in H0.
-  apply H0.
+Admitted.
+(* jww (2017-04-24): Universe inconsistency in Coq 8.6 *)
+(*
+  apply (H0 k g h).
 Qed.
+*)
 
 (* Program Instance Yoneda_lemma `{FunctorLaws f} : *)
 (*   forall a, @IsomorphismLaws (Yoneda f a) (f a) (Yoneda_lemma a). *)
