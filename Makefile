@@ -49,7 +49,6 @@ extract/Hask/Prelude0.hs: src/Prelude.vo
 
 Makefile.coq: _CoqProject
 	coq_makefile -f _CoqProject -o $@
-	perl -i fixmake.pl $@
 
 clean: Makefile.coq
 	$(MAKE) -f Makefile.coq clean
