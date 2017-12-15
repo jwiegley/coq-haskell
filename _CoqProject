@@ -44,3 +44,4 @@ src/Extract.v
 src/Haskell.v
 src/Ltac.v
 src/Prelude.v
+src/Ssr.v
