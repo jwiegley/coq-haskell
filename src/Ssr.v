@@ -1,13 +1,7 @@
-Require Import mathcomp.ssreflect.ssreflect.
-
-From mathcomp Require Export
+From Coq Require Export
   ssreflect
   ssrfun
-  ssrbool
-  eqtype
-  seq
-  ssrnat
-  fintype.
+  ssrbool.
 
 Lemma and_swap : forall x y z, [&& x, y & z] = [&& y, x & z].
 Proof. by case; case; case. Qed.
