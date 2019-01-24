@@ -7,6 +7,9 @@ Require Import Hask.Data.Vector.
 Require Import Coq.Strings.String.
 
 Generalizable All Variables.
+Set Primitive Projections.
+Set Universe Polymorphism.
+Unset Transparent Obligations.
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.

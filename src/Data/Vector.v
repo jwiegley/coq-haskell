@@ -2,6 +2,9 @@ Require Import Hask.Prelude.
 Require Import Hask.Ltac.
 
 Generalizable All Variables.
+Set Primitive Projections.
+Set Universe Polymorphism.
+Unset Transparent Obligations.
 
 Section Vector.
 

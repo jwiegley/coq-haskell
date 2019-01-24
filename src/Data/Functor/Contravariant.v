@@ -2,6 +2,9 @@ Require Import Hask.Ltac.
 Require Import Hask.Data.Functor.
 
 Generalizable All Variables.
+Set Primitive Projections.
+Set Universe Polymorphism.
+Unset Transparent Obligations.
 
 Class Contravariant (f : Type -> Type) := {
   contramap : forall {a b : Type}, (a -> b) -> f b -> f a

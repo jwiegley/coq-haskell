@@ -3,6 +3,9 @@ Require Import Control.Monad.
 Require Import Control.Comonad.
 
 Generalizable All Variables.
+Set Primitive Projections.
+Set Universe Polymorphism.
+Unset Transparent Obligations.
 
 (* A container takes a set of shapes {S] and a family of types {P] indexed by
    {S]. Using these two, we may construct a box for one such shape {x : S]
@@ -132,7 +135,6 @@ Variable S : Type.
 Variable P : S -> Type.
 
 Program Instance Container_FunctorLaws : FunctorLaws (Container P).
-Obligation 1. extensionality x; destruct x; reflexivity. Qed.
 
 (*
 Ltac reduce_cfree H :=

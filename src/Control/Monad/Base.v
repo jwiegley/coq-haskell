@@ -2,6 +2,11 @@
 Require Import Hask.Control.Monad.
 Require Import Hask.Control.Monad.Trans.State.
 
+Generalizable All Variables.
+Set Primitive Projections.
+Set Universe Polymorphism.
+Unset Transparent Obligations.
+
 Class FunDep {T : Type} (m1 m2 : T).
 
 Class MonadBase (b : Type -> Type) `{Monad b} (m : Type -> Type) `{Monad m}

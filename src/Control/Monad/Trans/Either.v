@@ -3,6 +3,11 @@ Require Import Hask.Control.Monad.
 Require Import Hask.Control.Monad.Trans.Class.
 Require Import Hask.Control.Monad.Morph.
 
+Generalizable All Variables.
+Set Primitive Projections.
+Set Universe Polymorphism.
+Unset Transparent Obligations.
+
 Definition EitherT (X : Type) (M : Type -> Type) (Y : Type) : Type :=
   M (Either X Y).
 

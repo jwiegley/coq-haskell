@@ -17,8 +17,10 @@ Require Import FunctionalExtensionality.
 Axiom propositional_extensionality : forall P : Prop, P -> P = True.
 Axiom proof_irrelevance : forall (P : Prop) (u v : P), u = v.
 
-(* Set Universe Polymorphism. *)
 Generalizable All Variables.
+Set Primitive Projections.
+Set Universe Polymorphism.
+(* Unset Transparent Obligations. *)
 
 (** * Category *)
 
@@ -335,25 +337,25 @@ equalities.
 
 *)
 
-Program Instance iso_identity `{C : Category} (X : C) : X {≅} X := {
+Program Definition iso_identity `{C : Category} (X : C) : X {≅} X := {|
     to   := id/X;
     from := id/X
-}.
+|}.
 
-Program Instance iso_symmetry `{C : Category} `(iso : X {≅} Y) : Y {≅} X := {
+Program Definition iso_symmetry `{C : Category} `(iso : X {≅} Y) : Y {≅} X := {|
     to   := @from C X Y iso;
     from := @to C X Y iso
-}.
+|}.
 (* begin hide *)
 Obligation 1. apply iso_from. Qed.
 Obligation 2. apply iso_to. Qed.
 (* end hide *)
 
-Program Instance iso_compose `{C : Category} {X Y Z : C}
-    (iso_a : Y {≅} Z) (iso_b : X {≅} Y) : X {≅} Z := {
+Program Definition iso_compose `{C : Category} {X Y Z : C}
+    (iso_a : Y {≅} Z) (iso_b : X {≅} Y) : X {≅} Z := {|
     to   := (@to C Y Z iso_a) ∘ (@to C X Y iso_b);
     from := (@from C X Y iso_b) ∘ (@from C Y Z iso_a)
-}.
+|}.
 (* begin hide *)
 Obligation 1.
   destruct iso_a.
@@ -384,7 +386,7 @@ Definition iso_equiv `{C : Category} {a b : C} (x y : a ≅ b) : Prop :=
     end
   end.
 
-Program Instance iso_equivalence `{C : Category} (a b : C)
+Program Definition iso_equivalence `{C : Category} (a b : C)
   : Equivalence (@iso_equiv C a b).
 Obligation 1.
   unfold Reflexive, iso_equiv. intros.
@@ -428,27 +430,34 @@ therefore an isomorphism.
 
 *)
 
-Program Instance Groupoid `(C : Category) : Category := {
+Program Definition Groupoid `(C : Category) : Category := {|
     ob      := @ob C;
     hom     := @Isomorphism C;
     c_id    := @iso_identity C
-}.
+|}.
 (* begin hide *)
-Obligation 1.
+Next Obligation.
+  unfold iso_compose, iso_identity.
+  eapply iso_compose; eauto.
+Defined.
+Next Obligation.
+  unfold Groupoid_obligation_1.
   unfold iso_compose, iso_identity.
   destruct f. simpl in *.
   apply iso_irrelevance.
   apply c_right_id.
   apply c_left_id.
 Qed.
-Obligation 2.
+Next Obligation.
+  unfold Groupoid_obligation_1.
   unfold iso_compose, iso_identity.
   destruct f. simpl in *.
   apply iso_irrelevance.
   apply c_left_id.
   apply c_right_id.
 Qed.
-Obligation 3.
+Next Obligation.
+  unfold Groupoid_obligation_1.
   unfold iso_compose.
   destruct f. destruct g. destruct h.
   simpl; apply iso_irrelevance;
@@ -463,11 +472,11 @@ an isomorphism with its respective witness.
 
 *)
 
-Program Instance Monic_Retraction_Iso `{C : Category}
-  `(f : X ~{C}~> Y) (r : Retraction f) (m : Monic f) : X {≅} Y := {
+Program Definition Monic_Retraction_Iso `{C : Category}
+  `(f : X ~{C}~> Y) (r : Retraction f) (m : Monic f) : X {≅} Y := {|
   to   := f;
   from := projT1 r
-}.
+|}.
 (* begin hide *)
 Obligation 1.
   autounfold in *.
@@ -489,11 +498,11 @@ Obligation 2.
 Qed.
 (* end hide *)
 
-Program Instance Epic_Section_Iso
-    `{C : Category} {X Y} `(s : Section' f) `(e : Epic f) : X {≅} Y := {
+Program Definition Epic_Section_Iso
+    `{C : Category} {X Y} `(s : Section' f) `(e : Epic f) : X {≅} Y := {|
     to   := f;
     from := projT1 s
-}.
+|}.
 (* begin hide *)
 Obligation 1.
   autounfold in *.
@@ -564,12 +573,12 @@ the plural is used instead.
 
 *)
 
-Program Instance Sets : Category := {
+Program Definition Sets : Category := {|
     ob     := Type;
     hom    := fun X Y => X → Y;
     c_id   := fun _ x => x;
     c_comp := fun _ _ _ f g x => f (g x)
-}.
+|}.
 (**
 
 Within the category of [Sets] we can prove that monic functions are injective,
@@ -583,7 +592,7 @@ Notation "X ≅Sets Y" :=
 
 Definition Injective `(f : X → Y) := ∀ x y, f x = f y → x = y.
 
-Lemma injectivity_is_monic `(f : X → Y) : Injective f ↔ Monic f.
+Lemma injectivity_is_monic `(f : X → Y) : Injective f ↔ @Monic Sets _ _ f.
 Proof.
   unfold Monic, Injective.
   split; intros; simpl in *.
@@ -602,7 +611,7 @@ Qed.
 
 Definition Surjective `(f : X → Y) := ∀ y, ∃ x, f x = y.
 
-Lemma surjectivity_is_epic `(f : X → Y) : Surjective f ↔ Epic f.
+Lemma surjectivity_is_epic `(f : X → Y) : Surjective f ↔ @Epic Sets _ _ f.
 Proof.
   unfold Epic, Surjective.
   split; intros; simpl in *.
@@ -630,12 +639,12 @@ operation.
 
 *)
 
-Program Instance Opposite `(C : Category) : Category := {
+Program Definition Opposite `(C : Category) : Category := {|
     ob     := @ob C;
     hom    := fun x y => @hom C y x;
     c_id   := @c_id C;
     c_comp := fun _ _ _ f g => g ∘ f
-}.
+|}.
 Obligation 3. rewrite c_comp_assoc. auto. Defined.
 
 (* begin hide *)

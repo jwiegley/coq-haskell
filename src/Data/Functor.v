@@ -1,6 +1,9 @@
 Require Import Hask.Ltac.
 
 Generalizable All Variables.
+Set Primitive Projections.
+Set Universe Polymorphism.
+Unset Transparent Obligations.
 
 Class Functor (f : Type -> Type) : Type := {
   fmap : forall {a b : Type}, (a -> b) -> f a -> f b

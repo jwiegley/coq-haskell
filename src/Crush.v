@@ -11,10 +11,8 @@ Require Import Coq.Logic.Eqdep Coq.Lists.List.
 
 Require Import Omega.
 
-
-Set Primitive Projection.
 Set Implicit Arguments.
-
+Generalizable All Variables.
 
 (** A version of [injection] that does some standard simplifications afterward: clear the hypothesis in question, bring the new facts above the double line, and attempt substitution for known variables. *)
 Ltac inject H := injection H; clear H; intros; try subst.

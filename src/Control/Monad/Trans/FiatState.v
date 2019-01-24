@@ -4,6 +4,9 @@ Require Import Hask.Control.Monad.
 (* Require Import Hask.Control.Monad.Trans.Class. *)
 
 Generalizable All Variables.
+Set Primitive Projections.
+Set Universe Polymorphism.
+Unset Transparent Obligations.
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.

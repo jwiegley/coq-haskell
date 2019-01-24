@@ -15,6 +15,9 @@ Require Import Coq.Init.Datatypes.
 Require Import Coq.Relations.Relation_Definitions.
 
 Generalizable All Variables.
+Set Primitive Projections.
+Set Universe Polymorphism.
+Unset Transparent Obligations.
 
 (** Type Constants *)
 

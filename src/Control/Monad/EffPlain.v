@@ -4,6 +4,9 @@ Require Import
   Coq.Lists.List.
 
 Generalizable All Variables.
+Set Primitive Projections.
+Set Universe Polymorphism.
+Unset Transparent Obligations.
 
 Import ListNotations.
 

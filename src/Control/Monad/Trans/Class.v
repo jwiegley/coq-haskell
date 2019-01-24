@@ -2,6 +2,9 @@ Require Import Hask.Prelude.
 Require Import Hask.Control.Monad.
 
 Generalizable All Variables.
+Set Primitive Projections.
+Set Universe Polymorphism.
+Unset Transparent Obligations.
 
 Class MonadTrans (T : (Type -> Type) -> Type -> Type) :=
 { lift : forall (M : Type -> Type) `{Monad M} `{Monad (T M)} A, M A -> T M A

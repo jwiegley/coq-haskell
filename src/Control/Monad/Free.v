@@ -2,6 +2,9 @@ Require Import Hask.Prelude.
 Require Import Hask.Control.Monad.
 
 Generalizable All Variables.
+Set Primitive Projections.
+Set Universe Polymorphism.
+Unset Transparent Obligations.
 Set Asymmetric Patterns.
 
 Inductive Free (f : Type -> Type) (a : Type) :=
@@ -77,6 +80,7 @@ Global Program Instance Free_Monad `{Functor f} : Monad (Free f) := {
   join := fun _ => Free_bind id
 }.
 
+(*
 Module FreeLaws.
 
 Include MonadLaws.
@@ -91,7 +95,8 @@ Ltac reduce_free H :=
   | [ HF : Free _ _ |- _ ] =>
       induction HF as [|? ? H ?]; simpl; auto
   end;
-  f_equal;
+  try f_equal;
+  try apply f_equal2; auto;
   try extensionality YY;
   try apply H.
 
@@ -209,6 +214,7 @@ Proof.
 *)
 
 End FreeLaws.
+*)
 
 CoInductive CoFree (h : Type -> Type) (a : Type) :=
   CoF : a -> forall x, (x -> CoFree h a) -> h x -> CoFree h a.

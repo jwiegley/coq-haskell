@@ -3,6 +3,9 @@ Require Import Hask.Data.List.
 Require Import Hask.Control.Applicative.
 
 Generalizable All Variables.
+Set Primitive Projections.
+Set Universe Polymorphism.
+Unset Transparent Obligations.
 
 Class Comonad (w : Type -> Type) := {
   is_functor :> Functor w;

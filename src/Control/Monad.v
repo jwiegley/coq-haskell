@@ -1,6 +1,9 @@
 Require Export Hask.Control.Applicative.
 
 Generalizable All Variables.
+Set Primitive Projections.
+Set Universe Polymorphism.
+Unset Transparent Obligations.
 
 Class Monad (m : Type -> Type) := {
   is_applicative :> Applicative m;

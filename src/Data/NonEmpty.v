@@ -4,6 +4,9 @@ Require Import Coq.Sorting.Sorted.
 Require Import Coq.Classes.RelationClasses.
 
 Generalizable All Variables.
+Set Primitive Projections.
+Set Universe Polymorphism.
+Unset Transparent Obligations.
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.

@@ -3,6 +3,9 @@ Require Import
   Hask.Data.Maybe.
 
 Generalizable All Variables.
+Set Primitive Projections.
+Set Universe Polymorphism.
+Unset Transparent Obligations.
 
 Class Traversable `{Functor t} := {
   sequence : forall `{Applicative f} a, t (f a) -> f (t a)

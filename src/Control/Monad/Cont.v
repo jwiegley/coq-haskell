@@ -3,6 +3,11 @@ Require Import Hask.Control.Monad.
 Require Import Hask.Data.Functor.Identity.
 Require Import Hask.Data.Functor.Yoneda.
 
+Generalizable All Variables.
+Set Primitive Projections.
+Set Universe Polymorphism.
+Unset Transparent Obligations.
+
 Definition Cont (R A : Type) : Type := (A -> R) -> R.
 
 Definition Cont_map {R X Y} (f : X -> Y) (k : Cont R X) : Cont R Y :=

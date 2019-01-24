@@ -2,6 +2,9 @@ Require Import Hask.Ltac.
 Require Import Hask.Prelude.
 
 Generalizable All Variables.
+Set Primitive Projections.
+Set Universe Polymorphism.
+Unset Transparent Obligations.
 
 (* Even though we have the Category class in Category.v, the Functors
    and Monads I'm interested in reasoning about are all endofunctors on

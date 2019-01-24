@@ -2,6 +2,9 @@ Require Import Hask.Prelude.
 Require Import Hask.Control.Monad.
 
 Generalizable All Variables.
+Set Primitive Projections.
+Set Universe Polymorphism.
+Unset Transparent Obligations.
 Set Asymmetric Patterns.
 
 (* Identity, in two flavors. *)

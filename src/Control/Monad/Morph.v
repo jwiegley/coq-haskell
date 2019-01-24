@@ -2,6 +2,11 @@ Require Import Hask.Prelude.
 Require Import Hask.Control.Monad.
 Require Import Hask.Control.Monad.Trans.Class.
 
+Generalizable All Variables.
+Set Primitive Projections.
+Set Universe Polymorphism.
+Unset Transparent Obligations.
+
 (* These classes are laws are documented by Gabriel Gonzalez at:
 
    http://hackage.haskell.org/package/mmorph-1.0.3/docs/src/Control-Monad-Morph.html

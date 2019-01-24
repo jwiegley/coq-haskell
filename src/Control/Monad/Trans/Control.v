@@ -5,6 +5,9 @@ Require Import Hask.Control.Monad.Trans.State.
 (* Require Import Hask.Control.Monad.Trans.Free. *)
 
 Generalizable All Variables.
+Set Primitive Projections.
+Set Universe Polymorphism.
+Unset Transparent Obligations.
 
 Class StMC (m : Type -> Type) : Type := {
   StM : Type -> Type

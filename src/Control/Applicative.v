@@ -3,6 +3,9 @@ Require Export Hask.Data.Functor.
 Require Export Hask.Data.Functor.Const.
 
 Generalizable All Variables.
+Set Primitive Projections.
+Set Universe Polymorphism.
+Unset Transparent Obligations.
 
 Reserved Notation "f <*> g" (at level 28, left associativity).
 

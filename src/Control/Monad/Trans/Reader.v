@@ -6,6 +6,9 @@ Require Import Hask.Control.Impl.
 Require Import Hask.Control.Compose.
 
 Generalizable All Variables.
+Set Primitive Projections.
+Set Universe Polymorphism.
+Unset Transparent Obligations.
 
 Definition ReaderT (X : Type) (M : Type -> Type) (Y : Type) : Type :=
   X -> M Y.

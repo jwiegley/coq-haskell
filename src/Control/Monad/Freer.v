@@ -2,6 +2,9 @@ Require Import Hask.Prelude.
 Require Import Hask.Control.Monad.
 
 Generalizable All Variables.
+Set Primitive Projections.
+Set Universe Polymorphism.
+Unset Transparent Obligations.
 
 Definition Free (f : Type -> Type) (a : Type) :=
   forall r, (a -> r) -> (forall x, (x -> r) -> f x -> r) -> r.
@@ -62,7 +65,7 @@ Admitted.
 (*   exact: join_fmap_pure. *)
 (* Qed. *)
 
-Theorem retract_distributes `{MonadLaws f} : forall a (x y : Free f a),
+Theorem retract_distributes `{Monad f} `{MonadLaws f} : forall a (x y : Free f a),
   retract (x >> y) = (retract x >> retract y).
 Admitted.
 (* Proof. *)

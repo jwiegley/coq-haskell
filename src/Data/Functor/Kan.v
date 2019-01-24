@@ -3,6 +3,9 @@ Require Import Hask.Data.Functor.
 Require Import Hask.Data.Functor.Contravariant.
 
 Generalizable All Variables.
+Set Primitive Projections.
+Set Universe Polymorphism.
+Unset Transparent Obligations.
 
 (* Left and Right Kan extensions *)
 

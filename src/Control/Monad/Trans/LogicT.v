@@ -2,6 +2,10 @@ Require Import Hask.Prelude.
 (* Require Import Hask.Control.Iso. *)
 Require Import Hask.Control.Monad.
 
+Generalizable All Variables.
+Set Primitive Projections.
+Set Universe Polymorphism.
+Unset Transparent Obligations.
 Set Asymmetric Patterns.
 
 Inductive LogicT (M : Type -> Type) `{Monad M} (A : Type) :=

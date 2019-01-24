@@ -1,6 +1,9 @@
 Require Import Hask.Control.Monad.
 
 Generalizable All Variables.
+Set Primitive Projections.
+Set Universe Polymorphism.
+Unset Transparent Obligations.
 
 Class Monoid (m : Type) := {
   mempty : m;

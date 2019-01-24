@@ -3,6 +3,9 @@ Require Import Hask.Control.Applicative.
 Require Import Hask.Control.Monad.
 
 Generalizable All Variables.
+Set Primitive Projections.
+Set Universe Polymorphism.
+Unset Transparent Obligations.
 
 Instance Compose_Functor `{Functor F} `{Functor G} : Functor (F \o G) :=
 { fmap := fun A B => @fmap F _ (G A) (G B) \o @fmap G _ A B

@@ -5,6 +5,9 @@ Require Import Hask.Data.Functor.Kan.
 Require Import Hask.Control.Monad.
 
 Generalizable All Variables.
+Set Primitive Projections.
+Set Universe Polymorphism.
+Unset Transparent Obligations.
 Set Asymmetric Patterns.
 
 Definition Yoneda (f : Type -> Type) (a : Type) :=

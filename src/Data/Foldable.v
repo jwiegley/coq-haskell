@@ -2,6 +2,9 @@ Require Import Hask.Ltac.
 Require Import Hask.Data.Functor.
 
 Generalizable All Variables.
+Set Primitive Projections.
+Set Universe Polymorphism.
+Unset Transparent Obligations.
 
 Class Foldable (t : Type -> Type) := {
   foldr : forall a b, (a -> b -> b) -> b -> t a -> b

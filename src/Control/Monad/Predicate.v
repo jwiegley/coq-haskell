@@ -6,6 +6,9 @@ Require Export Iso.
 Require Export Tuple.
 
 Generalizable All Variables.
+Set Primitive Projections.
+Set Universe Polymorphism.
+Unset Transparent Obligations.
 
 Section Indexed.
 

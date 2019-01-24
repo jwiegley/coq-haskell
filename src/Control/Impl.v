@@ -4,6 +4,9 @@ Require Import Hask.Control.Monad.
 Require Import Hask.Control.Compose.
 
 Generalizable All Variables.
+Set Primitive Projections.
+Set Universe Polymorphism.
+Unset Transparent Obligations.
 
 Instance Impl_Functor {A} : Functor (fun B => A -> B) := {
   fmap := fun A B f run => fun xs => f (run xs)

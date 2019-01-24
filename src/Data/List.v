@@ -9,6 +9,9 @@ Require Import Coq.Classes.RelationClasses.
 Require Import Coq.Lists.List.
 
 Generalizable All Variables.
+Set Primitive Projections.
+Set Universe Polymorphism.
+Unset Transparent Obligations.
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.

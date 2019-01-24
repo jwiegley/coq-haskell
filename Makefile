@@ -15,7 +15,7 @@ all: $(VOFILES) extract/Hask/Prelude0.hs
 	-@$(MISSING) || exit 0
 
 %.vo: %.v Makefile.coq
-	$(MAKE) -f Makefile.coq OPT=$(COQFLAGS)
+	$(MAKE) -f Makefile.coq -j10 -k OPT=$(COQFLAGS)
 	@$(MAKE) extract/Hask/Prelude0.hs
 
 extract/Hask/Prelude0.hs: src/Prelude.vo

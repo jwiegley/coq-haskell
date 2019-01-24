@@ -4,6 +4,9 @@ Require Import Hask.Prelude.
 Require Import FunctionalExtensionality.
 
 Generalizable All Variables.
+Set Primitive Projections.
+Set Universe Polymorphism.
+Unset Transparent Obligations.
 
 Definition Church (a : Type) := forall r, (a -> r -> r) -> r -> r.
 

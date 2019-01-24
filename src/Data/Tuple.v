@@ -2,6 +2,9 @@ Require Import Hask.Ltac.
 (* Require Import Hask.Control.Iso. *)
 
 Generalizable All Variables.
+Set Primitive Projections.
+Set Universe Polymorphism.
+Unset Transparent Obligations.
 
 (*
 Instance LTuple_Isomorphism {A} : (unit * A) ≅ A :=
