@@ -40,10 +40,8 @@ Proof.
   destruct x, x0, y, y0;
   simpl; auto;
   try contradiction.
-  apply Equivalence_Maybe; simpl.
-  apply mappend_respects.
-    now apply H in H1; apply H1.
-  now apply H in H2; apply H2.
+  apply mappend_respects;
+  first [ apply H1 | apply H2 ].
 Qed.
 
 Program Instance Semigroup_Maybe `{Semigroup a} : Semigroup (Maybe a) := {
@@ -51,8 +49,6 @@ Program Instance Semigroup_Maybe `{Semigroup a} : Semigroup (Maybe a) := {
   mappend_respects := Maybe_append_Proper
 }.
 Next Obligation.
-  destruct a0, b, c; simpl; auto;
-  try reflexivity.
-  apply Just_Proper.
-  apply mappend_assoc.
+  destruct a0, b, c; simpl; try reflexivity.
+  now apply mappend_assoc.
 Qed.
