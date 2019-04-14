@@ -38,6 +38,7 @@ src/Data/List/Church.v
 src/Data/Maybe.v
 src/Data/Monoid.v
 src/Data/NonEmpty.v
+src/Data/Semigroup.v
 src/Data/Tuple.v
 src/Data/Vector.v
 src/Extract.v

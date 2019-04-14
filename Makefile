@@ -50,6 +50,9 @@ extract/Hask/Prelude0.hs: src/Prelude.vo
 Makefile.coq: _CoqProject
 	coq_makefile -f _CoqProject -o $@
 
+install: _CoqProject Makefile.coq
+	make -f Makefile.coq COQLIB=$(COQLIB) install
+
 clean: Makefile.coq
 	$(MAKE) -f Makefile.coq clean
 	rm -fr Makefile.coq Setup extract/*

@@ -1,7 +1,7 @@
-{ packages ? "coqPackages_8_8"
+{ packages ? "coqPackages_8_9"
 
-, rev      ? "89b618771ad4b0cfdb874dee3d51eb267c4257dd"
-, sha256   ? "0jlyggy7pvqj2a6iyn44r7pscz9ixjb6fn6s4ssvahfywsncza6y"
+, rev      ? "d73f16d6767e99675682f822dac3017bf9af1e83"
+, sha256   ? "1b5wix9kr5s3hscpl425si0zw00zzijc9xrcph6l2myh4n5nvcm0"
 
 , pkgs     ? import (builtins.fetchTarball {
     url = "https://github.com/NixOS/nixpkgs/archive/${rev}.tar.gz";
@@ -11,14 +11,13 @@
   }
 }:
 
-with pkgs.${packages}; pkgs.stdenv.mkDerivation rec {
-  name = "category-theory";
+with pkgs.${packages};
+
+pkgs.stdenv.mkDerivation rec {
+  name = "coq${coq.coq-version}-haskell-${version}";
   version = "1.0";
 
   src =
-    if pkgs.lib.inNixShell
-    then null
-    else
     if pkgs ? coqFilterSource
     then pkgs.coqFilterSource [] ./.
     else ./.;
@@ -32,6 +31,6 @@ with pkgs.${packages}; pkgs.stdenv.mkDerivation rec {
 
   env = pkgs.buildEnv { name = name; paths = buildInputs; };
   passthru = {
-    compatibleCoqVersions = v: builtins.elem v [ "8.6" "8.7" "8.8" ];
+    compatibleCoqVersions = v: builtins.elem v [ "8.6" "8.7" "8.8" "8.9" ];
  };
 }

@@ -4,6 +4,7 @@ Require Export Hask.Data.Maybe.
 Require Export Hask.Data.Tuple.
 Require Export Hask.Data.Functor.
 Require Export Omega.
+Require Import Coq.Classes.Equivalence.
 
 Generalizable All Variables.
 Set Primitive Projections.
@@ -12,6 +13,8 @@ Unset Transparent Obligations.
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
+
+Infix "≈" := equiv (at level 48).
 
 Definition undefined {a : Type} : a. Admitted.
 

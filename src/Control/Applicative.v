@@ -126,7 +126,7 @@ Ltac apply_applicative_laws :=
 
 End ApplicativeLaws.
 
-Reserved Notation "f <|> g" (at level 28, left associativity).
+Reserved Notation "f <|> g" (at level 29, left associativity).
 
 Class Alternative (F : Type -> Type) :=
 { alt_is_applicative :> Applicative F
@@ -138,7 +138,7 @@ Class Alternative (F : Type -> Type) :=
 (* ; many : forall {X}, F X -> list (F X) *)
 }.
 
-Notation "f <|> g" := (choose f g) (at level 28, left associativity).
+Notation "f <|> g" := (choose f g) (at level 29, left associativity).
 
 (* Module Import LN := ListNotations. *)
 
