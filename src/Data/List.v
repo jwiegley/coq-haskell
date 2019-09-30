@@ -1069,59 +1069,95 @@ Proof.
   elim=> //= [x xs IHxs] y.
   congr (_ ++ _).
   exact: IHxs.
-Qed.
+Qed. *)
 
 Instance List_Functor : Functor list := {
-  fmap := fun _ _ => map
+  fmap := map
 }.
+
+Fixpoint list_ap {A B} (fs: list (A -> B)) (xs: list A)
+  : list B :=
+  match fs with
+  | f :: fs' => map f xs ++ list_ap fs' xs
+  | _ => nil
+  end.
+
 
 Instance List_Applicative : Applicative list := {
   pure := fun _ x => [x];
-  ap   := fun _ _ fs xs => [list f x | f <- fs, x <- xs]
+  ap   := @list_ap
 }.
 
 Module ListLaws.
 
 Include MonadLaws.
+Require Import FunctionalExtensionality.
+
+Lemma list_ap_app : forall A B (v w: list (A -> B)) x,
+  list_ap (v ++ w) x = list_ap v x ++ list_ap w x.
+Proof.
+  induction v; intros; auto.
+  simpl.
+  rewrite IHv.
+  rewrite app_assoc.
+  reflexivity.
+Qed.
 
 Program Instance List_FunctorLaws : FunctorLaws list.
 Obligation 1.
-  move=> xs.
-  by rewrite map_id.
+  unfold id.
+  extensionality l.
+  rewrite map_id.
+  auto.
 Qed.
 Obligation 2.
-  move=> xs.
-  by rewrite /funcomp /= -!map_comp /funcomp.
+  extensionality l.
+  simpl.
+  rewrite map_map.
+  reflexivity.
 Qed.
 
 Program Instance List_ApplicativeLaws : ApplicativeLaws list.
 Obligation 1.
-  move=> xs.
-  elim: xs => [|x xs IHxs] //=.
-  by rewrite IHxs.
+extensionality l.
+rewrite <- app_nil_end.
+rewrite map_id.
+reflexivity.
 Qed.
 Obligation 2.
-  rewrite cats0.
-  elim: u => [|u us IHus] //=.
-  rewrite allpairs_cat {}IHus.
-  f_equal.
-  elim: v => [|v vs IHvs] //=.
-  rewrite map_cat {}IHvs.
-  elim: w => [|w ws IHws] //=.
-  f_equal.
-  by rewrite -!map_comp /funcomp.
+  simpl.
+  induction u as [u | f fs].
+  - simpl; auto.
+  - simpl.
+    rewrite <- IHfs.
+    clear IHfs.
+    rewrite <- ?app_nil_end.
+    remember (list_ap
+              (map (fun (f : b -> c) (g : a -> b) (x : a) => f (g x)) fs) v)
+    as l'.
+    rewrite list_ap_app.
+    f_equal.
+    clear Heql'.
+    induction v.
+    -- simpl; eauto.
+    -- simpl.
+      rewrite IHv.
+      rewrite map_app.
+      f_equal.
+      rewrite map_map.
+     auto.
 Qed.
 Obligation 4.
-  rewrite cats0.
-  by elim: u.
+  rewrite <- app_nil_end.
+  induction u; simpl; f_equal; auto.
 Qed.
 Obligation 5.
-  move=> xs /=.
-  by rewrite cats0.
+  extensionality l.
+  rewrite <- app_nil_end.
+  reflexivity.
 Qed.
 
 End ListLaws.
-*)
 
 Require Import
   Coq.Relations.Relations
