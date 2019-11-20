@@ -21,7 +21,7 @@ Arguments liftBase {b _ m _ _ _ a} _.
 (*   liftBase := @id *)
 (* }. *)
 
-Instance StateT_m_b {s : Type} {m b : Type -> Type}
+Program Instance StateT_m_b {s : Type} {m b : Type -> Type}
          `{FunDep (Type -> Type) m b} :
   FunDep (StateT s m) b.
 
