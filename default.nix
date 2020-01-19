@@ -1,13 +1,32 @@
 { packages ? "coqPackages_8_10"
 
-, rev      ? "620124b130c9e678b9fe9dd4a98750968b1f749a"
-, sha256   ? "0xgy2rn2pxii3axa0d9y4s25lsq7d9ykq30gvg2nzgmdkmy375rr"
+, rev      ? "8da81465c19fca393a3b17004c743e4d82a98e4f"
+, sha256   ? "1f3s27nrssfk413pszjhbs70wpap43bbjx2pf4zq5x2c1kd72l6y"
 
 , pkgs     ? import (builtins.fetchTarball {
     url = "https://github.com/NixOS/nixpkgs/archive/${rev}.tar.gz";
     inherit sha256; }) {
     config.allowUnfree = true;
     config.allowBroken = false;
+    overlays = [
+      (self: super:
+       let
+         nixpkgs = { rev, sha256 }:
+           import (super.fetchFromGitHub {
+             owner = "NixOS";
+             repo  = "nixpkgs";
+             inherit rev sha256;
+           }) { config.allowUnfree = true; };
+
+         known-good-20191113_070954 = nixpkgs {
+           rev    = "620124b130c9e678b9fe9dd4a98750968b1f749a";
+           sha256 = "0xgy2rn2pxii3axa0d9y4s25lsq7d9ykq30gvg2nzgmdkmy375rr";
+         };
+       in
+       {
+         inherit (known-good-20191113_070954) shared-mime-info;
+       })
+    ];
   }
 }:
 
