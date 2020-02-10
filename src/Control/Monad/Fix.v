@@ -10,7 +10,14 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
 (******************************************************************************
- * The State Monad
+ * The MonadFix class
+ *
+ * Note that the type of `mfix` here is quite different from Haskell's
+ * @(T -> m U) -> m U@, and this is due to the call-by-value nature of Coq.
+ * For more information on this encoding and what it means, see the article
+ * "Axioms for Recursion in Call-by-Val":
+ *
+ * http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.27.2580&rep=rep1&type=pdf
  *)
 
 Class MonadFix (m : Type -> Type) : Type := {
