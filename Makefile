@@ -21,26 +21,26 @@ all: $(VOFILES) extract/Hask/Prelude0.hs
 extract/Hask/Prelude0.hs: src/Prelude.vo
 	@if [ ! -d extract ]; then rm -f extract; fi
 	@if [ ! -d extract ]; then mkdir extract; fi
-	@ls -1 *.hs | egrep -v '(Setup|Hask).hs' |	\
+	@ls -1 *.hs | egrep -v '(Setup|Hask).hs' |		\
 	    while read file; do					\
-              if ! grep "module Hask" $$file; then	\
+              if ! grep "module Hask" $$file; then		\
 	        perl -i fixcode.pl $$file;			\
               fi;						\
-	      if [[ "$$file" = "eqtype.hs" ]]; then		\
+	      if [ "$$file" = "eqtype.hs" ]; then		\
                 mv eqtype.hs extract/Hask/Eqtype.hs;		\
-	      elif [[ "$$file" = "choice.hs" ]]; then		\
+	      elif [ "$$file" = "choice.hs" ]; then		\
                 mv choice.hs extract/Hask/Choice.hs;		\
-	      elif [[ "$$file" = "fintype.hs" ]]; then		\
+	      elif [ "$$file" = "fintype.hs" ]; then		\
                 mv fintype.hs extract/Hask/Fintype.hs;		\
-	      elif [[ "$$file" = "seq.hs" ]]; then		\
+	      elif [ "$$file" = "seq.hs" ]; then		\
                 mv seq.hs extract/Hask/Seq.hs;			\
-	      elif [[ "$$file" = "ssrbool.hs" ]]; then		\
+	      elif [ "$$file" = "ssrbool.hs" ]; then		\
                 mv ssrbool.hs extract/Hask/Ssrbool.hs;		\
-	      elif [[ "$$file" = "ssreflect.hs" ]]; then	\
+	      elif [ "$$file" = "ssreflect.hs" ]; then		\
                 mv ssreflect.hs extract/Hask/Ssreflect.hs;	\
-	      elif [[ "$$file" = "ssrfun.hs" ]]; then		\
+	      elif [ "$$file" = "ssrfun.hs" ]; then		\
                 mv ssrfun.hs extract/Hask/Ssrfun.hs;		\
-	      elif [[ "$$file" = "ssrnat.hs" ]]; then		\
+	      elif [ "$$file" = "ssrnat.hs" ]; then		\
                 mv ssrnat.hs extract/Hask/Ssrnat.hs;		\
               else						\
                 mv $$file extract/Hask;				\
@@ -51,7 +51,7 @@ Makefile.coq: _CoqProject
 	coq_makefile -f _CoqProject -o $@
 
 install: _CoqProject Makefile.coq
-	make -f Makefile.coq COQLIB=$(COQLIB) install
+	make -f Makefile.coq install
 
 clean: Makefile.coq
 	$(MAKE) -f Makefile.coq clean
