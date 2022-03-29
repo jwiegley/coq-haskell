@@ -19,7 +19,7 @@ let coq-haskell = coqPackages:
           else ./.;
 
     buildInputs = [
-      coq coq.ocaml coq.camlp5 coq.findlib
+      coq coq.ocaml coq.camlp5 coq.findlib pkgs.perl
     ];
     enableParallelBuilding = true;
 
