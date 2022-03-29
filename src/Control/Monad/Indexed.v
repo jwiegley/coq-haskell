@@ -1,5 +1,6 @@
 Require Import Hask.Ltac.
 Require Import Hask.Prelude.
+Require Import FunctionalExtensionality.
 
 Generalizable All Variables.
 Set Primitive Projections.
@@ -125,8 +126,6 @@ Ltac rewrite_iapp_homomorphisms :=
    repeat (rewrite app_imap_unit)).
 
 Section IApplicatives.
-
-  Require Import FunctionalExtensionality.
 
   Variable F : Type -> Type -> Type -> Type.
   Context `{IApplicative F}.

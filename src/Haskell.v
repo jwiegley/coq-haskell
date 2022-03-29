@@ -63,10 +63,10 @@ Extract Inlined Constant projT1    => "Prelude.fst".
 Extract Inlined Constant snd       => "Prelude.snd".
 (* Extract Inlined Constant subn      => "(Prelude.-)". *)
 
-Extraction Implicit eq_rect [ x y ].
-Extraction Implicit eq_rect_r [ x y ].
-Extraction Implicit eq_rec [ x y ].
-Extraction Implicit eq_rec_r [ x y ].
+(* Extraction Implicit eq_rect [ x y ]. *)
+(* Extraction Implicit eq_rect_r [ x y ]. *)
+(* Extraction Implicit eq_rec [ x y ]. *)
+(* Extraction Implicit eq_rec_r [ x y ]. *)
 
 Extract Inlined Constant eq_rect => "".
 Extract Inlined Constant eq_rect_r => "".
