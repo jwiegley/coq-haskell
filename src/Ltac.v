@@ -1,4 +1,4 @@
-Require Import Omega.
+Require Import Coq.micromega.Lia.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -13,7 +13,7 @@ Tactic Notation "invert" "as" simple_intropattern(pat) :=
   intros top; inversion top as pat; clear top.
 
 Lemma ltn_leq_trans : forall n m p : nat, m < n -> n <= p -> m < p.
-Proof. intros. omega. Qed.
+Proof. intros. lia. Qed.
 
 Definition comp {a b c} (f : b -> c) (g : a -> b) (x : a) : c := f (g x).
 Arguments comp {a b c} f g x /.

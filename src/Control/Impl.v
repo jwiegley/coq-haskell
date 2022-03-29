@@ -21,7 +21,7 @@ Instance Impl_Monad {A} : Monad (fun B => A -> B) := {
   join := fun A run => fun xs => run xs xs
 }.
 
-Program Instance Impl_Monad_Distributes `{Monad N} :
+Program Instance Impl_Monad_Distributes {A} `{Monad N} :
   @Monad_Distributes (fun B => A -> B) Impl_Monad N is_applicative.
 Obligation 1.
   exact (X >>= fun f => f X0).
@@ -33,11 +33,11 @@ Import MonadLaws.
 
 Program Instance Impl_FunctorLaws {A} : FunctorLaws (fun B => A -> B).
 Program Instance Impl_ApplicativeLaws {A} : ApplicativeLaws (fun B => A -> B).
-Program Instance Impl_MonadLaws : MonadLaws (fun B => A -> B).
+Program Instance Impl_MonadLaws {A} : MonadLaws (fun B => A -> B).
 
 Require Import FunctionalExtensionality.
 
-Program Instance Impl_Monad_DistributesLaws `{MonadLaws N} :
+Program Instance Impl_Monad_DistributesLaws {A} `{MonadLaws N} :
   @Monad_DistributesLaws (fun B => A -> B) N _ Impl_Monad is_applicative
                          Impl_Monad_Distributes.
 Obligation 1.

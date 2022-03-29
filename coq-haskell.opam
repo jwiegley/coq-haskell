@@ -1,0 +1,26 @@
+opam-version: "2.0"
+maintainer: "johnw@newartisans.com"
+version: "dev"
+
+homepage: "https://github.com/jwiegley/coq-haskell"
+dev-repo: "git+https://github.com/jwiegley/coq-haskell.git"
+bug-reports: "https://github.com/jwiegley/coq-haskell/issues"
+license: "BSD-3-Clause"
+
+synopsis: "A library to provide Haskell-familiar constructions in Coq"
+description: """
+An axiom-free formalization of category theory in Coq for personal study and
+practical work.
+"""
+
+build: [make "JOBS=%{jobs}%" ]
+install: [make "install"]
+depends: [
+  "coq" {(>= "8.10" & < "8.16~") | (= "dev")}
+]
+
+tags: [
+]
+authors: [
+  "John Wiegley"
+]

@@ -1,3 +1,10 @@
+Set Warnings "-notation-overridden".
+
+Generalizable All Variables.
+Set Primitive Projections.
+Set Universe Polymorphism.
+Set Transparent Obligations.
+
 (* Copyright (c) 2014, John Wiegley
  *
  * This work is licensed under a

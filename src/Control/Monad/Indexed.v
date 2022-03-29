@@ -20,7 +20,7 @@ Class IFunctor (F : Type -> Type -> Type -> Type) :=
 }.
 
 Arguments imap             [F] [IFunctor] [I O X] [Y] f g.
-Arguments ifun_identity    [F] [IFunctor] [I O X].
+Arguments ifun_identity    {F} {IFunctor} {I O X}.
 Arguments ifun_composition [F] [IFunctor] [I O X] [Y] [Z] f g.
 
 Notation "f <$$> g" := (imap f g) (at level 28, left associativity).

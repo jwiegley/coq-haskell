@@ -76,8 +76,8 @@ Class LensLaws `(l : Lens' s a) := {
   lens_set_set  : forall (x : s) (y z : a), set l z (set l y x) = set l z x
 }.
 
-Program Instance Lens__1 : LensLaws (s:=a * b) _1.
-Program Instance Lens__2 : LensLaws (s:=a * b) _2.
+Program Instance Lens__1 {a b} : LensLaws (s:=a * b) _1.
+Program Instance Lens__2 {a b} : LensLaws (s:=a * b) _2.
 
 Example lens_ex1 : view _1 (10, 20) = 10.
 Proof. reflexivity. Qed.

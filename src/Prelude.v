@@ -3,7 +3,7 @@ Require Export Hask.Data.Either.
 Require Export Hask.Data.Maybe.
 Require Export Hask.Data.Tuple.
 Require Export Hask.Data.Functor.
-Require Export Omega.
+Require Export Coq.micromega.Lia.
 Require Import Coq.Classes.Equivalence.
 
 Generalizable All Variables.
@@ -102,16 +102,16 @@ Definition distance (n m : nat) : nat := if n < m then m - n else n - m.
 *)
 
 Lemma ltn_plus : forall m n, 0 < n -> m < m + n.
-Proof. intros; omega. Qed.
+Proof. intros; lia. Qed.
 
 Lemma leq_plus : forall m n, m <= m + n.
-Proof. intros; omega. Qed.
+Proof. intros; lia. Qed.
 
 Lemma leq_add2r : forall p m n : nat, m <= n -> m + p <= n + p.
-Proof. intros; omega. Qed.
+Proof. intros; lia. Qed.
 
 Lemma leq_add2l : forall p m n : nat, m <= n -> p + m <= p + n.
-Proof. intros; omega. Qed.
+Proof. intros; lia. Qed.
 
 (*
 Lemma leq_eqF : forall n m, (n == m) = false -> n <= m -> n < m.
@@ -131,7 +131,7 @@ Qed.
 *)
 
 Lemma ltn0ltn : forall n m, n < m -> 0 < m.
-Proof. intros; omega. Qed.
+Proof. intros; lia. Qed.
 
 Lemma ltn_subn : forall n m, n < m -> m > 0 -> n <= m - 1.
-Proof. intros; omega. Qed.
+Proof. intros; lia. Qed.

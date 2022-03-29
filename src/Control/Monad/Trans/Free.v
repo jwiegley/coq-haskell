@@ -104,8 +104,8 @@ Module FreeTLaws.
 Include MonadLaws.
 
 (* It's not always this easy. *)
-Program Instance FreeT_FunctorLaws     : FunctorLaws (FreeT f m).
-Program Instance FreeT_ApplicativeLaws : ApplicativeLaws (FreeT f m).
+Program Instance FreeT_FunctorLaws     {f m} : FunctorLaws (FreeT f m).
+Program Instance FreeT_ApplicativeLaws {f m} : ApplicativeLaws (FreeT f m).
 (* Program Instance FreeT_MonadLaws       : MonadLaws (FreeT f m). *)
 
 End FreeTLaws.
