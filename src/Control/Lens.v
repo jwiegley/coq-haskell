@@ -8,7 +8,6 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 Generalizable All Variables.
 Set Primitive Projections.
-Set Universe Polymorphism.
 Unset Transparent Obligations.
 
 Definition Lens s t a b := forall `{Functor f}, (a -> f b) -> s -> f t.
