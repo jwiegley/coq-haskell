@@ -1,0 +1,12 @@
+#!/bin/bash
+
+docker run -t coqorg/coq:8.15 bash -c '
+    git clone https://github.com/jwiegley/coq-haskell;
+    cd coq-haskell;
+    opam update;
+    opam pin add -n -y -k path coq-haskell .;
+    opam install -y -v -j 2 coq-haskell --deps-only;
+    opam install -y -v -j 2 coq-haskell
+'
+
+wait
