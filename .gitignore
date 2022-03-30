@@ -2,8 +2,12 @@
 .coq-native/
 *.d
 *.vo
+*.vio
+*.vok
+*.vos
 *.glob
 /Makefile.coq
 /extract
 /Makefile.bak
 /Makefile.coq.conf
+.lia.cache
