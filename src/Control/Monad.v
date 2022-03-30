@@ -103,9 +103,10 @@ Fixpoint flatten `(xs : list (list A)) : list A :=
   | cons x xs' => app x (flatten xs')
   end.
 
-Definition concatMapM `{AP : Applicative m} {A B}
+Definition concatMapM `{Applicative m} {A B}
   (f : A -> m (list B)) (l : list A) : m (list B) :=
-  fmap (f:=m) (Functor:=is_functor) flatten (mapM (m:=m) f l).
+  let xs : m (list (list B)) := mapM f l in
+  fmap flatten xs.
 
 Fixpoint replicateM_ `{Monad m} (n : nat) (x : m unit) : m unit :=
   match n with
