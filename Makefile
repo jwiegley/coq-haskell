@@ -1,6 +1,6 @@
-COQFLAGS = ""
 MISSING  =								\
-	find . -name '*.v' ! -name Notes.v				\
+	find . -name '*.v'						\
+		! -name Notes.v						\
 		! -name Extract.v					\
 		! -name CpdtTactics.v					\
                 ! -name '*2.v'                                    |	\
@@ -8,19 +8,37 @@ MISSING  =								\
 		      egrep -v 'Definition undefined'             |	\
 		      egrep -v '(old|new|research)/'
 
-VFILES = $(wildcard src/*.v)
-VOFILES = $(patsubst %.v,%.vo,$(VFILES))
 
-all: $(VOFILES) extract/Hask/Prelude0.hs
+all: Makefile.coq
+	@+$(MAKE) -f Makefile.coq all
 	-@$(MISSING) || exit 0
 
-%.vo: %.v Makefile.coq
-	$(MAKE) -f Makefile.coq -j10 -k OPT=$(COQFLAGS)
-	@$(MAKE) extract/Hask/Prelude0.hs
+Makefile.coq: _CoqProject
+	$(COQBIN)coq_makefile -f _CoqProject -o Makefile.coq
 
-extract/Hask/Prelude0.hs: src/Prelude.vo
-	@if [ ! -d extract ]; then rm -f extract; fi
-	@if [ ! -d extract ]; then mkdir extract; fi
+install: Makefile.coq
+	@+$(MAKE) -f Makefile.coq install
+
+clean: Makefile.coq
+	@+$(MAKE) -f Makefile.coq clean
+	rm -fr Setup extract dist .coq-native
+	rm -fr .hdevtools.sock *.glob *.d *.vo
+
+fullclean: clean
+	@+$(MAKE) -f Makefile.coq cleanall
+	rm -f Makefile.coq Makefile.coq.conf .Makefile.d
+
+force _CoqProject Makefile: ;
+
+%: Makefile.coq force
+	@+$(MAKE) -f Makefile.coq $@
+
+.PHONY: all clean force
+
+
+extraction: src/Extract.vo
+	@if [ ! -d extract ]; then rm -fr extract; fi
+	@if [ ! -d extract ]; then mkdir -p extract/Hask; fi
 	@ls -1 *.hs | egrep -v '(Setup|Hask).hs' |		\
 	    while read file; do					\
               if ! grep "module Hask" $$file; then		\
@@ -46,15 +64,3 @@ extract/Hask/Prelude0.hs: src/Prelude.vo
                 mv $$file extract/Hask;				\
 	      fi						\
             done
-
-Makefile.coq: _CoqProject
-	coq_makefile -f _CoqProject -o $@
-
-install: _CoqProject Makefile.coq
-	make -f Makefile.coq install
-
-clean: Makefile.coq
-	$(MAKE) -f Makefile.coq clean
-	rm -fr Makefile.coq Setup extract/*
-	rm -fr dist .coq-native
-	rm -fr .hdevtools.sock *.glob *.d *.vo
