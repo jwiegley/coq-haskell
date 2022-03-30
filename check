@@ -1,6 +1,6 @@
 #!/bin/bash
 
-docker run -t coqorg/coq:8.15 bash -c '
+docker run -t coqorg/coq:dev bash -c '
     git clone https://github.com/jwiegley/coq-haskell;
     cd coq-haskell;
     opam update;

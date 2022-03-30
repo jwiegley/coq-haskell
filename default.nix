@@ -9,7 +9,9 @@ args@{
   }
 }:
 
-let coq-haskell = coqPackages:
+let
+
+coq-haskell = coqPackages:
   with pkgs.${coqPackages}; pkgs.stdenv.mkDerivation rec {
     name = "coq${coq.coq-version}-coq-haskell-${version}";
     version = "1.0";
@@ -31,7 +33,8 @@ let coq-haskell = coqPackages:
 
     env = pkgs.buildEnv { inherit name; paths = buildInputs; };
     passthru = {
-      compatibleCoqVersions = v: builtins.elem v [ "8.10" "8.11" "8.12" "8.13" "8.14" "8.15" ];
+      compatibleCoqVersions = v:
+        builtins.elem v [ "8.10" "8.11" "8.12" "8.13" "8.14" "8.15" ];
     };
   };
 
