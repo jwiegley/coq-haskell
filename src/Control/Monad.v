@@ -16,7 +16,7 @@ Arguments join {m _ _} _.
 Definition bind `{Monad m} {X Y : Type} (f : (X -> m Y)) : m X -> m Y :=
   join \o fmap f.
 
-Definition return_ `{Monad m} {a} : a -> m a := pure.
+Definition return_ `{Monad m} {a : Type} : a -> m a := pure.
 
 Delimit Scope monad_scope with monad.
 
@@ -54,26 +54,26 @@ Definition when `{Monad m} `(b : bool) (x : m unit) : m unit :=
 Definition unless `{Monad m} `(b : bool) (x : m unit) : m unit :=
   if negb b then x else return_ tt.
 
-Fixpoint mapM `{Applicative m} {A B} (f : A -> m B) (l : list A) :
+Fixpoint mapM `{Applicative m} {A B : Type} (f : A -> m B) (l : list A) :
   m (list B) :=
   match l with
   | nil => pure nil
   | cons x xs => liftA2 (@cons _) (f x) (mapM f xs)
   end.
 
-Definition forM `{Applicative m} {A B} (l : list A) (f : A -> m B) :
+Definition forM `{Applicative m} {A B : Type} (l : list A) (f : A -> m B) :
   m (list B) := mapM f l.
 
-Fixpoint mapM_ `{Applicative m} {A B} (f : A -> m B) (l : list A) : m unit :=
+Fixpoint mapM_ `{Applicative m} {A B : Type} (f : A -> m B) (l : list A) : m unit :=
   match l with
   | nil => pure tt
   | cons x xs => liftA2 (const id) (f x) (mapM_ f xs)
   end.
 
-Definition forM_ `{Applicative m} {A B} (l : list A) (f : A -> m B) : m unit :=
+Definition forM_ `{Applicative m} {A B : Type} (l : list A) (f : A -> m B) : m unit :=
   mapM_ f l.
 
-Definition foldM `{Monad m} {A : Type} {B : Type}
+Definition foldM `{Monad m} {A B : Type}
   (f : A -> B -> m A) (s : A) (l : list B) : m A :=
   let fix go xs z :=
       match xs with
@@ -82,10 +82,10 @@ Definition foldM `{Monad m} {A : Type} {B : Type}
       end in
   go l s.
 
-Definition forFoldM `{Monad m} {A : Type} {B : Type}
+Definition forFoldM `{Monad m} {A B : Type}
   (s : A) (l : list B) (f : A -> B -> m A) : m A := foldM f s l.
 
-Definition foldrM `{Monad m} {A : Type} {B : Type}
+Definition foldrM `{Monad m} {A B : Type}
   (f : B -> A -> m A) (s : A) (l : list B) : m A :=
   let fix go xs z :=
       match xs with
@@ -94,7 +94,7 @@ Definition foldrM `{Monad m} {A : Type} {B : Type}
       end in
   go l s.
 
-Definition forFoldrM `{Monad m} {A : Type} {B : Type}
+Definition forFoldrM `{Monad m} {A B : Type}
   (s : A) (l : list B) (f : B -> A -> m A) : m A := foldrM f s l.
 
 Fixpoint flatten `(xs : list (list A)) : list A :=
@@ -114,8 +114,8 @@ Fixpoint replicateM_ `{Monad m} (n : nat) (x : m unit) : m unit :=
   | S n' => x >> replicateM_ n' x
   end.
 
-Fixpoint insertM `{Monad m} {a} (P : a -> a -> m bool)
-  (z : a) (l : list a) : m (list a) :=
+Fixpoint insertM `{Monad m} {A : Type} (P : A -> A -> m bool)
+  (z : A) (l : list A) : m (list A) :=
   match l with
   | nil => pure (cons z nil)
   | cons x xs =>
@@ -124,7 +124,7 @@ Fixpoint insertM `{Monad m} {a} (P : a -> a -> m bool)
     then cons x <$> insertM P z xs
     else pure (cons z (cons x xs))
   end.
-Arguments insertM {m H a} P z l : simpl never.
+Arguments insertM {m H A} P z l : simpl never.
 
 Class Monad_Distributes `{Monad M} `{Applicative N} :=
 { prod : forall A, N (M (N A)) -> M (N A)
