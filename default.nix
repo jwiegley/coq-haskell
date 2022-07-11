@@ -39,6 +39,7 @@ coq-haskell = coqPackages:
   };
 
 in {
+  inherit coq-haskell;
   coq-haskell_8_10 = coq-haskell "coqPackages_8_10";
   coq-haskell_8_11 = coq-haskell "coqPackages_8_11";
   coq-haskell_8_12 = coq-haskell "coqPackages_8_12";
