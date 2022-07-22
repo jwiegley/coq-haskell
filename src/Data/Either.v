@@ -47,6 +47,7 @@ Definition Either_join {E X} (x : Either E (Either E X)) : Either E X :=
   | Right (Right x') => Right x'
   end.
 
+#[export]
 Instance Either_Functor {E} : Functor (Either E) :=
 { fmap := @Either_map E
 }.
@@ -59,6 +60,7 @@ Proof.
 Defined.
 *)
 
+#[export]
 Instance Either_Applicative {E} : Applicative (Either E) :=
 { is_functor := Either_Functor
 ; pure := @Right E
@@ -82,6 +84,7 @@ Proof.
 Defined.
 *)
 
+#[export]
 Instance Either_Monad {E} : Monad (Either E) :=
 { is_applicative := Either_Applicative
 ; join := @Either_join E

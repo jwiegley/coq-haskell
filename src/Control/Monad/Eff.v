@@ -28,6 +28,7 @@ Class Handles (fs : list Effect) (effect : Effect) := {
   getEffect : forall m, Effects m fs -> effect m
 }.
 
+#[export]
 Instance Handles_hd {fs : list Effect}  {f : Effect} :
   Handles (f :: fs) f.
 Proof.
@@ -36,6 +37,7 @@ Proof.
   exact X0.
 Defined.
 
+#[export]
 Instance Handles_tl `{_ : Handles fs f} : Handles (x :: fs) f.
 Proof.
   constructor; intros.
@@ -57,15 +59,18 @@ Definition liftF `{Handles effects effect} `{Monad m}
 Definition interpret `{H : Monad m} `(interpreter : Effects m effects)
   `(program : Eff effects m a) : m a := program interpreter.
 
+#[export]
 Instance TFree_Functor `(xs : list Effect) `{Monad m} : Functor (TFree xs m) := {
   fmap := fun A B f run => fun xs => fmap f (run xs)
 }.
 
+#[export]
 Instance TFree_Applicative `(xs : list Effect) `{Monad m} : Applicative (TFree xs m) := {
   pure := fun _ x => fun xs => pure x;
   ap   := fun A B runf runx => fun xs => runf xs <*> runx xs
 }.
 
+#[export]
 Instance TFree_Monad `(xs : list Effect) `{Monad m} : Monad (TFree xs m) := {
   join := fun A run => fun xs => run xs >>= fun f => f xs
 }.

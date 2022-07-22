@@ -66,6 +66,7 @@ Notation "X ≅ Y" := (isomorphic X Y) (at level 100).
 Axiom iso_ext : forall {A : Type} (f g : A -> Type),
   (forall x, f x ≅ g x) -> ((forall x, f x) ≅ (forall x, g x)).
 
+#[export]
 Program Instance Iso_Equivalence : Equivalence isomorphic.
 Obligation 1.
   intro x.
@@ -223,7 +224,7 @@ Proof.
   exists (fun a => inl a).
   extensionalize.
 Qed.
-Hint Rewrite add_zero_iso : isos.
+#[export] Hint Rewrite add_zero_iso : isos.
 
 Theorem zero_add_iso : forall a, zero + a ≅ a.
 Proof.
@@ -235,7 +236,7 @@ Proof.
   exists (fun a => inr a).
   extensionalize.
 Qed.
-Hint Rewrite zero_add_iso : isos.
+#[export] Hint Rewrite zero_add_iso : isos.
 
 Theorem add_assoc_iso : forall a b c, (a + b) + c ≅ a + (b + c).
 Proof.
@@ -299,7 +300,7 @@ Proof.
   exists (fun f => False_rect _ f).
   extensionalize.
 Qed.
-Hint Rewrite mul_zero_iso : isos.
+#[export] Hint Rewrite mul_zero_iso : isos.
 
 Theorem zero_mul_iso : forall a, zero * a ≅ zero.
 Proof.
@@ -308,7 +309,7 @@ Proof.
   exists (fun f => False_rect _ f).
   extensionalize.
 Qed.
-Hint Rewrite zero_mul_iso : isos.
+#[export] Hint Rewrite zero_mul_iso : isos.
 
 Theorem mul_one_iso : forall a, a * one ≅ a.
 Proof.
@@ -317,7 +318,7 @@ Proof.
   exists (fun a => (a, tt));
   extensionalize.
 Qed.
-Hint Rewrite mul_one_iso : isos.
+#[export] Hint Rewrite mul_one_iso : isos.
 
 Theorem one_mul_iso : forall a, one * a ≅ a.
 Proof.
@@ -326,7 +327,7 @@ Proof.
   exists (fun a => (tt, a));
   extensionalize.
 Qed.
-Hint Rewrite one_mul_iso : isos.
+#[export] Hint Rewrite one_mul_iso : isos.
 
 Theorem mul_two_iso : forall a, a * two ≅ a + a.
 Proof.
@@ -338,7 +339,7 @@ Proof.
                    end).
   extensionalize.
 Qed.
-Hint Rewrite mul_two_iso : isos.
+#[export] Hint Rewrite mul_two_iso : isos.
 
 Theorem two_mul_iso : forall a, two * a ≅ a + a.
 Proof.
@@ -350,7 +351,7 @@ Proof.
                    end).
   extensionalize.
 Qed.
-Hint Rewrite two_mul_iso : isos.
+#[export] Hint Rewrite two_mul_iso : isos.
 
 Theorem mul_assoc_iso : forall a b c, (a * b) * c ≅ a * (b * c).
 Proof.
@@ -383,7 +384,7 @@ Proof.
                    end).
   extensionalize.
 Qed.
-Hint Rewrite mul_add_iso : isos.
+#[export] Hint Rewrite mul_add_iso : isos.
 
 Theorem add_mul_iso : forall a b c, (a + b) * c ≅ (a * c) + (b * c).
 Proof.
@@ -398,7 +399,7 @@ Proof.
                    end).
   extensionalize.
 Qed.
-Hint Rewrite add_mul_iso : isos.
+#[export] Hint Rewrite add_mul_iso : isos.
 
 Theorem add_mul_add_iso : forall a b c,
   (a + b) * (a + c) ≅ (a * a) + (a * c) + (b * a) + (b * c).
@@ -418,7 +419,7 @@ Proof.
                    end).
   extensionalize.
 Qed.
-Hint Rewrite add_mul_add_iso : isos.
+#[export] Hint Rewrite add_mul_add_iso : isos.
 
 Theorem add_one_mul_iso : forall a b, (a + one) * b ≅ (a * b) + b.
 Proof.
@@ -433,7 +434,7 @@ Proof.
                    end).
   extensionalize.
 Qed.
-Hint Rewrite add_one_mul_iso : isos.
+#[export] Hint Rewrite add_one_mul_iso : isos.
 
 (** Exponentials (type exponentiation) *)
 
@@ -445,7 +446,7 @@ Proof.
   exists (fun _ f => False_rect _ f).
   extensionalize.
 Qed.
-Hint Rewrite exp_zero_iso : isos.
+#[export] Hint Rewrite exp_zero_iso : isos.
 
 Theorem exp_one_iso : forall a, one -> a ≅ a.
 (* a^1 = a *)
@@ -455,7 +456,7 @@ Proof.
   exists (fun a _ => a).
   extensionalize.
 Qed.
-Hint Rewrite exp_one_iso : isos.
+#[export] Hint Rewrite exp_one_iso : isos.
 
 Theorem one_exp_iso : forall a, a -> one ≅ one.
 (* 1^a = a *)
@@ -465,7 +466,7 @@ Proof.
   exists (fun u _ => u).
   extensionalize.
 Qed.
-Hint Rewrite one_exp_iso : isos.
+#[export] Hint Rewrite one_exp_iso : isos.
 
 Theorem exp_two_iso : forall a, two -> a ≅ a * a.
 Proof.
@@ -474,7 +475,7 @@ Proof.
   exists (fun p (b : bool) => if b then fst p else snd p).
   extensionalize.
 Qed.
-Hint Rewrite exp_two_iso : isos.
+#[export] Hint Rewrite exp_two_iso : isos.
 
 Theorem exp_exp_sym_iso : forall a b c, b -> a -> c ≅ a -> b -> c.
 (* (c^a)^b = (c^b)^a *)
@@ -506,7 +507,7 @@ Proof.
   extensionality p.
   destruct p; trivial.
 Qed.
-Hint Rewrite exp_add_iso : isos.
+#[export] Hint Rewrite exp_add_iso : isos.
 
 Theorem mul_exp_iso : forall a b c, a -> (b * c) ≅ (a -> b) * (a -> c).
 (* (b * c)^a = b^a * c^a *)
@@ -516,12 +517,12 @@ Proof.
   exists (fun p a => match p with (f, g) => (f a, g a) end).
   extensionalize.
 Qed.
-Hint Rewrite mul_exp_iso : isos.
+#[export] Hint Rewrite mul_exp_iso : isos.
 
 Corollary exp_mul_iso : forall a b c, (a * b) -> c ≅ a -> b -> c.
 (* c^(a * b) = (c^b)^a *)
 Proof. intros; rewrite curry_adj, exp_exp_sym_iso; reflexivity. Qed.
-Hint Rewrite exp_mul_iso : isos.
+#[export] Hint Rewrite exp_mul_iso : isos.
 
 Lemma exp_ex_iso : forall A (P : A -> Prop) (r : Prop),
   (exists x : A, P x) -> r ≅ (forall x : A, P x -> r).
@@ -532,7 +533,7 @@ Proof.
             match p with ex_intro x H => k x H end).
   extensionalize.
 Qed.
-Hint Rewrite exp_ex_iso : isos.
+#[export] Hint Rewrite exp_ex_iso : isos.
 
 Lemma exp_sig_iso : forall A (P : A -> Prop) r,
   { x : A | P x } -> r ≅ (forall x : A, P x -> r).
@@ -542,7 +543,7 @@ Proof.
   exists (fun k p => match p with exist x H => k x H end).
   extensionalize.
 Qed.
-Hint Rewrite exp_sig_iso : isos.
+#[export] Hint Rewrite exp_sig_iso : isos.
 
 Lemma exp_sigT_iso : forall A (P : A -> Type) r,
   { x : A & P x } -> r ≅ (forall x : A, P x -> r).
@@ -552,7 +553,7 @@ Proof.
   exists (fun k p => match p with existT x H => k x H end).
   extensionalize.
 Qed.
-Hint Rewrite exp_sigT_iso : isos.
+#[export] Hint Rewrite exp_sigT_iso : isos.
 
 Corollary exp_add_more_iso : forall a b c d,
   (d -> (a + b) -> c) -> c ≅ (d -> a -> c) -> (d -> b -> c) -> c.
@@ -601,7 +602,7 @@ Proof.
   rewrite ?add_zero_iso;
   reflexivity.
 Qed.
-Hint Rewrite mul_S_iso : isos.
+#[export] Hint Rewrite mul_S_iso : isos.
 
 Add Parametric Morphism : mul
   with signature (eq ==> isomorphic ==> isomorphic)
@@ -614,7 +615,7 @@ Proof.
   reflexivity.
 Qed.
 
-Hint Rewrite plus_Sn_m : isos.
+#[export] Hint Rewrite plus_Sn_m : isos.
 
 Theorem mul_plus_iso : forall a n m, mul (n + m) a ≅ mul n a + mul m a.
 Proof.
@@ -625,7 +626,7 @@ Proof.
   rewrite IHn, add_assoc_iso.
   reflexivity.
 Qed.
-Hint Rewrite mul_plus_iso : isos.
+#[export] Hint Rewrite mul_plus_iso : isos.
 
 (** Exponentation by a constant *)
 
@@ -651,7 +652,7 @@ Proof.
   rewrite ?mul_one_iso;
   reflexivity.
 Qed.
-Hint Rewrite exp_S_iso : isos.
+#[export] Hint Rewrite exp_S_iso : isos.
 
 Add Parametric Morphism : exp
   with signature (eq ==> isomorphic ==> isomorphic)
@@ -673,7 +674,7 @@ Proof.
   rewrite IHn, mul_assoc_iso.
   reflexivity.
 Qed.
-Hint Rewrite exp_plus_iso : isos.
+#[export] Hint Rewrite exp_plus_iso : isos.
 
 (** Lists *)
 
@@ -690,7 +691,7 @@ Proof.
                    end).
   extensionalize.
 Qed.
-Hint Rewrite list_cons_iso : isos.
+#[export] Hint Rewrite list_cons_iso : isos.
 
 Lemma iso_impl : @subrelation Prop isomorphic Basics.impl.
 Proof.
@@ -740,7 +741,7 @@ Abort.
 
 Theorem identity_iso : forall (A : Type), Identity A ≅ A.
 Proof. reflexivity. Qed.
-Hint Rewrite identity_iso : Isos.
+#[export] Hint Rewrite identity_iso : Isos.
 
 Theorem Identity_representable : representable Identity.
 Proof.
@@ -765,7 +766,7 @@ Proof.
   Import YonedaLaws.
   exact (Yoneda_parametricity _ _ _ _ _ _).
 Qed.
-Hint Resolve Yoneda_iso : isos.
+#[export] Hint Resolve Yoneda_iso : isos.
 
 (* Given a pair (y -> a, f y), and a function g : y -> x, then the pair
     (id, fmap g c) is informationally equivalent to the pair (g, c). *)
@@ -784,7 +785,7 @@ Proof.
   apply EqdepFacts.eq_dep_eq_sigT.
   exact (Coyoneda_parametricity _ _ _ _).
 Qed.
-Hint Resolve Coyoneda_iso : isos.
+#[export] Hint Resolve Coyoneda_iso : isos.
 
 (** Cont *)
 
@@ -796,7 +797,7 @@ Proof.
   extensionalize.
   apply Cont_parametricity.
 Qed.
-Hint Rewrite Cont_iso : isos.
+#[export] Hint Rewrite Cont_iso : isos.
 
 (** Reader *)
 
@@ -893,12 +894,14 @@ Axiom Lens_parametricity :
 
 Definition IStore a b t := (a * (b -> t))%type.
 
+#[export]
 Instance IStore_Functor {a b} : Functor (IStore a b) := {
   fmap := fun _ _ f x => match x with
                            (a, k) => (a, fun b => f (k b))
                          end
 }.
 
+#[export]
 Program Instance IStore_FunctorLaws {a b} : FunctorLaws (IStore a b).
 Obligation 1.
   extensionality p.
@@ -1084,6 +1087,7 @@ Definition wrap_FooF {a b} (x : FooF a b (Fix (FooF a b))) : Fix (FooF a b) :=
   fun r k => k (Fix (FooF a b)) (fun z => z r k) x.
 *)
 
+#[export]
 Instance FooF_Functor (a b : Type) : Functor (FooF a b) := {
   fmap := fun _ _ f x =>
             match x with
@@ -1093,6 +1097,7 @@ Instance FooF_Functor (a b : Type) : Functor (FooF a b) := {
             end
 }.
 
+#[export]
 Program Instance FooF_FunctorLaws (a b : Type) : FunctorLaws (FooF a b).
 Obligation 1. extensionalize. Qed.
 Obligation 2. extensionalize. Qed.
@@ -1256,6 +1261,7 @@ Proof.
   reflexivity.
 Qed.
 
+#[export]
 Program Instance List_Alg_Functor : Functor (fun r => one + a * r)%type := {
   fmap := fun _ _ f x =>
             match x with
@@ -1264,6 +1270,7 @@ Program Instance List_Alg_Functor : Functor (fun r => one + a * r)%type := {
             end
 }.
 
+#[export]
 Program Instance List_Alg_FunctorLaws : FunctorLaws (fun r => one + a * r)%type.
 Obligation 1. extensionalize. Qed.
 Obligation 2. extensionalize. Qed.

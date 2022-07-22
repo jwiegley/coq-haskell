@@ -265,6 +265,7 @@ Section Applicatives.
 
 End Applicatives.
 
+#[export]
 Program Instance option_Applicative : Applicative option := {
     pure := Some;
     ap := fun _ _ f x => match f with
@@ -292,6 +293,7 @@ Fixpoint list_ap {a b} (fs : list (a -> b)) (xs : list a) : list b :=
   | f :: fs' => fmap f xs ++ list_ap fs' xs
   end.
 
+#[export]
 Program Instance list_Applicative : Applicative list := {
     pure := fun _ x => [x];
     ap := @list_ap

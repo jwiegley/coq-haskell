@@ -48,9 +48,9 @@ Definition StateT_join `{Monad m} {s a : Type} (x : StateT s m (StateT s m a)) :
     end.
 
 (*
-Module StateTLaws.
-
 Require Import FunctionalExtensionality.
+
+Module StateTLaws.
 
 Include MonadLaws.
 
@@ -62,6 +62,7 @@ Proof.
   destruct x; auto.
 Qed.
 
+#[export]
 Program Instance StateT_FunctorLaws {s} `{FunctorLaws m} :
   FunctorLaws (StateT s m).
 Next Obligation. Admitted.
@@ -83,6 +84,7 @@ Next Obligation. Admitted.
 (*   by case: y. *)
 (* Qed. *)
 
+#[export]
 Program Instance StateT_Applicative `{MonadLaws m} {s : Type} :
   ApplicativeLaws (StateT s m).
 Next Obligation. Admitted.
@@ -147,6 +149,7 @@ Next Obligation. Admitted.
 (*   f_equal. *)
 (* Qed. *)
 
+#[export]
 Program Instance StateT_Monad `{MonadLaws m} {s : Type} :
   MonadLaws (StateT s m).
 Next Obligation. Admitted.
@@ -191,10 +194,12 @@ Next Obligation. Admitted.
 End StateTLaws.
 *)
 
+(* #[export] *)
 (* Instance Tuple_Functor {S} : Functor (fun a => (S * a)%type) | 9 := { *)
 (*   fmap := fun _ _ f p => (fst p, f (snd p)) *)
 (* }. *)
 
+#[export]
 Instance StateT_Functor `{Functor m} {S} : Functor (StateT S m) := {
   fmap := fun _ _ f x => fun s =>
     x s <&> fun p =>
@@ -203,32 +208,38 @@ Instance StateT_Functor `{Functor m} {S} : Functor (StateT S m) := {
               end
 }.
 
+#[export]
 Instance StateT_Applicative `{Monad m} {S} : Applicative (StateT S m) := {
   pure := fun _ x => fun s => pure (s, x);
   ap := @StateT_ap _ _ _
 }.
 
+#[export]
 Instance StateT_Monad `{Monad m} {S} : Monad (StateT S m) := {
   join := @StateT_join _ _ _
 }.
 
+Require Import FunctionalExtensionality.
+
 Module StateTLaws.
 
 Import MonadLaws.
-Require Import FunctionalExtensionality.
 
+(* #[export] *)
 (* Program Instance Tuple_FunctorLaws {S} : FunctorLaws (fun a => (S * a)%type). *)
 (* Obligation 1. *)
 (*   extensionality p. *)
 (*   destruct p; reflexivity. *)
 (* Qed. *)
 
+(* #[export] *)
 (* Program Instance StateT_FunctorLaws `{FunctorLaws m} {S} : *)
 (*   FunctorLaws (StateT S m) := *)
 (*   @Compose_FunctorLaws _ Impl_Functor Impl_FunctorLaws *)
 (*     _ _ (@Compose_FunctorLaws m _ _ _ _ (@Tuple_FunctorLaws S)). *)
 
 (*
+#[export]
 Program Instance StateT_ApplicativeLaws `{MonadLaws m} {S} :
   ApplicativeLaws (StateT S m).
 Obligation 1.
@@ -245,6 +256,7 @@ Qed.
 Obligation 2.
 Abort.
 
+#[export]
 Program Instance StateT_MonadLaws `{MonadLaws m} {S} :
   MonadLaws (StateT S m).
 *)

@@ -23,6 +23,7 @@ Coercion fobj : Functor >-> Funclass.
 (* jww (2014-08-11): Have the ∘ symbol refer to morphisms in any category, so
    that it can be used for both arrows and functors (which are arrows in
    Cat). *)
+#[export]
 Program Instance fun_compose
   {C : Category} {D : Category} {E : Category}
   (F : D ⟶ E) (G : C ⟶ D) : C ⟶ E := {
@@ -92,6 +93,7 @@ Qed.
 (*
 Section Hidden.
 
+#[export]
 Program Instance Cat : Category :=
 { ob      := Category
 ; hom     := @Functor
@@ -125,6 +127,7 @@ Obligation 3.
   reflexivity.
 Defined.
 
+#[export]
 Program Instance One : Category := {
     ob      := unit;
     hom     := fun _ _ => unit;
@@ -134,11 +137,13 @@ Program Instance One : Category := {
 Obligation 1. destruct f. reflexivity. Qed.
 Obligation 2. destruct f. reflexivity. Qed.
 
+#[export]
 Program Instance Fini `(C : Category) : C ⟶ One := {
     fobj    := fun _ => tt;
     fmap    := fun _ _ _ => id
 }.
 
+#[export]
 Program Instance Zero : Category := {
     ob      := Empty_set;
     hom     := fun _ _ => Empty_set
@@ -149,6 +154,7 @@ Obligation 3.
     destruct A.
 Defined.
 
+#[export]
 Program Instance Init `(C : Category) : Zero ⟶ C.
 Obligation 1. destruct C. crush. Defined.
 Obligation 2.
@@ -173,6 +179,7 @@ Class HasInitial (C : Category) :=
 ; initial_law : ∀ {X} (f g : init_obj ~> X), f = g
 }.
 
+#[export]
 Program Instance Cat_HasInitial : HasInitial Cat := {
     init_obj := Zero;
     init_mor := Init
@@ -199,6 +206,7 @@ Class HasTerminal (C : Category) :=
 ; terminal_law : ∀ {X} (f g : X ~> term_obj), f = g
 }.
 
+#[export]
 Program Instance Cat_HasTerminal : HasTerminal Cat := {
     term_obj := One;
     term_mor := Fini
@@ -235,6 +243,7 @@ Notation "F ⟾ G" := (Natural F G) (at level 90, right associativity).
    perform the functor mapping they imply. *)
 Coercion transport : Natural >-> Funclass.
 
+#[export]
 Program Instance nat_identity `{F : Functor} : F ⟾ F := {
     transport := fun _ => id
 }.
@@ -244,6 +253,7 @@ Obligation 1.
   reflexivity.
 Defined.
 
+#[export]
 Program Instance nat_compose `{F : C ⟶ D} `{G : C ⟶ D} `{K : C ⟶ D}
   (f : G ⟾ K) (g : F ⟾ G) : F ⟾ K := {
     transport := fun X =>
@@ -282,6 +292,7 @@ Definition nat_equiv (x y : F ⟾ G) : Prop :=
     end
   end.
 
+#[export]
 Program Instance nat_equivalence : Equivalence nat_equiv.
 Obligation 1.
   unfold Reflexive, nat_equiv. intros.
@@ -324,6 +335,7 @@ Defined.
 (* Nat is the category whose morphisms are natural transformations between
    Functors from C ⟶ D. *)
 
+#[export]
 Program Instance Nat (C : Category) (D : Category) : Category :=
 { ob      := @Functor C D
 ; hom     := @Natural C D
@@ -384,6 +396,7 @@ Definition dimap `{P : C^op ⟶ [D, E]} `(f : X ~{C}~> W) `(g : Y ~{D}~> Z) :
 
 (* jww (2014-08-24): Waiting on Coq 8.5. *)
 (*
+#[export]
 Program Instance Hom `(C : Category) : C^op ⟶ [C, Sets] :=
 { fobj := fun X =>
   {| fobj := @hom C X
@@ -420,11 +433,13 @@ Coercion Hom : Category >-> Functor.
 (** This is the Yoneda embedding. *)
 (* jww (2014-08-10): It should be possible to get rid of Hom here, but the
    coercion isn't firing. *)
+#[export]
 Program Instance Yoneda `(C : Category) : C ⟶ [C^op, Sets] := Hom (C^op).
 Obligation 1. apply op_involutive. Defined.
 *)
 
 (*
+#[export]
 Program Instance YonedaLemma `(C : Category) `(F : C ⟶ Sets) {A : C^op}
     : (C A ⟾ F) ≅Sets F A.
 Obligation 1.
@@ -478,12 +493,14 @@ Class FullyFaithful `(F : @Functor C D) :=
 }.
 
 (*
+#[export]
 Program Instance Hom_Faithful (C : Category) : FullyFaithful C :=
 { unfmap := fun _ _ f => (transport/f) id
 }.
 *)
 
 (*
+#[export]
 Program Instance Hom_Faithful_Co (C : Category) {A : C} : FullyFaithful (C A).
 Obligation 1.
   destruct C. crush.
@@ -504,6 +521,7 @@ definition, [F^op] maps objects and morphisms identically to [F].
 
 *)
 
+#[export]
 Program Instance Opposite_Functor `(F : C ⟶ D) : C^op ⟶ D^op := {
     fobj := @fobj C D F;
     fmap := fun X Y f => @fmap C D F Y X (op f)
@@ -514,6 +532,7 @@ Obligation 2. unfold op. apply functor_compose_law. Defined.
 (* jww (2014-08-10): Until I figure out how to make C^op^op implicitly unify
    with C, I need a way of undoing the action of Opposite_Functor. *)
 (*
+#[export]
 Program Instance Reverse_Opposite_Functor `(F : C^op ⟶ D^op) : C ⟶ D := {
     fobj := @fobj _ _ F;
     fmap := fun X Y f => unop (@fmap _ _ F Y X f)
@@ -559,6 +578,7 @@ Class Adjunction `{C : Category} `{D : Category}
 
 Notation "F ⊣ G" := (Adjunction F G) (at level 70) : category_scope.
 
+#[export]
 Program Instance adj_identity `{C : Category} : Id ⊣ Id.
 
 (* Definition adj' `{C : Category} `{D : Category} `{E : Category} *)
@@ -637,6 +657,7 @@ Proof.
   apply proof_irrelevance.
 Qed.
 
+#[export]
 Program Instance Adj : Category := {
     ob := Category;
     hom := @Adj_Morphism
@@ -693,6 +714,7 @@ Qed.
 (*   | Const_ x => x *)
 (*   end. *)
 
+#[export]
 Program Instance Const `{C : Category} `{J : Category} (x : C) : J ⟶ C := {
     fobj := fun _ => x;
     fmap := fun _ _ _ => id
@@ -704,6 +726,7 @@ Proof. crush. Qed.
 Definition Sets_getConst `{J : Category} (a : Type) (b : J)
   (c : @Const Sets J a b) : Type := @fobj J Sets (@Const Sets J a) b.
 
+#[export]
 Program Instance Const_Transport `(C : Category) `(J : Category) `(x ~> y)
   : @Natural C J (Const x) (Const y) := {
     transport := fun X => _
@@ -713,8 +736,9 @@ Obligation 2.
   rewrite right_identity. reflexivity.
 Defined.
 
-Hint Unfold Const_Transport.
+#[export] Hint Unfold Const_Transport : core.
 
+#[export]
 Program Instance Delta `{C : Category} `{J : Category} : C ⟶ [J, C] := {
     fobj := @Const C J;
     fmap := @Const_Transport J C
@@ -766,6 +790,7 @@ Proof.
 Defined.
 
 (* jww (2014-08-24): Need Coq 8.5
+#[export]
 Program Instance Const_Cone_Iso `(F : J ⟶ C)
   : ∀ a, (Const a ⟾ F) ≅Sets Cone a F := {
     to   := @Const_to_Cone J C F a;
@@ -786,6 +811,7 @@ Abort.
 *)
 
 (*
+#[export]
 Program Instance Lim_Sets `(J : Category) : [J, Sets] ⟶ Sets := {
     fobj := fun F => 
     fmap := fun _ _ n F_x z => (transport/n) (F_x z)
@@ -805,6 +831,7 @@ Proof.
   assumption.
 Qed.
 
+#[export]
 Program Instance Sets_Const_Nat (J : Category) (F : [J, Sets])
   (a : Type) (f : a → ∀ x : J, F x) : @Const Sets J a ⟾ F.
 Obligation 2.
@@ -816,6 +843,7 @@ Obligation 2.
   crush. clear.
   (* jww (2014-08-12): We don't believe this is true. *)
 
+#[export]
 Program Instance Sets_Const_Lim_Iso (J : Category) (a : Sets) (F : [J, Sets])
   : @Isomorphism Sets (Const a ⟾ F) (a → Lim_Sets J F).
 Obligation 1.
@@ -853,6 +881,7 @@ Obligation 4.
   reflexivity.
 Qed.
 
+#[export]
 Program Instance Sets_Complete : Complete Sets.
 Obligation 1.
   exists (Lim_Sets J).
@@ -883,6 +912,7 @@ Infix "⊗" := mult (at level 27, right associativity) : category_scope.
 
 Coercion is_category : MonoidalCategory >-> Category.
 
+#[export]
 Program Instance Tuple_Functor (X : Type) : Sets ⟶ Sets := {
     fobj := fun Y => (X * Y);
     fmap := fun _ _ f p => match p with
@@ -898,6 +928,7 @@ Obligation 2.
   destruct p. reflexivity.
 Qed.
 
+#[export]
 Program Instance Tuple_Bifunctor : Sets ⟶ [Sets, Sets] := {
     fobj := Tuple_Functor;
     fmap := fun _ _ f =>
@@ -924,6 +955,7 @@ Obligation 3.
   destruct p. reflexivity.
 Qed.
 
+#[export]
 Program Instance LTuple_Isomorphism {A} : (unit * A) ≅Sets A :=
 { to   := @snd unit A
 ; from := pair tt
@@ -932,6 +964,7 @@ Obligation 2.
   extensionality x. destruct x. destruct u. reflexivity.
 Qed.
 
+#[export]
 Program Instance RTuple_Isomorphism {A} : (A * unit) ≅Sets A :=
 { to   := @fst A unit
 ; from := fun x => (x, tt)
@@ -952,6 +985,7 @@ Definition left_triple {A B C} (x : A) (y : B) (z : C) : A * B * C :=
 Definition right_triple {A B C} (x : A) (y : B) (z : C) : A * (B * C) :=
   (x, (y, z)).
 
+#[export]
 Program Instance Tuple_Assoc {A B C} : (A * B * C) ≅Sets (A * (B * C)) :=
 { to   := tuple_swap_ab_c_to_a_bc
 ; from := tuple_swap_a_bc_to_ab_c
@@ -984,6 +1018,7 @@ Theorem uncurry_works : forall {X Y Z} (x : X) (y : Y) (f : X -> Y -> Z),
   uncurry f (x, y) = f x y.
 Proof. reflexivity. Qed.
 
+#[export]
 Program Instance Sets_with_Products : MonoidalCategory := {
     is_category := Sets;
 

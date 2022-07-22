@@ -10,11 +10,11 @@ Generalizable All Variables.
 Set Primitive Projections.
 Unset Transparent Obligations.
 
-Definition Lens s t a b := forall `{Functor f}, (a -> f b) -> s -> f t.
+Definition Lens s t a b := forall f, Functor f -> (a -> f b) -> s -> f t.
 Definition Lens' s a := Lens s s a a.
 
 Definition Getter s a :=
-  forall `{Functor f} `{Contravariant f}, (a -> f a) -> s -> f s.
+  forall f, Functor f -> Contravariant f -> (a -> f a) -> s -> f s.
 
 Definition Getting r s a := (a -> Const r a) -> s -> Const r s.
 
@@ -75,7 +75,9 @@ Class LensLaws `(l : Lens' s a) := {
   lens_set_set  : forall (x : s) (y z : a), set l z (set l y x) = set l z x
 }.
 
+#[export]
 Program Instance Lens__1 {a b} : LensLaws (s:=a * b) _1.
+#[export]
 Program Instance Lens__2 {a b} : LensLaws (s:=a * b) _2.
 
 Example lens_ex1 : view _1 (10, 20) = 10.

@@ -1,6 +1,6 @@
 opam-version: "2.0"
 maintainer: "johnw@newartisans.com"
-version: "1.0.0"
+version: "1.1.0"
 
 homepage: "https://github.com/jwiegley/coq-haskell"
 dev-repo: "git+https://github.com/jwiegley/coq-haskell.git"
@@ -18,12 +18,12 @@ make Gallina more familiar to Haskellers.
 build: [make "JOBS=%{jobs}%" ]
 install: [make "install"]
 depends: [
-  "coq" {(>= "8.10" & < "8.16~") | (= "dev")}
+  "coq" {(>= "8.14" & < "8.16~") | (= "dev")}
 ]
 
 url {
-  src: "https://github.com/jwiegley/coq-haskell/archive/refs/tags/1.0.tar.gz"
-  checksum: "sha256=64b6958f4eca641b933977a047272dea00ef5ceff33206da66f10fe792dbf3f2"
+  src: "https://github.com/jwiegley/coq-haskell/archive/refs/tags/1.1.tar.gz"
+  checksum: "sha256=66243d54a6ff551a9ec762d69e5ff6a09869e7d5ce6504fa3a63350efde03720"
 }
 
 authors: [

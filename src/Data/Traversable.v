@@ -34,6 +34,7 @@ Arguments sequenceT {rep t H _ a} _ _.
 
 Arguments Tupersable rep t [H].
 
+#[export]
 Instance Maybe_Traversable : Traversable Maybe := {
   sequence := fun _ _ A x =>
     match x with
@@ -42,6 +43,7 @@ Instance Maybe_Traversable : Traversable Maybe := {
     end
 }.
 
+#[export]
 Instance Maybe_Tupersable {rep} : Tupersable rep Maybe := {
   sequenceT := fun A (s : rep) x =>
     match x with

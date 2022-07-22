@@ -1071,6 +1071,7 @@ Proof.
   exact: IHxs.
 Qed. *)
 
+#[export]
 Instance List_Functor : Functor list := {
   fmap := map
 }.
@@ -1083,15 +1084,17 @@ Fixpoint list_ap {A B} (fs: list (A -> B)) (xs: list A)
   end.
 
 
+#[export]
 Instance List_Applicative : Applicative list := {
   pure := fun _ x => [x];
   ap   := @list_ap
 }.
 
+Require Import FunctionalExtensionality.
+
 Module ListLaws.
 
 Include MonadLaws.
-Require Import FunctionalExtensionality.
 
 Lemma list_ap_app : forall A B (v w: list (A -> B)) x,
   list_ap (v ++ w) x = list_ap v x ++ list_ap w x.
@@ -1103,6 +1106,7 @@ Proof.
   reflexivity.
 Qed.
 
+#[export]
 Program Instance List_FunctorLaws : FunctorLaws list.
 Obligation 1.
   unfold id.
@@ -1117,6 +1121,7 @@ Obligation 2.
   reflexivity.
 Qed.
 
+#[export]
 Program Instance List_ApplicativeLaws : ApplicativeLaws list.
 Obligation 1.
 extensionality l.
@@ -1126,7 +1131,7 @@ reflexivity.
 Qed.
 Obligation 2.
   simpl.
-  induction u as [u | f fs].
+  induction u as [| f fs].
   - simpl; auto.
   - simpl.
     rewrite <- IHfs.

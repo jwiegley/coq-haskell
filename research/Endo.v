@@ -69,6 +69,7 @@ End Functors.
 (* Functions are trivial functors. *)
 
 (*
+#[export]
 Program Instance Hom_Functor {A} : Functor (fun X => A -> X) :=
 { fmap := fun X Y f g => f ∘ g
 }.
@@ -108,6 +109,7 @@ Class FullyFaithful `(F : Functor) := {
     unfmap : ∀ {X Y}, (F X -> F Y) -> (X -> Y)
 }.
 
+#[export]
 Program Instance Hom (A : Type) : Functor (fun X => A -> X) := {
     fmap := @compose _
 }.
@@ -135,14 +137,17 @@ Proof. auto. Defined.
 (*   omega. *)
 (* Qed. *)
 
+#[export]
 Program Instance Hom_Full (A : Type) : Full (Hom A).
 Obligation 1.
 Admitted.
 
+#[export]
 Program Instance Hom_Faithful (A : Type) : Faithful (Hom A).
 Obligation 1.
 Admitted.
 
+#[export]
 Program Instance Hom_FullyFaithful (A : Type) : FullyFaithful (Hom A).
 Obligation 1.
   pose (@full_prop _ (Hom A) _ X Y X0).
@@ -150,6 +155,7 @@ Obligation 1.
   apply (X0 (const X1)).
 Admitted.
 
+#[export]
 Program Instance option_Functor : Functor option := {
     fmap := fun _ _ f x => match x with
       | None => None
@@ -159,6 +165,7 @@ Program Instance option_Functor : Functor option := {
 Obligation 1. extensionality x. destruct x; auto. Qed.
 Obligation 2. extensionality x. destruct x; auto. Qed.
 
+#[export]
 Program Instance list_Functor : Functor list := {
     fmap := List.map
 }.

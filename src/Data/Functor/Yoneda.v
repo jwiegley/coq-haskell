@@ -13,15 +13,18 @@ Set Asymmetric Patterns.
 Definition Yoneda (f : Type -> Type) (a : Type) :=
   forall r : Type, (a -> r) -> f r.
 
+(* #[export] *)
 (* Instance Yoneda_lemma `{Functor f} : forall a, Yoneda f a ≅ f a := { *)
 (*   iso_to   := fun x => x _ id; *)
 (*   iso_from := fun x _ k => fmap k x *)
 (* }. *)
 
+#[export]
 Instance Yoneda_Functor {f : Type -> Type} : Functor (Yoneda f) := {
   fmap := fun _ _ g k _ h => k _ (h \o g)
 }.
 
+#[export]
 Instance Yoneda_Applicative `{Applicative f} :
   Applicative (Yoneda f) := {
   pure := fun _ x => fun _ k => pure (k x);
@@ -31,13 +34,14 @@ Instance Yoneda_Applicative `{Applicative f} :
 Definition Yoneda_join `{Monad m} `(k : Yoneda m (Yoneda m a)) : Yoneda m a :=
   fun _ h => join (k _ (fun y => y _ h)).
 
+#[export]
 Instance Yoneda_Monad `{Monad m} : Monad (Yoneda m) := {
   join := @Yoneda_join m _
 }.
 
-Module YonedaLaws.
-
 Require Import FunctionalExtensionality.
+
+Module YonedaLaws.
 
 (* Include IsomorphismLaws. *)
 Include MonadLaws.
@@ -57,6 +61,7 @@ Admitted.
 Qed.
 *)
 
+(* #[export] *)
 (* Program Instance Yoneda_lemma `{FunctorLaws f} : *)
 (*   forall a, @IsomorphismLaws (Yoneda f a) (f a) (Yoneda_lemma a). *)
 (* Obligation 1. *)
@@ -73,8 +78,10 @@ Qed.
 (*   reflexivity. *)
 (* Qed. *)
 
+#[export]
 Program Instance Yoneda_FunctorLaws {f : Type -> Type} : FunctorLaws (Yoneda f).
 
+#[export]
 Program Instance Yoneda_ApplicativeLaws `{ApplicativeLaws f} :
   ApplicativeLaws (Yoneda f).
 Obligation 1.
@@ -120,6 +127,7 @@ Obligation 5.
   f_equal.
 Qed.
 
+#[export]
 Program Instance Yoneda_MonadLaws `{MonadLaws m} : MonadLaws (Yoneda m).
 Obligation 1.
   extensionality k.
@@ -171,16 +179,18 @@ Definition liftCoyoneda {f : Type -> Type} {a : Type} : f a -> Coyoneda f a :=
 Definition lowerCoyoneda `{Functor f} {a : Type} (c : Coyoneda f a) : f a :=
   match c with COYO _ g h => fmap g h end.
 
+#[export]
 Instance Coyoneda_Functor (f : Type -> Type) : Functor (Coyoneda f) := {
   fmap := fun _ _ f x => match x with COYO _ g h => COYO (f \o g) h end
 }.
+
+Require Import FunctionalExtensionality.
 
 Module CoyonedaLaws.
 
 Include FunctorLaws.
 
-Require Import FunctionalExtensionality.
-
+#[export]
 Program Instance Coyoneda_FunctorLaws (f : Type -> Type) :
   FunctorLaws (Coyoneda f).
 Obligation 1. extensionality x. destruct x; reflexivity. Qed.

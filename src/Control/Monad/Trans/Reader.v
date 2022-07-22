@@ -15,20 +15,25 @@ Definition ReaderT (X : Type) (M : Type -> Type) (Y : Type) : Type :=
 
 Definition runReaderT {E M A} (r : ReaderT E M A) := r.
 
+#[export]
 Program Instance ReaderT_Functor `{Functor m} {E} : Functor (ReaderT E m) :=
   @Compose_Functor _ Impl_Functor m _.
 
+#[export]
 Program Instance ReaderT_Applicative `{Applicative m} {E} :
   Applicative (ReaderT E m) :=
   @Compose_Applicative _ m Impl_Applicative _.
 
+#[export]
 Program Instance ReaderT_Monad `{Monad m} {E} : Monad (ReaderT E m) :=
   @Compose_Monad _ Impl_Monad m _ Impl_Monad_Distributes.
 
+#[export]
 Instance ReaderT_MonadTrans {E} : MonadTrans (ReaderT E) :=
 { lift := fun _ _ _ _ => fun v _ => v
 }.
 
+#[export]
 Program Instance ReaderT_MFunctor {E} : MFunctor (ReaderT E) :=
 { hoist := fun _ _ _ _ _ nat => fun v1 v2 => nat _ (v1 v2)
 }.
@@ -39,14 +44,17 @@ Import MonadLaws.
 Import ComposeMonadLaws.
 Import ImplMonadLaws.
 
+#[export]
 Program Instance ReaderT_FunctorLaws `{FunctorLaws m} {E} :
   FunctorLaws (ReaderT E m) :=
   @Compose_FunctorLaws _ Impl_Functor Impl_FunctorLaws m _ _.
 
+#[export]
 Program Instance ReaderT_ApplicativeLaws `{ApplicativeLaws m} {E} :
   ApplicativeLaws (ReaderT E m) :=
   @Compose_ApplicativeLaws _ _ Impl_ApplicativeLaws m _ _.
 
+#[export]
 Program Instance ReaderT_MonadLaws `{MonadLaws m} {E} :
   MonadLaws (ReaderT E m) :=
   @Compose_MonadLaws _ m Impl_Monad _ _ Impl_Monad_DistributesLaws.
@@ -59,6 +67,7 @@ Class MonadReader (r : Type) (m : Type -> Type) `{Monad m} := {
   reader : forall a, (r -> a) -> m a
 }.
 
+#[export]
 Program Instance ReaderT_MonadReader {E} `{Monad m} :
   MonadReader E (ReaderT E m) := {
   ask    := pure;

@@ -13,6 +13,7 @@ Definition Cont (R A : Type) : Type := (A -> R) -> R.
 Definition Cont_map {R X Y} (f : X -> Y) (k : Cont R X) : Cont R Y :=
   k \o (flip compose f).
 
+#[export]
 Instance Cont_Functor {R} : Functor (Cont R) :=
 { fmap := @Cont_map R
 }.
@@ -30,6 +31,7 @@ Definition Cont_apply {R X Y} (kf : Cont R (X -> Y)) (kx : Cont R X)
   fun h => kf (fun f' =>
     kx (fun x' => h (f' x'))).
 
+#[export]
 Instance Cont_Applicative {R} : Applicative (Cont R) :=
 { is_functor := Cont_Functor
 ; pure := fun A x => fun k => k x
@@ -55,6 +57,7 @@ Defined.
 Definition Cont_join {R X} (k : Cont R (Cont R X)) : Cont R X :=
   fun h => k (fun km => km (fun x' => h x')).
 
+#[export]
 Instance Cont_Monad {R} : Monad (Cont R) :=
 { is_applicative := Cont_Applicative
 ; join := @Cont_join R

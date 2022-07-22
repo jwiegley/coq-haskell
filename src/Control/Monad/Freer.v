@@ -31,29 +31,35 @@ Definition foldFreeCPS `(n : forall x r, f x -> (x -> r) -> r)
   `(fr : Free f a) : forall r, (a -> r) -> r := fun r p =>
   fr r p (fun t k x => n t r x k).
 
-Global Instance Free_Functor `{Functor f} : Functor (Free f) := {
+#[export]
+Instance Free_Functor `{Functor f} : Functor (Free f) := {
   fmap := fun _ _ k fr => fun _ p j => fr _ (p \o k) j
 }.
 
-Global Instance Free_Applicative `{Functor f} : Applicative (Free f) := {
+#[export]
+Instance Free_Applicative `{Functor f} : Applicative (Free f) := {
   pure := fun _ x => fun _ p j => p x;
   ap   := fun _ _ mf mx =>
             fun _ p j => mf _ (fun f => mx _ (fun x => p (f x)) j) j
 }.
 
-Global Instance Free_Monad `{Functor f} : Monad (Free f) := {
+#[export]
+Instance Free_Monad `{Functor f} : Monad (Free f) := {
   join := fun _ mm => fun _ p j => mm _ (fun m => m _ p j) j
 }.
+
+Require Import FunctionalExtensionality.
 
 Module FreeLaws.
 
 Include MonadLaws.
 
-Require Import FunctionalExtensionality.
-
+#[export]
 Program Instance Free_FunctorLaws `{FunctorLaws f} : FunctorLaws (Free f).
+#[export]
 Program Instance Free_ApplicativeLaws `{FunctorLaws f} :
   ApplicativeLaws (Free f).
+#[export]
 Program Instance Free_MonadLaws `{FunctorLaws f} : MonadLaws (Free f).
 
 Theorem retract_liftF_id `{MonadLaws f} : forall a,

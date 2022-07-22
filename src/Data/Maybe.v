@@ -1,5 +1,4 @@
 Require Import Hask.Control.Monad.
-Require Import Coq.Classes.Equivalence.
 
 Generalizable All Variables.
 Set Primitive Projections.
@@ -9,31 +8,6 @@ Unset Transparent Obligations.
 Notation Maybe   := option.
 Notation Nothing := None.
 Notation Just    := Some.
-
-Definition Maybe_equiv `{Equivalence a} (x y : Maybe a) : Prop :=
-  match x, y with
-  | Nothing, Nothing => True
-  | Just x, Just y => equiv x y
-  | _, _ => False
-  end.
-
-Program Instance Equivalence_Maybe `{Equivalence a} : Equivalence Maybe_equiv.
-Next Obligation.
-  repeat intro.
-  destruct x; simpl; auto.
-  reflexivity.
-Qed.
-Next Obligation.
-  repeat intro.
-  destruct x, y; simpl in *; auto.
-  now symmetry.
-Qed.
-Next Obligation.
-  repeat intro.
-  destruct x, y, z; simpl in *; auto.
-  now transitivity a1.
-  contradiction.
-Qed.
 
 Definition fromMaybe `(x : a) (my : Maybe a) : a :=
   match my with
@@ -53,6 +27,7 @@ Definition Maybe_map `(f : X -> Y) (x : Maybe X) : Maybe Y :=
   | Just x' => Just (f x')
   end.
 
+#[export]
 Instance Maybe_Functor : Functor Maybe := {
   fmap := @Maybe_map
 }.
@@ -66,6 +41,7 @@ Definition Maybe_apply {X Y} (f : Maybe (X -> Y)) (x : Maybe X) : Maybe Y :=
     end
   end.
 
+#[export]
 Instance Maybe_Applicative : Applicative Maybe := {
   is_functor := Maybe_Functor;
 
@@ -80,6 +56,7 @@ Definition Maybe_join {X} (x : Maybe (Maybe X)) : Maybe X :=
   | Just (Just x') => Just x'
   end.
 
+#[export]
 Instance Maybe_Monad : Monad Maybe := {
   is_applicative := Maybe_Applicative;
   join := @Maybe_join
@@ -93,6 +70,7 @@ Definition Maybe_choose {a} (x y : Maybe a) : Maybe a :=
   | Just _  => x
   end.
 
+#[export]
 Instance Maybe_Alternative : Alternative Maybe := {
   empty  := @Nothing;
   choose := @Maybe_choose

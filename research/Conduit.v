@@ -15,7 +15,8 @@ Definition Source_map {M : Type -> Type} `{Functor M} {R X Y}
   (f : X -> Y) (x : Source M R X) : Source M R Y :=
   match x with Source_ k => Source_ M R Y (fmap f k) end.
 
-Global Instance Source_Functor {M : Type -> Type} `{Functor M} {R}
+#[export]
+Instance Source_Functor {M : Type -> Type} `{Functor M} {R}
   : Functor (Source M R) :=
 { fmap := @Source_map M _ R
 }.
@@ -45,7 +46,8 @@ Definition Source_apply {M : Type -> Type} `{Applicative M}
     end
   end.
 
-Global Instance Source_Applicative {M : Type -> Type} `{Applicative M}
+#[export]
+Instance Source_Applicative {M : Type -> Type} `{Applicative M}
   {R} : Applicative (Source M R) :=
 { is_functor := Source_Functor
 ; pure := fun A x => Source_ M R A (pure x)
@@ -96,7 +98,8 @@ Definition Source_join {M : Type -> Type} `{Monad M}
   {R X} : Source M R (Source M R X) -> Source M R X :=
   Source_ M R X ∘ join ∘ fmap getSource ∘ getSource.
 
-Global Program Instance Source_Monad {M : Type -> Type} `{Monad M} {R}
+#[export]
+Program Instance Source_Monad {M : Type -> Type} `{Monad M} {R}
   : Monad (Source M R) :=
 { is_applicative := Source_Applicative
 ; join := fun _ => Source_join
@@ -193,7 +196,8 @@ Proof.
 Qed.
 *)
 
-Global Instance Source_MonadTrans {M : Type -> Type} `{Monad M} {R}
+#[export]
+Instance Source_MonadTrans {M : Type -> Type} `{Monad M} {R}
   : @MonadTrans (fun N => Source N R) M _ Source_Monad :=
 { lift := fun _ m => source (fun r yield => lift m >>= yield r)
 }.
@@ -244,7 +248,8 @@ Require Export Category.
    is always a sub-category in its codomain, and since Sources are functors,
    they must also then be categories.
 *)
-Global Instance Src {M : Type -> Type} `{Monad M} {R}
+#[export]
+Instance Src {M : Type -> Type} `{Monad M} {R}
   : Category (sigT (Source M R))
              (fun dom ran => projT1 dom → projT1 ran) :=
 { id      := fun _ x => id x

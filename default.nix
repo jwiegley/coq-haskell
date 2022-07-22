@@ -14,7 +14,7 @@ let
 coq-haskell = coqPackages:
   with pkgs.${coqPackages}; pkgs.stdenv.mkDerivation rec {
     name = "coq${coq.coq-version}-coq-haskell-${version}";
-    version = "1.0";
+    version = "1.1";
 
     src = if pkgs ? coqFilterSource
           then pkgs.coqFilterSource [] ./.

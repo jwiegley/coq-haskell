@@ -21,12 +21,14 @@ Definition put  {s : Type} x   : State s unit := fun _ => (tt, x).
 
 Definition modify {s : Type} (f : s -> s) : State s unit := fun i => (tt, f i).
 
+#[export]
 Program Instance State_Functor {s : Type} : Functor (State s) := {
   fmap := fun A B f (x : State s A) => fun st => match x st with
     | (a,st') => (f a, st')
     end
 }.
 
+#[export]
 Program Instance State_Applicative {s : Type} : Applicative (State s) := {
   pure := fun _ x => fun st => (x, st);
 
@@ -38,6 +40,7 @@ Program Instance State_Applicative {s : Type} : Applicative (State s) := {
     end
 }.
 
+#[export]
 Program Instance State_Monad {s : Type} : Monad (State s) := {
   join := fun _ x => fun st => match x st with
     | (y, st') => match y st' with
@@ -46,12 +49,13 @@ Program Instance State_Monad {s : Type} : Monad (State s) := {
     end
 }.
 
+Require Import FunctionalExtensionality.
+
 Module StateLaws.
 
 Include MonadLaws.
 
-Require Import FunctionalExtensionality.
-
+#[export]
 Program Instance State_FunctorLaws {s : Type} : FunctorLaws (State s).
 Obligation 1.
   extensionality x.
@@ -66,6 +70,7 @@ Obligation 2.
   destruct (x st); auto.
 Qed.
 
+#[export]
 Program Instance State_Applicative {s : Type} : ApplicativeLaws (State s).
 Obligation 1.
   extensionality x.
@@ -80,6 +85,7 @@ Obligation 2.
   destruct (w st''); auto.
 Qed.
 
+#[export]
 Program Instance State_Monad {s : Type} : MonadLaws (State s).
 Obligation 1.
   extensionality f.
