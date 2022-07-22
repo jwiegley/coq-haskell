@@ -18,6 +18,7 @@ Definition bind `{Monad m} {X Y : Type} (f : (X -> m Y)) : m X -> m Y :=
 
 Definition return_ `{Monad m} {a : Type} : a -> m a := pure.
 
+Declare Scope monad_scope.
 Delimit Scope monad_scope with monad.
 
 Notation "join[ M ]" := (@join M _ _) (at level 9) : monad_scope.

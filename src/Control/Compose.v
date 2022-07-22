@@ -7,10 +7,12 @@ Set Primitive Projections.
 Set Universe Polymorphism.
 Unset Transparent Obligations.
 
+#[export]
 Instance Compose_Functor `{Functor F} `{Functor G} : Functor (F \o G) :=
 { fmap := fun A B => @fmap F _ (G A) (G B) \o @fmap G _ A B
 }.
 
+#[export]
 Instance Compose_Applicative (F : Type -> Type) (G : Type -> Type)
   `{Applicative F} `{Applicative G} : Applicative (F \o G)  :=
 { is_functor := Compose_Functor (F:=F) (G:=G)
@@ -18,27 +20,31 @@ Instance Compose_Applicative (F : Type -> Type) (G : Type -> Type)
 ; ap   := fun A B => ap \o fmap (@ap G _ A B)
 }.
 
+#[export]
 Instance Compose_Alternative
   `{Alternative F} `{Alternative G} : Alternative (F \o G) :=
 { empty  := fun A => @empty F _ (G A)
 ; choose := fun A => @choose F _ (G A) (* jww (2016-01-28): correct? *)
 }.
 
+#[export]
 Instance Compose_Monad `{Monad_Distributes M N}
   : Monad (M \o N) :=
 { is_applicative := Compose_Applicative M N
 ; join := fun A => join[M] \o fmap[M] (prod M N A)
 }.
 
+Require Import FunctionalExtensionality.
+
 Module ComposeMonadLaws.
 
-Require Import FunctionalExtensionality.
 Import MonadLaws.
 
 Corollary fmap_compose  `{Functor F} `{Functor G} : forall {X Y} (f : X -> Y),
   @fmap F _ (G X) (G Y) (@fmap G _ X Y f) = @fmap (F \o G) _ X Y f.
 Proof. reflexivity. Qed.
 
+#[export]
 Program Instance Compose_FunctorLaws `{FunctorLaws F} `{FunctorLaws G} :
   FunctorLaws (F \o G).
 Obligation 1. (* fmap_id *)
@@ -54,6 +60,7 @@ Qed.
 
 Local Obligation Tactic := intros; simpl; apply_applicative_laws.
 
+#[export]
 Program Instance Compose_ApplicativeLaws
   `{ApplicativeLaws F} `{ApplicativeLaws G} : ApplicativeLaws (F \o G).
 Obligation 2. (* ap_composition *)
@@ -73,6 +80,7 @@ Obligation 2. (* ap_composition *)
   reflexivity.
 Qed.
 
+#[export]
 Program Instance Compose_MonadLaws
         `{Monad_DistributesLaws M N (H:=Compose_Applicative M N)} :
   MonadLaws (M \o N).

@@ -43,11 +43,11 @@ Definition liftA2 `{Applicative m} {A B C : Type}
 Infix "*>" := (liftA2 (const id)) (at level 28, left associativity).
 Infix "<*" := (liftA2 const) (at level 28, left associativity).
 
+Require Import FunctionalExtensionality.
+
 Module ApplicativeLaws.
 
 Include FunctorLaws.
-
-Require Import FunctionalExtensionality.
 
 Class ApplicativeLaws (f : Type -> Type) `{Applicative f} := {
   has_functor_laws :> FunctorLaws f;
@@ -142,6 +142,7 @@ Notation "f <|> g" := (choose f g) (at level 29, left associativity).
 
 (* Module Import LN := ListNotations. *)
 
+(* #[export] *)
 (* Program Instance list_Alternative : Alternative list := { *)
 (*     empty := fun _ => []; *)
 (*     choose := app *)

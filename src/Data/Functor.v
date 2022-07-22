@@ -24,11 +24,11 @@ Notation "fmap[ M N ]" := (@fmap (fun X => M (N X)) _ _ _) (at level 9).
 Notation "fmap[ M N O ]" :=
   (@fmap (fun X => M (N (O X))) _ _ _) (at level 9).
 
-Module FunctorLaws.
-
 Require Import FunctionalExtensionality.
 Require Import Coq.Classes.Morphisms.
 Require Import Coq.Setoids.Setoid.
+
+Module FunctorLaws.
 
 (* Functors preserve extensional equality for the applied function.
    This is needed to perform setoid rewriting within the function

@@ -105,6 +105,8 @@ indicated, it is stated in the arrow: [A ~{C}~> B]. *)
 Coercion ob : Category >-> Sortclass.
 (* Coercion hom : Category >-> Funclass. *)
 
+Declare Scope category_scope.
+
 Infix "~>"       := hom : category_scope.
 Infix "~{ C }~>" := (@hom C) (at level 100) : category_scope.
 Infix "∘"        := c_comp (at level 40, left associativity) : category_scope.
@@ -143,14 +145,14 @@ Proof.
   apply proof_irrelevance.
 Qed.
 
-Hint Extern 1 => apply c_left_id.
-Hint Extern 1 => apply c_right_id.
+#[export] Hint Extern 1 => apply c_left_id : core.
+#[export] Hint Extern 1 => apply c_right_id : core.
 
-Hint Extern 4 (?A = ?A) => reflexivity.
-Hint Extern 7 (?X = ?Z) =>
+#[export] Hint Extern 4 (?A = ?A) => reflexivity : core.
+#[export] Hint Extern 7 (?X = ?Z) =>
   match goal with
     [H : ?X = ?Y, H' : ?Y = ?Z |- ?X = ?Z] => transitivity Y
-  end.
+  end : core.
 
 (* end hide *)
 
@@ -196,8 +198,8 @@ existential quantifier (∃), but it would not convey which [g] was chosen.
 
 *)
 
-Definition Epic  `(f : X ~> Y) := ∀ {Z} (g1 g2 : Y ~> Z), g1 ∘ f = g2 ∘ f → g1 = g2.
-Definition Monic `(f : X ~> Y) := ∀ {Z} (g1 g2 : Z ~> X), f ∘ g1 = f ∘ g2 → g1 = g2.
+Definition Epic  `(f : X ~> Y) := ∀ Z (g1 g2 : Y ~> Z), g1 ∘ f = g2 ∘ f → g1 = g2.
+Definition Monic `(f : X ~> Y) := ∀ Z (g1 g2 : Z ~> X), f ∘ g1 = f ∘ g2 → g1 = g2.
 
 Definition Bimorphic `(f : X ~> Y) := Epic f ∧ Monic f.
 Definition SplitEpi  `(f : X ~> Y) := Retraction f.
@@ -209,15 +211,15 @@ The only morphism we've seen so far is [id], but we can trivially prove it is
 both _idempotent_ and _involutive_. *)
 
 (* begin hide *)
-Hint Unfold Idempotent.
-Hint Unfold Involutive.
-Hint Unfold Section'.
-Hint Unfold Retraction.
-Hint Unfold Epic.
-Hint Unfold Monic.
-Hint Unfold Bimorphic.
-Hint Unfold SplitEpi.
-Hint Unfold SplitMono.
+Hint Unfold Idempotent : core.
+Hint Unfold Involutive : core.
+Hint Unfold Section' : core.
+Hint Unfold Retraction : core.
+Hint Unfold Epic : core.
+Hint Unfold Monic : core.
+Hint Unfold Bimorphic : core.
+Hint Unfold SplitEpi : core.
+Hint Unfold SplitMono : core.
 (* end hide *)
 
 Lemma id_idempotent : ∀ X, Idempotent (c_id (A := X)).
@@ -530,15 +532,15 @@ Obligation 2.
   auto.
 Qed.
 
-Hint Unfold Idempotent.
-Hint Unfold Involutive.
-Hint Unfold Section'.
-Hint Unfold Retraction.
-Hint Unfold Epic.
-Hint Unfold Monic.
-Hint Unfold Bimorphic.
-Hint Unfold SplitEpi.
-Hint Unfold SplitMono.
+#[export] Hint Unfold Idempotent : core.
+#[export] Hint Unfold Involutive : core.
+#[export] Hint Unfold Section' : core.
+#[export] Hint Unfold Retraction : core.
+#[export] Hint Unfold Epic : core.
+#[export] Hint Unfold Monic : core.
+#[export] Hint Unfold Bimorphic : core.
+#[export] Hint Unfold SplitEpi : core.
+#[export] Hint Unfold SplitMono : core.
 (* end hide *)
 
 (**

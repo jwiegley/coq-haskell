@@ -7,6 +7,7 @@ Set Universe Polymorphism.
 Unset Transparent Obligations.
 
 (*
+#[export]
 Instance LTuple_Isomorphism {A} : (unit * A) ≅ A :=
 { iso_to   := @snd unit A
 ; iso_from := pair tt
@@ -17,6 +18,7 @@ Obligation 1. (* iso_to *)
 Defined.
 *)
 
+#[export]
 Instance RTuple_Isomorphism {A} : (A * unit) ≅ A :=
 { iso_to   := @fst A unit
 ; iso_from := fun x => (x, tt)
@@ -41,6 +43,7 @@ Definition right_triple {A B C} (x : A) (y : B) (z : C) : A * (B * C) :=
   (x, (y, z)).
 
 (*
+#[export]
 Instance Tuple_Assoc {A B C} : (A * B * C) ≅ (A * (B * C)) :=
 { iso_to   := tuple_swap_ab_c_to_a_bc
 ; iso_from := tuple_swap_a_bc_to_ab_c
@@ -103,9 +106,9 @@ Qed.
 Definition prod_map {A B C : Type} (f : A -> B) (x : C * A) : C * B :=
   match x with (a, b) => (a, f b) end.
 
-Module TupleLaws.
-
 Require Import FunctionalExtensionality.
+
+Module TupleLaws.
 
 Theorem prod_map_id {E A} : @prod_map A A E id = id.
 Proof.

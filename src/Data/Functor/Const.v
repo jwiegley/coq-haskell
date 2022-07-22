@@ -8,10 +8,12 @@ Unset Transparent Obligations.
 
 Definition Const (c a : Type) := c.
 
+#[export]
 Program Instance Const_Functor (c : Type) : Functor (Const c) := {
   fmap := fun _ _ _ => id
 }.
 
+#[export]
 Program Instance Const_Contravariant (c : Type) : Contravariant (Const c) := {
   contramap := fun _ _ _ => id
 }.

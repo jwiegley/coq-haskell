@@ -371,6 +371,7 @@ Definition ibind {M : Type -> Type -> Type -> Type} `{IMonad M} {I J K X Y}
   (f : (X -> M J K Y)) (x : M I J X) : M I K Y :=
   @ijoin M _ I J K Y (@imap _ _ I J _ _ f x).
 
+Declare Scope imonad_scope.
 Delimit Scope imonad_scope with imonad.
 
 Notation "m >>= f" := (ibind f m) (at level 42, right associativity) : imonad_scope.
@@ -456,6 +457,7 @@ Arguments mkIState [i o a] _.
 Definition runIState {i o a} (x : IState i o a) :=
   match x with mkIState f => f end.
 
+#[export]
 Program Instance IState_IFunctor : IFunctor IState := {
     imap := fun _ _ _ _ f x =>
       mkIState (fun st => let (a,st') := runIState x st in (f a, st'))
@@ -489,6 +491,7 @@ Definition iput {i o} (x : o) : IState i o unit := mkIState (fun s => (tt, x)).
 Definition imodify {i o} (f : i -> o) : IState i o unit :=
   mkIState (fun i => (tt, f i)).
 
+#[export]
 Program Instance IState_IApplicative : IApplicative IState := {
     ipure := fun _ _ x => mkIState (fun st => (x, st));
     iap := fun _ _ _ _ _ f x =>
@@ -517,6 +520,7 @@ Obligation 2.
   reflexivity.
 Qed.
 
+#[export]
 Program Instance IState_IMonad : IMonad IState := {
     ijoin := fun _ _ _ _ x => mkIState (fun st =>
       let (y, st') := runIState x st in

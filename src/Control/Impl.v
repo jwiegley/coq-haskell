@@ -8,35 +8,43 @@ Set Primitive Projections.
 Set Universe Polymorphism.
 Unset Transparent Obligations.
 
+#[export]
 Instance Impl_Functor {A} : Functor (fun B => A -> B) := {
   fmap := fun A B f run => fun xs => f (run xs)
 }.
 
+#[export]
 Instance Impl_Applicative {A} : Applicative (fun B => A -> B) := {
   pure := fun _ x => fun _ => x;
   ap   := fun _ _ runf runx => fun xs => runf xs (runx xs)
 }.
 
+#[export]
 Instance Impl_Monad {A} : Monad (fun B => A -> B) := {
   join := fun A run => fun xs => run xs xs
 }.
 
+#[export]
 Program Instance Impl_Monad_Distributes {A} `{Monad N} :
   @Monad_Distributes (fun B => A -> B) Impl_Monad N is_applicative.
 Obligation 1.
   exact (X >>= fun f => f X0).
 Defined.
 
+Require Import FunctionalExtensionality.
+
 Module ImplMonadLaws.
 
 Import MonadLaws.
 
+#[export]
 Program Instance Impl_FunctorLaws {A} : FunctorLaws (fun B => A -> B).
+#[export]
 Program Instance Impl_ApplicativeLaws {A} : ApplicativeLaws (fun B => A -> B).
+#[export]
 Program Instance Impl_MonadLaws {A} : MonadLaws (fun B => A -> B).
 
-Require Import FunctionalExtensionality.
-
+#[export]
 Program Instance Impl_Monad_DistributesLaws {A} `{MonadLaws N} :
   @Monad_DistributesLaws (fun B => A -> B) N _ Impl_Monad is_applicative
                          Impl_Monad_Distributes.

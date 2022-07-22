@@ -66,26 +66,29 @@ Definition Free_bind `(k : a -> Free f b) : Free f a -> Free f b :=
     end in
   go x0.
 
-Global Program Instance Free_Functor `{Functor f} : Functor (Free f) := {
+#[export]
+Program Instance Free_Functor `{Functor f} : Functor (Free f) := {
   fmap := fun _ _ k => Free_bind (Pure \o k)
 }.
 
-Global Program Instance Free_Applicative `{Functor f} :
+#[export]
+Program Instance Free_Applicative `{Functor f} :
   Applicative (Free f) := {
   pure := fun _ => Pure;
   ap   := fun _ _ mf mx => Free_bind (flip fmap mx) mf
 }.
 
-Global Program Instance Free_Monad `{Functor f} : Monad (Free f) := {
+#[export]
+Program Instance Free_Monad `{Functor f} : Monad (Free f) := {
   join := fun _ => Free_bind id
 }.
 
 (*
+Require Import FunctionalExtensionality.
+
 Module FreeLaws.
 
 Include MonadLaws.
-
-Require Import FunctionalExtensionality.
 
 Ltac reduce_free H :=
   unfold id, comp, flip;
@@ -100,10 +103,12 @@ Ltac reduce_free H :=
   try extensionality YY;
   try apply H.
 
+#[export]
 Program Instance Free_FunctorLaws `{FunctorLaws f} : FunctorLaws (Free f).
 Obligation 1. reduce_free IHx. Qed.
 Obligation 2. reduce_free IHx. Qed.
 
+#[export]
 Program Instance Free_ApplicativeLaws `{FunctorLaws f} :
   ApplicativeLaws (Free f).
 Obligation 1. reduce_free IHx. Qed.
@@ -115,6 +120,7 @@ Obligation 2.
   reduce_free IHu.
 Qed.
 
+#[export]
 Program Instance Free_MonadLaws `{FunctorLaws f} : MonadLaws (Free f).
 Obligation 1. reduce_free IHx. Qed.
 Obligation 2. reduce_free IHx. Qed.
@@ -228,6 +234,7 @@ CoFixpoint CoFree_map {h} `(f : a -> b) (c : CoFree h a) :
   CoFree h b :=
   match c with CoF x s g h => CoF (f x) (CoFree_map f \o g) h end.
 
+#[export]
 Program Instance CoFree_Functor `{Functor h} : Functor (CoFree h) := {
   fmap := fun _ _ => CoFree_map
 }.
@@ -237,6 +244,7 @@ Module CoFreeLaws.
 Include FunctorLaws.
 
 (*
+#[export]
 Program Instance CoFree_FunctorLaws `{FunctorLaws h} : FunctorLaws (CoFree h).
 Obligation 1.
   move=> x.

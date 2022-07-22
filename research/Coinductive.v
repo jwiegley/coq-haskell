@@ -192,6 +192,7 @@ CoFixpoint pushR `{Monad m} {a' a b' b c' c r} (p0 : CoProxy a' a b' b m r)
 *)
 
 (*
+#[export]
 Program Instance Push_Category
   (n : nat) (_ : n > 0) {r} (dflt : r) `{MonadLaws m} :
   Category := {

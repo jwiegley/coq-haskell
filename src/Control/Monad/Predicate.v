@@ -52,6 +52,7 @@ Class Category {k} (cat : k → k → Type) := {
       compose f (compose g h) = compose (compose f g) h
 }.
 
+#[export]
 Program Instance Index_Category {A} : Category (@transp A) := {
     id      := @pid A;
     compose := @pcompose A
@@ -121,14 +122,14 @@ Defined.
 Lemma path_right_id : ∀ i j (x : Path (i,j)), path_compose x Stop = x.
 Proof. dependent destruction x; reflexivity. Qed.
 
-Hint Rewrite path_right_id.
-Hint Resolve path_right_id.
+#[export] Hint Rewrite path_right_id : core.
+#[export] Hint Resolve path_right_id : core.
 
 Lemma path_left_id : ∀ i j (x : Path (i,j)), path_compose Stop x = x.
 Proof. dependent destruction x; reflexivity. Qed.
 
-Hint Rewrite path_left_id.
-Hint Resolve path_left_id.
+#[export] Hint Rewrite path_left_id : core.
+#[export] Hint Resolve path_left_id : core.
 
 Lemma path_compose_spec
   : ∀ {i j k l : I} (x : g (i,j)) (xs : Path (j,k)) (ys : Path (k,l)),
@@ -157,6 +158,7 @@ Qed.
 
 Import SimpleCategory.
 
+#[export]
 Program Instance Path_Category : Category (fun i j => Path (i,j)) := {
     id      := @Stop;
     compose := fun _ _ _ x y => path_compose y x
@@ -184,6 +186,7 @@ Definition path_pmap {I} {k h : (I * I) → Type} (f : k :→ h)
   apply (Link (f _ g) IHp).
 Defined.
 
+#[export]
 Program Instance Path_PFunctor {I} : @PFunctor (I * I) (I * I) (@Path I) := {
     pmap := @path_pmap I
 }.
@@ -228,6 +231,7 @@ Arguments V {I a k} _.
 
 Infix "::=" := PAssign (at level 50).
 
+#[export]
 Program Instance KeyIndex_Iso : ∀ (a I : Type) (t : I → Type) (k : I),
   ((a ::= k) :→ t) ≅ (a → t k).
 Obligation 1.
@@ -263,6 +267,7 @@ Definition Path_to_list : ∀ {a}, Path (a ::= (tt, tt)) (tt, tt) → list a.
 Defined.
 
 (*
+#[export]
 Program Instance Path_List_Iso
   : ∀ a, list a ≅ Path (a ::= (tt, tt)) (tt, tt) := {
     to   := list_to_Path;
@@ -365,6 +370,7 @@ Proof.
   reflexivity.
 Qed.
 
+#[export]
 Program Instance Path_PMonad {I} : PMonad (@Path I) := {
     pskip := fun p (x : I * I) =>
       (let (i, j) as z return (p z → Path p z) := x in
@@ -458,6 +464,7 @@ Qed.
 
 End IxFunctor.
 
+#[export]
 Program Instance Atkey_IxFunctor {I : Type} `{H : PFunctor I I F}
   : IxFunctor (Atkey F) := {
     ixmap := fun _ O X Y f x =>
@@ -788,6 +795,7 @@ Definition liftIA2 {I J K A B C} (f : A → B → C)
 
 End IxApplicative.
 
+#[export]
 Program Instance Atkey_IxApplicative {I : Type} `{H : PMonad I F}
   : IxApplicative (Atkey F) := {
   ixpure := fun _ _ => pskip \o V
@@ -902,6 +910,7 @@ Class IxMonad {I} (M : I → I → Type → Type) :=
     (m >>>= f) >>>= g = m >>>= (λ x, f x >>>= g)
 }.
 
+#[export]
 Program Instance Atkey_IxMonad {I : Type} `{H : PMonad I F}
   : IxMonad (Atkey F) := {
   ixbind := @ibind I F _ H
@@ -974,6 +983,7 @@ Arguments xx {I O S X} o _.
 Coercion op : WFunctor >-> Operations.
 Coercion WFunctor : Signature >-> Funclass.
 
+#[export]
 Program Instance WFunctor_PFunctor {I O} (S : I ▷ O) : PFunctor (WFunctor S).
 Obligation 1.
   unfold ":→". intros.
@@ -1051,6 +1061,7 @@ Proof.
   apply Kleene_composition.
 Qed.
 
+#[export]
 Program Instance Kleene_PFunctor {I O} (F : I ▷ O)
   : PFunctor (Kleene F) := {
     pmap := fun _ _ => Kleene_map F
@@ -1089,6 +1100,7 @@ Proof.
   apply (Kleene_assoc I O F p q r).
 Qed.
 
+#[export]
 Program Instance Kleene_PMonad {I O} (F : I ▷ O)
   : PMonad (Kleene F) := {
     pskip := fun _ _ => Ret;
@@ -1114,6 +1126,7 @@ Arguments mkRProd {I p q r i} _ _.
 Infix ":>>:" := RProd (at level 25, left associativity).
 Infix ":&" := mkRProd (at level 25, left associativity).
 
+#[export]
 Program Instance RProd_PFunctor {I} (p q : I → Type) : PFunctor (p :>>: q) := {
     pmap := fun _ _ h _ x => match x with p :& k => p :& (h :∘ k) end
 }.
@@ -1139,6 +1152,7 @@ Arguments InR {I O f g p i} _.
 
 Infix ":+:" := RSum (at level 25, left associativity).
 
+#[export]
 Program Instance RSum_PFunctor {I O} `{PFunctor I O f, PFunctor I O g}
   : PFunctor (f :+: g) := {
     pmap := fun _ _ h _ x =>
@@ -1337,6 +1351,7 @@ Definition pmodify {I} (S : I → Type) {i} (f : S :→ S)
   : PState S (fun _ => unit) i :=
   mkPState (fun s : S i => (tt, f i s)).
 
+#[export]
 Program Instance PState_PFunctor {I} (S : I → Type)
   : PFunctor (PState S) := {
     pmap := fun X Y f i x =>
@@ -1363,6 +1378,7 @@ Obligation 2.
   reflexivity.
 Qed.
 
+#[export]
 Program Instance PState_PMonad {I} (S : I → Type) : PMonad (PState S) := {
     pskip := fun p i x => mkPState (fun st => (x, st));
     pextend := fun p q f i x => mkPState (fun st =>

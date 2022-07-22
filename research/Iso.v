@@ -108,11 +108,13 @@ Section Isos.
 
 End Isos.
 
+#[export]
 Program Instance iso_reflexive : A ≅ A := {
     to   := id;
     from := id
 }.
 
+#[export]
 Program Instance iso_symmetry `(iso : A ≅ B) : B ≅ A := {
     to   := @from A B iso;
     from := @to A B iso
@@ -120,6 +122,7 @@ Program Instance iso_symmetry `(iso : A ≅ B) : B ≅ A := {
 Obligation 1. destruct iso. assumption. Qed.
 Obligation 2. destruct iso. assumption. Qed.
 
+#[export]
 Program Instance iso_transitivity {A B C}
     (iso_a : B ≅ C) (iso_b : A ≅ B) : A ≅ C := {
     to   := (@to B C iso_a) ∘ (@to A B iso_b);
@@ -148,6 +151,7 @@ Definition Natural_Iso `(Functor F) `(Functor G) := forall {X}, F X ≅ G X.
 
 Notation "F  [≅]  G" := (Natural_Iso F G) (at level 50) : type_scope.
 
+#[export]
 Program Instance Functor_Congruence `{A ≅ B} `(Functor F) : F A ≅ F B := {
     to   := fmap to;
     from := fmap from
@@ -179,6 +183,7 @@ Proof.
   intros. apply iso_functor_impl; auto.
 Qed.
 
+#[export]
 Program Instance FullyFaithful_Iso `(FullyFaithful F)
   : forall A B, (A -> B) ≅ (F A -> F B).
 Obligation 1.
@@ -217,6 +222,7 @@ Obligation 4.
   reflexivity.
 Defined.
 
+#[export]
 Program Instance Functor_Reflection `{FullyFaithful F} `(F A ≅ F B)
   : A ≅ B := {
     to   := unfmap to;
@@ -253,6 +259,7 @@ Proof.
   assumption.
 Qed.
 
+#[export]
 Program Instance Yoneda `(F : Functor) {A}
   : (Hom A ⟾ F) ≅ F A := {
     to   := fun f => transport id;
@@ -338,6 +345,7 @@ Qed.
 Definition Representational_Coproduct (A A1 A2 : Type) :=
   forall {X}, Hom A X ≅ (Hom A1 X * Hom A2 X).
 
+#[export]
 Program Instance Arith_Zero
   : (forall B : Type, Hom False B) ≅ (forall B : Type, True) := {
     to   := fun _ _ => I
@@ -364,6 +372,7 @@ Obligation 3.
   apply proof_irrelevance.
 Qed.
 
+#[export]
 Program Instance Arith_One
   : (forall A : Type, Hom A True) ≅ (forall A : Type, True) := {
     to   := fun _ _ => I;
@@ -383,6 +392,7 @@ Obligation 2.
   apply proof_irrelevance.
 Qed.
 
+#[export]
 Program Instance Arith_Plus (A1 A2 : Type)
   : (forall B : Type, Hom (A1 + A2) B) ≅
     (forall B : Type, (Hom A1 B * Hom A2 B)).

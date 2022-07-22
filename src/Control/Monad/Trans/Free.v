@@ -82,10 +82,12 @@ Fixpoint toFreeT `{Functor f} `{Monad m} `(ft : FreeTi f m a) : FreeT f m a :=
       end
     end.
 
+#[export]
 Program Instance FreeT_Functor {f m} : Functor (FreeT f m) := {
   fmap := fun _ _ f k => fun _ a fr => k _ (a \o f) fr
 }.
 
+#[export]
 Program Instance FreeT_Applicative {f m} : Applicative (FreeT f m) := {
   pure := fun _ a => fun _ k _ => k a;
   ap   := fun _ _ fk ak => fun _ b fr =>
@@ -94,6 +96,7 @@ Program Instance FreeT_Applicative {f m} : Applicative (FreeT f m) := {
 
 (* jww (2017-04-24): Universe inconsistency in Coq 8.6 *)
 (*
+#[export]
 Program Instance FreeT_Monad {f m} : Monad (FreeT f m) := {
   join := fun _ x => fun _ k h => x _ (fun y => y _ k h) h
 }.
@@ -104,8 +107,11 @@ Module FreeTLaws.
 Include MonadLaws.
 
 (* It's not always this easy. *)
+#[export]
 Program Instance FreeT_FunctorLaws     {f m} : FunctorLaws (FreeT f m).
+#[export]
 Program Instance FreeT_ApplicativeLaws {f m} : ApplicativeLaws (FreeT f m).
+(* #[export] *)
 (* Program Instance FreeT_MonadLaws       : MonadLaws (FreeT f m). *)
 
 End FreeTLaws.

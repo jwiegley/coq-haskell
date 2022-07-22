@@ -12,6 +12,8 @@ Class Monad (M : Type -> Type) :=
 ; monad_law_4 : forall {X Y} (f : X -> Y), join ∘ fmap (fmap f) = fmap f ∘ join
 }.
 
+Declare Scope Monad_scope.
+
 Notation "join/ M" := (@join M _ _) (at level 28).
 Notation "join/ M N" := (@join (fun X => M (N X)) _ _) (at level 26).
 
@@ -98,6 +100,7 @@ Proof.
   f_equal.
 Qed.
 
+#[export]
 Program Instance option_Monad : Monad option := {
     join := fun _ x => match x with
       | None => None
@@ -132,6 +135,7 @@ Qed.
 
 Module Import LN := ListNotations.
 
+#[export]
 Program Instance list_Monad : Monad list := {
     join := @concat
 }.

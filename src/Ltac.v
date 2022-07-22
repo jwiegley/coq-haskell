@@ -23,18 +23,18 @@ Infix "\o" := comp (at level 50).
 Theorem comp_id_left : forall {A B} (f : A -> B), id \o f = f.
 Proof. reflexivity. Qed.
 
-Hint Resolve comp_id_left.
+#[export] Hint Resolve comp_id_left : core.
 
 Theorem comp_id_right : forall {A B} (f : A -> B), f \o id = f.
 Proof. reflexivity. Qed.
 
-Hint Resolve comp_id_right.
+#[export] Hint Resolve comp_id_right : core.
 
 Theorem comp_assoc : forall {A B C D} (f : C -> D) (g : B -> C) (h : A -> B),
   f \o (g \o h) = (f \o g) \o h.
 Proof. reflexivity. Qed.
 
-Hint Resolve comp_assoc.
+#[export] Hint Resolve comp_assoc : core.
 
 Theorem uncompose : forall {A B C} (f : B -> C) (g : A -> B) (x : A) (y : C),
   (f \o g) x = f (g x).

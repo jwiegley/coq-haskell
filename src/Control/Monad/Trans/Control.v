@@ -14,7 +14,7 @@ Class StMC (m : Type -> Type) : Type := {
 }.
 Arguments StM m {_} a.
 
-Definition RunInBase m `{StMC m} b := forall {a}, m a -> b (StM m a).
+Definition RunInBase m `{StMC m} b := forall a, m a -> b (StM m a).
 
 Class MonadBaseControl b m `{MonadBase b m} `{StMC m} := {
   liftBaseWith : forall a, (RunInBase m b -> b a) -> m a;
@@ -40,23 +40,28 @@ Proof.
   reflexivity.
 Qed.
 
+(* #[export] *)
 (* Instance StMC_Identity : StMC Identity := { *)
 (*   StM := id *)
 (* }. *)
 
+(* #[export] *)
 (* Instance MonadBaseControl_Id_Id : *)
 (*   MonadBaseControl Identity Identity := { *)
 (*   liftBaseWith := fun _ runInBase => liftBase (runInBase (fun _ => pure)); *)
 (*   restoreM := fun A => @id A *)
 (* }. *)
 
+(* #[export] *)
 (* Program Instance MonadBaseControlLaws_Id_Id : *)
 (*   MonadBaseControlLaws Identity Identity. *)
 
+#[export]
 Instance StMC_StateT s m `{StMC m} : StMC (StateT s m) := {
   StM := fun A => StM m (A * s)%type
 }.
 
+#[export]
 Program Instance MonadBaseControl_StateT s `{MonadBaseControl b m} :
   MonadBaseControl b (StateT s m) := {
   liftBaseWith := fun _ f => fun st =>
@@ -67,15 +72,18 @@ Program Instance MonadBaseControl_StateT s `{MonadBaseControl b m} :
 }.
 
 (*
+#[export]
 Instance FreeT_m_b {f : Type -> Type} {m b : Type -> Type}
          `{FunDep (Type -> Type) m b} :
   FunDep (FreeT f m) b.
 
+#[export]
 Instance MonadBase_FreeT `{Functor f} {m b : Type -> Type}
          `{B : MonadBase b m} : MonadBase b (FreeT f m) := {
   liftBase := fun _ x => fun _ p _ => liftBase x >>= p
 }.
 
+#[export]
 Instance StMC_FreeT f m `{StMC m} : StMC (FreeT f m) := {
   StM := fun A => FreeF f A (FreeT f m (StM m A))
 }.
@@ -89,6 +97,7 @@ Definition embedF `{Monad m} `{Functor f} {t}
     | Free x => j (m r) id (fmap (fun k => k r p j) x)
     end.
 
+#[export]
 Program Instance MonadBaseControl_FreeT `{Functor f} `{MonadBaseControl b m} :
   MonadBaseControl b (FreeT f m) := {
 
@@ -106,11 +115,13 @@ Program Instance MonadBaseControl_FreeT `{Functor f} `{MonadBaseControl b m} :
 }.
 *)
 
+Require Import FunctionalExtensionality.
+
 Module MonadBaseControlLaws.
 
-Require Import FunctionalExtensionality.
 Import MonadLaws.
 
+#[export]
 Program Instance MonadBaseControlLaws_StateT
         s `{MonadBaseControlLaws b m} `{@MonadLaws b H} `{@MonadLaws m H0} :
   MonadBaseControlLaws b (StateT s m).
@@ -147,6 +158,7 @@ Obligation 3.
 Qed.
 
 (*
+#[export]
 Program Instance MonadBaseControlLaws_FreeT
         `{Functor f} `{MonadBaseControlLaws b m}
         `{@MonadLaws b H0} `{@MonadLaws m H1} :

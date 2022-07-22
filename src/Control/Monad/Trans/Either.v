@@ -15,6 +15,7 @@ Definition EitherT_map {E M} `{Functor M} {X Y}
   (f : X -> Y) (x : EitherT E M X) : EitherT E M Y :=
   (fmap[M] (fmap[Either E] f)) x.
 
+#[export]
 Instance EitherT_Functor {E M} `{Functor M} : Functor (EitherT E M) :=
 { fmap := fun _ _ => EitherT_map
 }.
@@ -47,6 +48,7 @@ Definition EitherT_apply {E M} `{Applicative M} {X Y}
   (mf : EitherT E M (X -> Y)) (mx : EitherT E M X) : EitherT E M Y :=
   liftA2 (@ap _ Either_Applicative X Y) mf mx.
 
+#[export]
 Instance EitherT_Applicative {E M} `{Applicative M}
   : Applicative (EitherT E M) :=
 { pure := fun _   => EitherT_pure
@@ -101,6 +103,7 @@ Definition EitherT_join {E M} `{Monad M} {X} (x : EitherT E M (EitherT E M X)) :
                 | Right mx' => mx'
                 end) x).
 
+#[export]
 Instance EitherT_Monad {E M} `{Monad M} : Monad (EitherT E M) :=
 { join := fun _ => EitherT_join
 }.
@@ -174,6 +177,7 @@ Proof.
 Defined.
 *)
 
+#[export]
 Instance EitherT_MonadTrans {E} : MonadTrans (EitherT E) :=
 { lift := fun m _ _ A => fmap Right
 }.
@@ -193,6 +197,7 @@ Proof.
 Defined.
 *)
 
+#[export]
 Program Instance EitherT_MFunctor {E} : MFunctor (EitherT E) :=
 { hoist := fun M N _ _ A nat => nat (Either E A)
 }.
@@ -209,6 +214,7 @@ Defined.
 *)
 
 (*
+#[export]
 Instance EitherT_MMonad {E}
   `{Monad (Either E)}
   : MMonad (EitherT E) EitherT_MFunctor EitherT_MonadTrans :=

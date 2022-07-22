@@ -33,6 +33,7 @@ Definition toLogicT (M : Type -> Type) `{Monad M} (A : Type)
    treatment of "compatible" monads.  I'm not yet certain what part it plays
    here.
 *)
+(* #[export] *)
 (* Instance LogicT_Restricted_Isomorphism (M : Type -> Type) `{Monad M} (A : Type) *)
 (*   (J2 : forall A B (f : M A -> M B), join \o fmap f = f \o join) *)
 (*   : LogicT' M A ≅ LogicT M A := *)

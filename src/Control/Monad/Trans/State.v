@@ -29,6 +29,7 @@ Definition putT  `{Applicative m} {s : Type} x   : StateT s m unit :=
 Definition modifyT `{Applicative m} {s : Type} (f : s -> s) : StateT s m unit :=
   fun i => pure (tt, f i).
 
+#[export]
 Program Instance StateT_Functor {s} `{Functor m} : Functor (StateT s m) := {
   fmap := fun A B f (x : StateT s m A) => fun st =>
     x st <&> first f
@@ -40,6 +41,7 @@ Definition StateT_ap `{Monad m} {s : Type} {a b : Type}
     | (f', st') => x st' <&> first f'
     end).
 
+#[export]
 Program Instance StateT_Applicative `{Monad m} {s : Type} :
   Applicative (StateT s m) := {
   pure := fun _ x => fun st => pure (x, st);
@@ -49,10 +51,12 @@ Program Instance StateT_Applicative `{Monad m} {s : Type} :
 Definition StateT_join `{Monad m} {s a : Type} (x : StateT s m (StateT s m a)) :
   StateT s m a := join \o fmap (curry apply) \o x.
 
+#[export]
 Program Instance StateT_Monad `{Monad m} {s : Type} : Monad (StateT s m) := {
   join := @StateT_join m _ s
 }.
 
+#[export]
 Instance StateT_MonadTrans {s} : MonadTrans (StateT s) :=
 { lift := fun m _ _ A x s => fmap (fun k => (k, s)) x
 }.
@@ -63,9 +67,9 @@ Definition liftStateT `{Monad m} `(x : State s a) : StateT s m a :=
   putT st' ;;
   pure a.
 
-Module StateTLaws.
-
 Require Import FunctionalExtensionality.
+
+Module StateTLaws.
 
 Include MonadLaws.
 
@@ -77,6 +81,7 @@ Proof.
   destruct x; auto.
 Qed.
 
+#[export]
 Program Instance StateT_FunctorLaws {s} `{FunctorLaws m} :
   FunctorLaws (StateT s m).
 Next Obligation. Admitted.
@@ -98,6 +103,7 @@ Next Obligation. Admitted.
 (*   by case: y. *)
 (* Qed. *)
 
+#[export]
 Program Instance StateT_Applicative `{MonadLaws m} {s : Type} :
   ApplicativeLaws (StateT s m).
 Next Obligation. Admitted.
@@ -162,6 +168,7 @@ Next Obligation. Admitted.
 (*   f_equal. *)
 (* Qed. *)
 
+#[export]
 Program Instance StateT_Monad `{MonadLaws m} {s : Type} :
   MonadLaws (StateT s m).
 Next Obligation. Admitted.

@@ -28,6 +28,7 @@ Class Handles (fs : list Effect) (effect : Effect) := {
   getEffect : forall m, Effects m fs -> effect m
 }.
 
+#[export]
 Instance Handles_hd {fs : list Effect}  {f : Effect} :
   Handles (f :: fs) f.
 Proof.
@@ -36,6 +37,7 @@ Proof.
   exact X0.
 Defined.
 
+#[export]
 Instance Handles_tl `{_ : Handles fs f} : Handles (x :: fs) f.
 Proof.
   constructor; intros.
@@ -68,25 +70,31 @@ Definition liftF `{Handles effects effect}
 Definition interpret `(interpreter : Effects IO effects)
   `(program : Eff effects a) : IO a := program interpreter.
 
+#[export]
 Instance Impl_Functor {A} : Functor (fun B => A -> B) := {
   fmap := fun A B f run => fun xs => f (run xs)
 }.
 
+#[export]
 Instance Impl_Applicative {A} : Applicative (fun B => A -> B) := {
   pure := fun _ x => fun xs => x;
   ap   := fun A B runf runx => fun xs => runf xs (runx xs)
 }.
 
+#[export]
 Instance Impl_Monad {A} : Monad (fun B => A -> B) := {
   join := fun A run => fun xs => run xs xs
 }.
 
+#[export]
 Instance Kleisli_Functor `{Monad m} {A} : Functor (Kleisli m A) :=
   Compose_Functor.
 
+#[export]
 Instance Kleisli_Applicative `{Applicative m} : Applicative (Kleisli m A) :=
   fun _ => @Compose_Applicative _ _ Impl_Applicative _.
 
+#[export]
 Program Instance Kleisli_Monad_Distributes `{Monad m} {A} :
   @Monad_Distributes _ (@Impl_Monad A) m _ := {
   prod := _
@@ -97,15 +105,18 @@ Defined.
 
 (* Instance Kleisli_Monad `{Monad m} {A} : Monad (Kleisli m A) := Compose_Monad. *)
 
+#[export]
 Instance TFree_Functor `(xs : list Effect) : Functor (TFree xs) := {
   fmap := fun A B f run => fun xs => fmap f (run xs)
 }.
 
+#[export]
 Instance TFree_Applicative `(xs : list Effect) : Applicative (TFree xs) := {
   pure := fun _ x => fun xs => pure x;
   ap   := fun A B runf runx => fun xs => runf xs <*> runx xs
 }.
 
+#[export]
 Instance TFree_Monad `(xs : list Effect) : Monad (TFree xs) := {
   join := fun A run => fun xs => run xs >>= fun f => f xs
 }.

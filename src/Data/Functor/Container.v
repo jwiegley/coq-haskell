@@ -36,6 +36,7 @@ Record Container `(Position : Shape -> Type) (a : Type) := {
 Arguments shape  {Shape Position a} _.
 Arguments getter {Shape Position a} _ _.
 
+#[export]
 Program Instance Container_Functor {S : Type} (P : S -> Type) :
   Functor (Container P) := {
   fmap := fun X Y f x =>
@@ -53,6 +54,7 @@ Program Instance Container_Functor {S : Type} (P : S -> Type) :
 
 (* Arguments focus {Shape Position a} _. *)
 
+(* #[export] *)
 (* Program Instance Container_Comonad {S : Type} (P : S -> Type) : *)
 (*   Comonad (FocusedContainer P) := { *)
 (*   extract   := fun _ x => getter x (focus x); *)
@@ -70,12 +72,14 @@ Definition IdentityContainer `(x : a) : Container (const unit) a :=
    ; getter := const x
    |}.
 
+#[export]
 Program Instance IdentityContainer_Applicative :
   Applicative (Container (const unit)) := {
   pure := fun _ => IdentityContainer;
   ap   := fun _ _ f x => IdentityContainer (getter f tt (getter x tt))
 }.
 
+#[export]
 Program Instance IdentityContainer_Monad :
   Monad (Container (const unit)) := {
   join := fun _ x => getter x tt
@@ -96,17 +100,20 @@ Definition CFree_bind {S : Type} {P : S -> Type} `(k : a -> CFree P b) :
     end in
   go x0.
 
+#[export]
 Program Instance CFree_Functor {S : Type} (P : S -> Type) :
   Functor (CFree P) := {
   fmap := fun _ _ k => CFree_bind (CPure \o k)
 }.
 
+#[export]
 Program Instance CFree_Applicative {S : Type} (P : S -> Type) :
   Applicative (CFree P) := {
   pure := fun _ => CPure;
   ap   := fun _ _ mf mx => CFree_bind (flip fmap mx) mf
 }.
 
+#[export]
 Program Instance CFree_Monad {S : Type} (P : S -> Type) : Monad (CFree P) := {
   join := fun _ => CFree_bind id
 }.
@@ -125,15 +132,18 @@ Fixpoint retract {S : Type} `(fr : CFree P a) :
     | CJoin s k => c s $ fun t => retract (k t) c
   end.
 
+Require Import FunctionalExtensionality.
+
 Module ContainerLaws.
 
 Include MonadLaws.
 
-Require Import FunctionalExtensionality.
+Section ContainerLaws.
 
 Variable S : Type.
 Variable P : S -> Type.
 
+#[export]
 Program Instance Container_FunctorLaws : FunctorLaws (Container P).
 
 (*
@@ -143,10 +153,12 @@ Ltac reduce_cfree H :=
   extensionality YY;
   exact: H.
 
+#[export]
 Program Instance CFree_FunctorLaws : FunctorLaws (CFree P).
 Obligation 1. by reduce_cfree IHx. Qed.
 Obligation 2. by reduce_cfree IHx. Qed.
 
+#[export]
 Program Instance CFree_ApplicativeLaws : ApplicativeLaws (CFree P).
 Obligation 1. by reduce_cfree IHx. Qed.
 Obligation 2.
@@ -158,10 +170,13 @@ Obligation 2.
   by reduce_cfree IHu.
 Qed.
 
+#[export]
 Program Instance CFree_MonadLaws : MonadLaws (CFree P).
 Obligation 1. by reduce_cfree IHx. Qed.
 Obligation 2. by reduce_cfree IHx. Qed.
 Obligation 4. by reduce_cfree IHx. Qed.
 *)
+
+End ContainerLaws.
 
 End ContainerLaws.

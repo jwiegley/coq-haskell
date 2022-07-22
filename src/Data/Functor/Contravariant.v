@@ -25,16 +25,17 @@ Notation "contramap[ M N O ]  f" :=
 Definition coerce `{Functor f} `{Contravariant f} {a b} : f a -> f b :=
   fmap (False_rect _) \o contramap (False_rect _).
 
+#[export]
 Instance Contravariant_Compose `{Functor F} `{Contravariant G} :
   Contravariant (F \o G) :=
 { contramap := fun A B => @fmap F _ (G B) (G A) \o @contramap G _ A B
 }.
 
+Require Import FunctionalExtensionality.
+
 Module ContravariantLaws.
 
 Include FunctorLaws.
-
-Require Import FunctionalExtensionality.
 
 Class ContravariantLaws (f : Type -> Type) `{Contravariant f} := {
   contramap_id   : forall a : Type, contramap (@id a) = id;
@@ -63,6 +64,7 @@ Corollary contramap_compose  `{Functor F} `{Contravariant G} :
     @contramap (F \o G) _ X Y f.
 Proof. reflexivity. Qed.
 
+#[export]
 Program Instance ContravariantLaws_Compose
   `{FunctorLaws F} `{ContravariantLaws G} : ContravariantLaws (F \o G).
 Obligation 1. (* contramap_id *)
